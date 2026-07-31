@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { CROP_CATEGORIES, CROP_CATEGORY_TELUGU, CROPS, type CropCategory, type CropInfo } from '@/constants/crops';
+import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
 import type { LanguageCode } from '@/constants/languages';
 import { fetchCropsFromBackend, searchCropsLocal } from '@/services/crops/cropService';
 
@@ -45,7 +46,7 @@ export const useCropCatalogStore = create<CropCatalogState>((set, get) => ({
     } catch (err) {
       set({
         loading: false,
-        error: err instanceof Error ? err.message : 'Failed to load crops',
+        error: getUserErrorMessage('CROPS_LOAD_FAILED', lang),
       });
     }
   },

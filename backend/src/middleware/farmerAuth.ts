@@ -1,5 +1,6 @@
 import type { Context, Next } from 'hono';
 
+import { appError } from '../errors/appError';
 import { parseFarmerToken } from '../services/farmerAuth';
 
 export type FarmerAuthVariables = {
@@ -13,12 +14,12 @@ export async function farmerAuthMiddleware(
 ): Promise<Response | void> {
   const auth = c.req.header('Authorization');
   if (!auth?.startsWith('Bearer ')) {
-    return c.json({ error: 'Unauthorized', message: 'Missing bearer token' }, 401);
+    return appError(c, 'UNAUTHORIZED');
   }
 
   const parsed = parseFarmerToken(auth.slice(7).trim());
   if (!parsed) {
-    return c.json({ error: 'Unauthorized', message: 'Invalid token' }, 401);
+    return appError(c, 'SESSION_EXPIRED');
   }
 
   c.set('farmerId', parsed.farmerId);

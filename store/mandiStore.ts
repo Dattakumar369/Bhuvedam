@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { API_CONFIG } from '@/constants/app';
+import { resolveApiError } from '@/services/api/userFacingError';
 import type { VarietyEntry } from '@/constants/cropVarieties';
 import { buildVarietyList } from '@/constants/cropVarieties';
 import { MANDI_CROPS } from '@/constants/mandiCommodities';
@@ -142,14 +143,9 @@ export const useMandiStore = create<MandiState>((set, get) => ({
         error: null,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to load mandi rates';
-      const hint =
-        API_CONFIG.useBackendData && message.toLowerCase().includes('network')
-          ? ' Check backend is running (npm run dev) or use your PC IP instead of localhost in .env.'
-          : '';
       set({
         isLoading: false,
-        error: `${message}${hint}`,
+        error: resolveApiError(error, 'MANDI_LOAD_FAILED'),
       });
     }
   },

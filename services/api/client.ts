@@ -54,28 +54,32 @@ export function createApiClient(): AxiosInstance {
       }
 
       const data = error.response?.data as {
-        message?: string;
-        error?: string;
         code?: string;
         errors?: Record<string, string[]>;
         retryAfterSec?: number;
       } | undefined;
 
-      const rawMessage = data?.message ?? data?.error ?? '';
       const apiError: ApiError = {
-        message: rawMessage || 'Something went wrong. Please try again.',
-        statusCode: error.response?.status ?? 500,
+        message: data?.code ?? 'API error',
+        statusCode: error.response?.status ?? 0,
         code: data?.code,
         errors: data?.errors,
         retryAfterSec: data?.retryAfterSec,
       };
+
+      if (!error.response) {
+        apiError.code = 'NETWORK_ERROR';
+        apiError.statusCode = 0;
+      } else if (!apiError.code && apiError.statusCode >= 500) {
+        apiError.code = 'SERVER_ERROR';
+      }
 
       logApiFailure({
         method: originalRequest?.method,
         url: originalRequest?.url,
         status: error.response?.status,
         code: apiError.code,
-        message: apiError.message,
+        message: data?.code,
         network: !error.response,
       });
 

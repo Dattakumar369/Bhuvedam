@@ -4,11 +4,12 @@ import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import { cors } from 'hono/cors';
 
 config({ path: '.env' });
 
-import { appError } from '../errors/appError';
+import { appError, appErrorFromThrown, parseOtpWaitSeconds } from '../errors/appError';
 import { db } from '../db';
 import { log, maskPhone } from '../logging/logger';
 import {
@@ -35,6 +36,7 @@ import { syncSoilAtPoint } from '../ingestion/sources/soilGridsSource';
 import { geoKey } from '../ingestion/utils';
 import { farmerAuthMiddleware, type FarmerAuthVariables } from '../middleware/farmerAuth';
 import { adminAuthMiddleware } from '../middleware/adminAuth';
+import { apiLoggerMiddleware, registerGlobalErrorHandler } from '../middleware/apiLogger';
 import {
   createFarmerToken,
   formatFarmerUser,
@@ -95,14 +97,7 @@ const app = new Hono<{ Variables: FarmerAuthVariables }>();
 const publicRoot = path.join(process.cwd(), 'public');
 
 app.use('*', cors());
-
-app.use('/api/auth/*', async (c, next) => {
-  const started = Date.now();
-  const method = c.req.method;
-  const path = c.req.path;
-  await next();
-  log.debug('auth/http', `${method} ${path}`, { status: c.res.status, ms: Date.now() - started });
-});
+app.use('*', apiLoggerMiddleware);
 
 app.use(
   '/static/*',
@@ -133,7 +128,7 @@ app.get('/health', (c) => {
 /** Legacy login — disabled in production (use OTP only) */
 app.post('/api/auth/login', async (c) => {
   if (process.env.NODE_ENV === 'production' && process.env.ALLOW_LEGACY_LOGIN !== 'true') {
-    return c.json({ error: 'Use OTP login — POST /api/auth/send-otp' }, 403);
+    return appError(c, 'LEGACY_LOGIN_DISABLED');
   }
 
   const body = (await c.req.json()) as {
@@ -145,7 +140,7 @@ app.post('/api/auth/login', async (c) => {
   const phoneRaw = body.phone?.trim();
   const name = body.name?.trim();
   if (!phoneRaw || !name) {
-    return c.json({ error: 'phone and name are required' }, 400);
+    return appError(c, 'INVALID_REQUEST');
   }
 
   const phone = formatPhone(phoneRaw);
@@ -268,9 +263,10 @@ app.post('/api/auth/login-password', async (c) => {
     });
   } catch (err) {
     const code = err instanceof Error ? err.message : 'LOGIN_FAILED';
+    log.warn('auth/login-password', 'rejected', { code, identifier: maskPhone(identifier) });
     if (code === 'INVALID_CREDENTIALS') return appError(c, 'INVALID_CREDENTIALS');
     if (code === 'ACCOUNT_DISABLED') return appError(c, 'ACCOUNT_DISABLED');
-    console.error('[auth/login-password] failed:', err);
+    log.error('auth/login-password', 'unexpected failure', { identifier: maskPhone(identifier), err });
     return appError(c, 'LOGIN_FAILED');
   }
 });
@@ -289,13 +285,10 @@ app.post('/api/auth/forgot-password', async (c) => {
     return c.json({ success: true, data: result });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'SMS_FAILED';
-    console.error('[auth/forgot-password] failed:', err);
+    log.warn('auth/forgot-password', 'otp send failed', { phone: maskPhone(phoneRaw), msg });
     if (msg.startsWith('WAIT_')) {
-      const seconds = Number(msg.replace('WAIT_', '')) || 60;
-      return appError(c, 'OTP_WAIT', {
-        message: `Please wait ${seconds}s before requesting another OTP`,
-        retryAfterSec: seconds,
-      });
+      const seconds = parseOtpWaitSeconds(msg) ?? 60;
+      return appError(c, 'OTP_WAIT', { retryAfterSec: seconds });
     }
     return appError(c, 'OTP_SEND_FAILED');
   }
@@ -384,10 +377,7 @@ app.post('/api/auth/send-otp', async (c) => {
     console.error('[OTP] send-otp failed:', err);
     if (msg.startsWith('WAIT_')) {
       const seconds = Number(msg.replace('WAIT_', '')) || 60;
-      return appError(c, 'OTP_WAIT', {
-        message: `Please wait ${seconds}s before requesting another OTP`,
-        retryAfterSec: seconds,
-      });
+      return appError(c, 'OTP_WAIT', { retryAfterSec: seconds });
     }
     return appError(c, 'OTP_SEND_FAILED');
   }
@@ -467,7 +457,7 @@ app.post('/api/auth/verify-otp', async (c) => {
 app.get('/api/auth/profile', farmerAuthMiddleware, async (c) => {
   const farmerId = c.get('farmerId');
   const profile = await getFarmerProfile(farmerId);
-  if (!profile) return c.json({ error: 'Farmer not found' }, 404);
+  if (!profile) return appError(c, 'FARMER_NOT_FOUND');
 
   return c.json({
     success: true,
@@ -479,7 +469,7 @@ app.get('/api/auth/profile', farmerAuthMiddleware, async (c) => {
 app.get('/api/farmers/me', farmerAuthMiddleware, async (c) => {
   const farmerId = c.get('farmerId');
   const profile = await getFarmerProfile(farmerId);
-  if (!profile) return c.json({ error: 'Farmer not found' }, 404);
+  if (!profile) return appError(c, 'FARMER_NOT_FOUND');
 
   return c.json({
     success: true,
@@ -502,7 +492,8 @@ app.put('/api/farmers/me/sync', farmerAuthMiddleware, async (c) => {
     });
   } catch (err) {
     console.error('[farmers/sync] failed:', err);
-    return c.json({ error: 'Could not sync farm profile to database' }, 500);
+    log.error('farmer/sync', 'profile sync failed', { err, farmerId: c.get('farmerId') });
+    return appError(c, 'SYNC_FAILED');
   }
 });
 
@@ -537,7 +528,7 @@ app.get('/api/crops/:cropId', async (c) => {
   const cropId = c.req.param('cropId');
   const lang = parseFarmerLanguage(c.req.query('lang'));
   const row = await getCropByIdDb(cropId);
-  if (!row) return c.json({ error: 'Crop not found' }, 404);
+  if (!row) return appError(c, 'CROP_NOT_FOUND');
   const data = await localizeCropRow(row, lang, 'full');
   return c.json({ data, lang, source: 'neon' });
 });
@@ -598,7 +589,7 @@ app.get('/api/fertilizer-products', async (c) => {
 
 app.get('/api/fertilizer-products/:id', async (c) => {
   const row = await getFertilizerProductById(c.req.param('id'));
-  if (!row) return c.json({ error: 'Fertilizer product not found' }, 404);
+  if (!row) return appError(c, 'FERTILIZER_NOT_FOUND');
   return c.json({ data: row, source: 'neon' });
 });
 
@@ -638,7 +629,7 @@ app.get('/api/plant-diseases/:id', async (c) => {
     .from(plantDiseases)
     .where(eq(plantDiseases.id, c.req.param('id')))
     .limit(1);
-  if (!row) return c.json({ error: 'Disease not found' }, 404);
+  if (!row) return appError(c, 'DISEASE_NOT_FOUND');
   return c.json({ data: row, source: 'plantvillage_icar' });
 });
 
@@ -730,7 +721,7 @@ app.get('/api/bulk-catalog/stats', async (c) => {
 app.get('/api/ag-products/canonical', async (c) => {
   const type = c.req.query('type');
   if (type !== 'pesticide' && type !== 'fungicide') {
-    return c.json({ error: 'type must be pesticide or fungicide' }, 400);
+    return appError(c, 'INVALID_PRODUCT_TYPE');
   }
   const data = searchCanonicalAgProducts({
     type,
@@ -744,7 +735,7 @@ app.get('/api/ag-products/canonical', async (c) => {
 
 app.get('/api/ag-products/canonical/:id', async (c) => {
   const row = getCanonicalAgProductById(c.req.param('id'));
-  if (!row) return c.json({ error: 'Product not found' }, 404);
+  if (!row) return appError(c, 'PRODUCT_NOT_FOUND');
   return c.json({ data: row, source: 'cibrc_reference' });
 });
 
@@ -775,7 +766,7 @@ app.get('/api/ag-products', async (c) => {
 
 app.get('/api/ag-products/:id', async (c) => {
   const [row] = await db.select().from(agProducts).where(eq(agProducts.id, c.req.param('id'))).limit(1);
-  if (!row) return c.json({ error: 'Product not found' }, 404);
+  if (!row) return appError(c, 'PRODUCT_NOT_FOUND');
   return c.json({ data: row });
 });
 
@@ -803,7 +794,7 @@ app.get('/api/crop-diseases', async (c) => {
 app.get('/api/soils', async (c) => {
   const lat = Number(c.req.query('lat'));
   const lon = Number(c.req.query('lon'));
-  if (!lat || !lon) return c.json({ error: 'lat and lon required' }, 400);
+  if (!lat || !lon) return appError(c, 'LOCATION_REQUIRED');
 
   await syncSoilAtPoint(lat, lon);
   const key = geoKey(lat, lon);
@@ -841,7 +832,7 @@ app.get('/api/sync/status', async (c) => {
 /** Instant agriculture knowledge search — research, books, diseases, pesticides */
 app.get('/api/knowledge/search', async (c) => {
   const q = c.req.query('q') ?? '';
-  if (!q.trim()) return c.json({ error: 'q parameter required' }, 400);
+  if (!q.trim()) return appError(c, 'SEARCH_REQUIRED');
   const hits = await searchKnowledge(q, Number(c.req.query('limit') ?? 15));
   return c.json({ data: hits, formatted: formatKnowledgeForAI(hits, q) });
 });
@@ -849,7 +840,7 @@ app.get('/api/knowledge/search', async (c) => {
 /** AI-ready knowledge context for a farmer question */
 app.get('/api/knowledge/ask', async (c) => {
   const q = c.req.query('q') ?? '';
-  if (!q.trim()) return c.json({ error: 'q required' }, 400);
+  if (!q.trim()) return appError(c, 'SEARCH_REQUIRED');
   const crop = c.req.query('crop') ?? c.req.query('cropId');
   const cropIds = crop ? crop.split(',').map((s) => s.trim()).filter(Boolean) : [];
   const context = await buildKnowledgeContextForAI(q, cropIds);
@@ -881,7 +872,7 @@ app.post('/api/sync', adminAuthMiddleware, async (c) => {
 app.post('/api/farmers/me/push-token', farmerAuthMiddleware, async (c) => {
   const body = (await c.req.json()) as { token?: string; platform?: string };
   const token = body.token?.trim();
-  if (!token) return c.json({ error: 'token is required' }, 400);
+  if (!token) return appError(c, 'PUSH_TOKEN_REQUIRED');
 
   await registerPushToken(c.get('farmerId'), token, body.platform);
   return c.json({ success: true });
@@ -890,7 +881,7 @@ app.post('/api/farmers/me/push-token', farmerAuthMiddleware, async (c) => {
 app.delete('/api/farmers/me/push-token', farmerAuthMiddleware, async (c) => {
   const body = (await c.req.json()) as { token?: string };
   const token = body.token?.trim();
-  if (!token) return c.json({ error: 'token is required' }, 400);
+  if (!token) return appError(c, 'PUSH_TOKEN_REQUIRED');
 
   await removePushToken(c.get('farmerId'), token);
   return c.json({ success: true });
@@ -917,9 +908,9 @@ app.get('/api/farmers/me/notifications', farmerAuthMiddleware, async (c) => {
 
 app.patch('/api/farmers/me/notifications/:id/read', farmerAuthMiddleware, async (c) => {
   const id = c.req.param('id');
-  if (!id) return c.json({ error: 'id required' }, 400);
+  if (!id) return appError(c, 'INVALID_REQUEST');
   const ok = await markNotificationRead(c.get('farmerId'), id);
-  if (!ok) return c.json({ error: 'Notification not found' }, 404);
+  if (!ok) return appError(c, 'NOTIFICATION_NOT_FOUND');
   return c.json({ success: true });
 });
 
@@ -937,7 +928,7 @@ app.post('/api/farmers/me/notifications/push', farmerAuthMiddleware, async (c) =
     data?: Record<string, unknown>;
   };
   if (!body.title?.trim() || !body.body?.trim()) {
-    return c.json({ error: 'title and body are required' }, 400);
+    return appError(c, 'NOTIFICATION_FIELDS_REQUIRED');
   }
 
   const typeMap: Record<string, 'mandi_alert' | 'weather_alert' | 'crop_calendar' | 'ai_insight'> = {
@@ -962,11 +953,11 @@ app.post('/api/farmers/me/notifications/push', farmerAuthMiddleware, async (c) =
 });
 
 /** Low-cost cron — cron-job.org (POST) or Vercel Cron (GET + Bearer CRON_SECRET) */
-async function runDailyNotificationCron(c: { req: { header: (name: string) => string | undefined }; json: (data: unknown, status?: number) => Response }) {
+async function runDailyNotificationCron(c: Context) {
   const secret = process.env.CRON_SECRET?.trim();
   if (!secret) {
     if (process.env.NODE_ENV === 'production') {
-      return c.json({ error: 'CRON_SECRET not configured' }, 503);
+      return appError(c, 'FORBIDDEN');
     }
   } else {
     const bearer = c.req.header('authorization');
@@ -974,7 +965,7 @@ async function runDailyNotificationCron(c: { req: { header: (name: string) => st
     const authorized =
       headerSecret === secret || bearer === `Bearer ${secret}`;
     if (!authorized) {
-      return c.json({ error: 'Unauthorized' }, 401);
+      return appError(c, 'FORBIDDEN');
     }
   }
 
@@ -993,7 +984,7 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
   };
 
   const messages = body.messages?.filter((m) => m.role && m.content) ?? [];
-  if (!messages.length) return c.json({ error: 'messages required' }, 400);
+  if (!messages.length) return appError(c, 'AI_MESSAGES_REQUIRED');
 
   try {
     const stream = await streamOllamaChat(messages, { voiceMode: body.voiceMode });
@@ -1005,10 +996,12 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
       },
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'AI stream failed';
-    return c.json({ error: msg }, 503);
+    log.error('ai/stream', 'Ollama proxy failed', { err, farmerId: c.get('farmerId') });
+    return appError(c, 'AI_UNAVAILABLE');
   }
 });
+
+registerGlobalErrorHandler(app);
 
 export default app;
 

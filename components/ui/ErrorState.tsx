@@ -3,6 +3,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { Body, Title } from '@/components/ui/Typography';
+import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
+import { useTranslation } from '@/hooks/useTranslation';
 import { colors, radius, spacing } from '@/theme';
 
 interface ErrorStateProps {
@@ -10,18 +12,22 @@ interface ErrorStateProps {
   onRetry?: () => void;
 }
 
-export function ErrorState({
-  message = 'Something went wrong. Please try again.',
-  onRetry,
-}: ErrorStateProps) {
+export function ErrorState({ message, onRetry }: ErrorStateProps) {
+  const { language } = useTranslation();
+  const displayMessage = message ?? getUserErrorMessage('DEFAULT', language);
+  const title = getUserErrorMessage('OOPS_TITLE', language);
+  const retryLabel = getUserErrorMessage('TRY_AGAIN', language);
+
   return (
     <View style={styles.container}>
       <View style={styles.iconBox}>
         <MaterialCommunityIcons name="alert-circle-outline" size={40} color={colors.error} />
       </View>
-      <Title style={styles.title}>Oops!</Title>
-      <Body style={styles.message}>{message}</Body>
-      {onRetry ? <Button label="Try Again" onPress={onRetry} variant="outline" /> : null}
+      <Title style={styles.title}>{title}</Title>
+      <Body style={styles.message}>{displayMessage}</Body>
+      {onRetry ? (
+        <Button label={retryLabel} onPress={onRetry} variant="outline" />
+      ) : null}
     </View>
   );
 }

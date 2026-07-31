@@ -12,7 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Chip, Header, ListSkeleton, SearchInput } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
+import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
 import { FERTILIZER_BRANDS, FERTILIZER_CATEGORIES } from '@/constants/fertilizerCatalog';
+import { useLanguageStore } from '@/store/languageStore';
 import { CROPS } from '@/constants/crops';
 import { FertilizerProductCard } from '@/features/fertilizers/components/FertilizerProductCard';
 import { fetchFertilizerProducts } from '@/services/fertilizers/fertilizerProductService';
@@ -47,10 +49,12 @@ export default function FertilizersScreen() {
       setProducts(result.products);
       setSource(result.source);
       if (result.source === 'offline') {
-        setError('Backend connect avvaledu — EXPO_PUBLIC_API_URL WiFi IP set cheyandi');
+        const lang = useLanguageStore.getState().language;
+        setError(getUserErrorMessage('PRODUCTS_OFFLINE', lang));
       }
     } catch {
-      setError('Products load avvaledu — malli try cheyandi');
+      const lang = useLanguageStore.getState().language;
+      setError(getUserErrorMessage('PRODUCTS_LOAD_FAILED', lang));
       setProducts([]);
     } finally {
       setLoading(false);

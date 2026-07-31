@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { getTranslations } from '@/constants/i18n/translations';
+import { resolveApiError } from '@/services/api/userFacingError';
 import { STORAGE_KEYS } from '@/constants/app';
 import { hasRealAIProvider } from '@/constants/aiConfig';
 import type { LanguageCode } from '@/constants/languages';
@@ -359,11 +360,10 @@ export const useAIStore = create<AIState>((set, get) => ({
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
 
-      const errorMessage =
-        error instanceof Error ? error.message : getTranslations(useLanguageStore.getState().language).aiError;
+      const errorMessage = resolveApiError(error, 'AI_CHAT_FAILED');
 
       if (__DEV__) {
-        console.error('[AI] Response failed:', errorMessage);
+        console.error('[AI] Response failed:', error);
       }
 
       set((state) => ({
@@ -378,7 +378,7 @@ export const useAIStore = create<AIState>((set, get) => ({
               msg.id === assistantId
                 ? {
                     ...msg,
-                    content: `⚠️ ${errorMessage}`,
+                    content: errorMessage,
                     isStreaming: false,
                   }
                 : msg,

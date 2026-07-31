@@ -13,6 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Chip, Header, ListSkeleton, SearchInput } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
 import { AGRO_BRAND_FILTERS } from '@/constants/agCatalogFilters';
+import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
+import { useLanguageStore } from '@/store/languageStore';
 import { CROPS } from '@/constants/crops';
 import { AgProductCard } from '@/features/catalog/components/AgProductCard';
 import { fetchAgCatalogProducts } from '@/services/catalog/agProductCatalogService';
@@ -72,10 +74,12 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
       setProducts(result.products);
       setSource(result.source);
       if (result.source === 'offline') {
-        setError('Backend connect avvaledu — WiFi IP check cheyandi');
+        const lang = useLanguageStore.getState().language;
+        setError(getUserErrorMessage('PRODUCTS_OFFLINE', lang));
       }
     } catch {
-      setError('Products load avvaledu');
+      const lang = useLanguageStore.getState().language;
+      setError(getUserErrorMessage('PRODUCTS_LOAD_FAILED', lang));
       setProducts([]);
     } finally {
       setLoading(false);

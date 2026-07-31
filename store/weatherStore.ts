@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 
+import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
 import { fetchWeatherForCurrentLocation } from '@/services/weather/weatherService';
+import { useLanguageStore } from '@/store/languageStore';
 import type { LocationData, LocationPermissionStatus } from '@/types/location';
 import type { WeatherData } from '@/types/weather';
 
@@ -39,14 +41,15 @@ export const useWeatherStore = create<WeatherState>((set, get) => ({
         error: null,
       });
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to load weather data';
-
-      const isPermissionError = message.toLowerCase().includes('permission');
+      const lang = useLanguageStore.getState().language;
+      const msg = error instanceof Error ? error.message : '';
+      const isPermissionError = msg.toLowerCase().includes('permission');
 
       set({
         isLoading: false,
-        error: message,
+        error: isPermissionError
+          ? getUserErrorMessage('LOCATION_REQUIRED', lang)
+          : getUserErrorMessage('WEATHER_LOAD_FAILED', lang),
         permissionStatus: isPermissionError ? 'denied' : get().permissionStatus,
       });
     }

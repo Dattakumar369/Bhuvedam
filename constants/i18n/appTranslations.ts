@@ -105,6 +105,8 @@ export interface AppTranslations {
   resetPasswordFailed: string;
   passwordChangeFailed: string;
   genericError: string;
+  networkError: string;
+  sessionExpired: string;
   backToLogin: string;
   syncFailed: string;
 }
@@ -214,6 +216,8 @@ const enApp: AppTranslations = {
   resetPasswordFailed: 'Could not reset password. Please try again.',
   passwordChangeFailed: 'Could not change password. Please try again.',
   genericError: 'Something went wrong. Please try again.',
+  networkError: 'Could not connect to server. Check your internet and try again.',
+  sessionExpired: 'Your session expired. Please log in again.',
   backToLogin: '← Back to login',
   syncFailed: 'Could not sync farm data to server. Will retry later.',
 };
@@ -323,6 +327,8 @@ const teApp: AppTranslations = {
   resetPasswordFailed: 'Password reset fail. Malli try cheyandi.',
   passwordChangeFailed: 'Password change fail. Malli try cheyandi.',
   genericError: 'Emaina problem vachindi. Malli try cheyandi.',
+  networkError: 'Server connect avvaledu. Internet check chesi malli try cheyandi.',
+  sessionExpired: 'Session expire ayyindi. Malli login cheyandi.',
   backToLogin: '← Login ki vellu',
   syncFailed: 'Server ki farm data sync fail. Taruvata retry avutundi.',
 };
