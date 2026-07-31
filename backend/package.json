@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "main": "src/index.ts",
   "scripts": {
     "dev": "tsx src/server/index.ts",
     "build": "esbuild src/server/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --packages=external",
