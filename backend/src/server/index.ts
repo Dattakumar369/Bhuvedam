@@ -112,7 +112,15 @@ app.use(
   }),
 );
 
-app.get('/health', (c) => c.json({ ok: true, service: 'bhuvedam-api' }));
+app.get('/health', (c) => {
+  const database = Boolean(process.env.DATABASE_URL?.trim());
+  const jwt = Boolean(process.env.JWT_SECRET?.trim());
+  return c.json({
+    ok: database && jwt,
+    service: 'bhuvedam-api',
+    config: { database, jwt },
+  });
+});
 
 /** Legacy login — disabled in production (use OTP only) */
 app.post('/api/auth/login', async (c) => {
@@ -996,8 +1004,13 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
 
 export default app;
 
-/** Local / Railway — Vercel sets VERCEL=1 and uses the default export as a serverless handler */
-if (process.env.VERCEL !== '1') {
+function isDirectServerRun(): boolean {
+  const entry = (process.argv[1] ?? '').replace(/\\/g, '/');
+  return entry.includes('server/index') || entry.endsWith('dist/index.js');
+}
+
+/** Only bind a port when started via npm run dev / npm start — not on Vercel import */
+if (isDirectServerRun()) {
   const port = Number(process.env.PORT ?? 3001);
   console.log(`Bhuvedam API → http://localhost:${port}`);
   serve({ fetch: app.fetch, port });
