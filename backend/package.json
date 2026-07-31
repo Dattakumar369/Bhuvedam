@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "main": "src/index.cts",
   "scripts": {
     "dev": "tsx src/server/index.ts",
     "build": "esbuild src/server/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --packages=external",
-    "build:vercel": "esbuild src/vercel.cts --bundle --platform=node --format=cjs --outfile=api/index.cjs --packages=external",
+    "build:vercel": "esbuild src/index.cts --bundle --platform=node --format=cjs --outfile=api/index.cjs --packages=external",
     "start": "node dist/index.js",
     "sync": "tsx src/ingestion/syncAll.ts",
     "sync:crops": "tsx src/ingestion/syncAll.ts crops",

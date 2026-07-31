@@ -1,4 +1,4 @@
-/** Bundled by npm run build:vercel → api/index.cjs (CommonJS for Vercel runtime) */
+/** Vercel source entry — bundled to api/index.cjs at build time */
 import { handle } from 'hono/vercel';
 import app from './server/index';
 
