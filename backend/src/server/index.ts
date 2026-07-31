@@ -90,7 +90,12 @@ import {
   registerFarmerWithPassword,
   resetPasswordWithPhoneOtp,
 } from '../services/passwordAuth';
-import { streamOllamaChat, type ProxyChatMessage } from '../services/aiProxyService';
+import {
+  completeOllamaChat,
+  isOllamaConfigured,
+  streamOllamaChat,
+  type ProxyChatMessage,
+} from '../services/aiProxyService';
 
 const app = new Hono<{ Variables: FarmerAuthVariables }>();
 
@@ -118,10 +123,11 @@ app.get('/', (c) =>
 app.get('/health', (c) => {
   const database = Boolean(process.env.DATABASE_URL?.trim());
   const jwt = Boolean(process.env.JWT_SECRET?.trim());
+  const ollama = isOllamaConfigured();
   return c.json({
     ok: database && jwt,
     service: 'bhuvedam-api',
-    config: { database, jwt },
+    config: { database, jwt, ollama },
   });
 });
 
@@ -976,6 +982,26 @@ async function runDailyNotificationCron(c: Context) {
 app.get('/api/notifications/cron/daily', runDailyNotificationCron);
 app.post('/api/notifications/cron/daily', runDailyNotificationCron);
 
+/** AI chat (non-stream) — reliable on React Native APK */
+app.post('/api/ai/chat', farmerAuthMiddleware, async (c) => {
+  const body = (await c.req.json()) as {
+    messages?: ProxyChatMessage[];
+    voiceMode?: boolean;
+  };
+
+  const messages = body.messages?.filter((m) => m.role && m.content) ?? [];
+  if (!messages.length) return appError(c, 'AI_MESSAGES_REQUIRED');
+  if (!isOllamaConfigured()) return appError(c, 'AI_NOT_CONFIGURED');
+
+  try {
+    const content = await completeOllamaChat(messages, { voiceMode: body.voiceMode });
+    return c.json({ content });
+  } catch (err) {
+    log.error('ai/chat', 'Ollama proxy failed', { err, farmerId: c.get('farmerId') });
+    return appError(c, 'AI_UNAVAILABLE');
+  }
+});
+
 /** AI chat stream — keys stay on server (Ollama proxy) */
 app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
   const body = (await c.req.json()) as {
@@ -985,6 +1011,7 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
 
   const messages = body.messages?.filter((m) => m.role && m.content) ?? [];
   if (!messages.length) return appError(c, 'AI_MESSAGES_REQUIRED');
+  if (!isOllamaConfigured()) return appError(c, 'AI_NOT_CONFIGURED');
 
   try {
     const stream = await streamOllamaChat(messages, { voiceMode: body.voiceMode });

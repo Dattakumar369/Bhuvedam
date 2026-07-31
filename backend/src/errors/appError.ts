@@ -207,6 +207,11 @@ export const APP_ERROR = {
     message: 'Please type a message to send to the assistant.',
     status: 400,
   },
+  AI_NOT_CONFIGURED: {
+    code: 'AI_NOT_CONFIGURED',
+    message: 'AI assistant is not configured on the server.',
+    status: 503,
+  },
   AI_UNAVAILABLE: {
     code: 'AI_UNAVAILABLE',
     message: 'AI assistant is temporarily unavailable. Try again later.',

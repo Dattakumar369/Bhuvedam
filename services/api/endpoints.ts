@@ -78,7 +78,7 @@ export const ENDPOINTS = {
   ai: {
     conversations: '/ai/conversations',
     conversation: (id: string) => `/ai/conversations/${id}`,
-    send: '/ai/chat',
+    send: '/api/ai/chat',
     stream: '/api/ai/chat/stream',
     predictions: '/ai/predictions',
   },

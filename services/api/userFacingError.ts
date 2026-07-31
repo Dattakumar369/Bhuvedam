@@ -22,6 +22,10 @@ export function resolveApiError(
 ): string {
   const language = useLanguageStore.getState().language;
 
+  if (err instanceof Error && typeof (err as Error & { code?: string }).code === 'string') {
+    return getUserErrorMessage((err as Error & { code: string }).code, language);
+  }
+
   if (err && typeof err === 'object' && ('code' in err || 'statusCode' in err)) {
     const apiErr = err as ApiError;
 

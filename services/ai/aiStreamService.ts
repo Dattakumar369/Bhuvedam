@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import { AI_CONFIG, hasRealAIProvider } from '@/constants/aiConfig';
 import type { LanguageCode } from '@/constants/languages';
 import { API_CONFIG } from '@/constants/app';
@@ -31,7 +33,81 @@ function buildOpenAIMessages(messages: ChatMessage[], systemPrompt: string) {
   ];
 }
 
-async function streamFromBackend({ messages, language, systemPrompt, onChunk, signal }: StreamOptions): Promise<string> {
+function throwBackendError(code: string): never {
+  const err = new Error(code) as Error & { code?: string };
+  err.code = code;
+  throw err;
+}
+
+async function parseBackendError(response: Response): Promise<never> {
+  let code = 'AI_UNAVAILABLE';
+  try {
+    const errBody = (await response.json()) as { code?: string };
+    if (errBody.code) code = errBody.code;
+  } catch {
+    // ignore parse errors
+  }
+  throwBackendError(code);
+}
+
+function parseBackendSSE(text: string, onChunk: (content: string) => void): string {
+  let fullContent = '';
+
+  for (const line of text.split('\n')) {
+    if (!line.startsWith('data:')) continue;
+    const data = line.slice(5).trim();
+    if (!data || data === '[DONE]') continue;
+
+    try {
+      const parsed = JSON.parse(data) as { content?: string };
+      if (parsed.content) {
+        fullContent = parsed.content;
+        onChunk(fullContent);
+      }
+    } catch {
+      fullContent += data;
+      onChunk(fullContent);
+    }
+  }
+
+  return fullContent;
+}
+
+async function chatFromBackend({
+  messages,
+  systemPrompt,
+  onChunk,
+  signal,
+  voiceMode,
+}: StreamOptions): Promise<string> {
+  const response = await fetch(`${API_CONFIG.baseUrl}${ENDPOINTS.ai.send}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
+    },
+    body: JSON.stringify({
+      messages: buildOpenAIMessages(messages, systemPrompt),
+      voiceMode,
+    }),
+    signal,
+  });
+
+  if (!response.ok) {
+    await parseBackendError(response);
+  }
+
+  const data = (await response.json()) as { content?: string };
+  const content = data.content?.trim() ?? '';
+  if (!content) throwBackendError('AI_UNAVAILABLE');
+
+  onChunk(content);
+  return content;
+}
+
+async function streamFromBackend(options: StreamOptions): Promise<string> {
+  const { messages, systemPrompt, onChunk, signal, voiceMode } = options;
   const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
   if (!lastUserMessage) throw new Error('No user message');
 
@@ -45,26 +121,23 @@ async function streamFromBackend({ messages, language, systemPrompt, onChunk, si
     body: JSON.stringify({
       messages: buildOpenAIMessages(messages, systemPrompt),
       message: lastUserMessage.content,
-      language,
+      language: options.language,
+      voiceMode,
     }),
     signal,
   });
 
   if (!response.ok) {
-    let code = 'AI_UNAVAILABLE';
-    try {
-      const errBody = (await response.json()) as { code?: string };
-      if (errBody.code) code = errBody.code;
-    } catch {
-      // ignore parse errors
-    }
-    const err = new Error(code) as Error & { code?: string };
-    err.code = code;
-    throw err;
+    await parseBackendError(response);
   }
 
   const reader = response.body?.getReader();
-  if (!reader) throw new Error('Streaming not supported');
+  if (!reader) {
+    const text = await response.text();
+    const fullContent = parseBackendSSE(text, onChunk);
+    if (!fullContent.trim()) throwBackendError('AI_UNAVAILABLE');
+    return fullContent;
+  }
 
   const decoder = new TextDecoder();
   let fullContent = '';
@@ -84,7 +157,7 @@ async function streamFromBackend({ messages, language, systemPrompt, onChunk, si
       try {
         const parsed = JSON.parse(data) as { content?: string };
         if (parsed.content) {
-          fullContent += parsed.content;
+          fullContent = parsed.content;
           onChunk(fullContent);
         }
       } catch {
@@ -94,6 +167,7 @@ async function streamFromBackend({ messages, language, systemPrompt, onChunk, si
     }
   }
 
+  if (!fullContent.trim()) throwBackendError('AI_UNAVAILABLE');
   return fullContent;
 }
 
@@ -102,7 +176,19 @@ export async function streamAIResponse(options: StreamOptions): Promise<string> 
   if (!lastUser) throw new Error('No user message to respond to');
 
   if (AI_CONFIG.useBackend) {
-    return streamFromBackend(options);
+    // React Native fetch cannot reliably read SSE streams on device.
+    if (Platform.OS !== 'web') {
+      return chatFromBackend(options);
+    }
+
+    try {
+      return await streamFromBackend(options);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Streaming not supported') {
+        return chatFromBackend(options);
+      }
+      throw error;
+    }
   }
 
   if (AI_CONFIG.provider === 'ollama' && AI_CONFIG.ollamaApiKey) {

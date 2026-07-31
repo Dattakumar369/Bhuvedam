@@ -16,16 +16,20 @@ function ollamaConfig() {
   };
 }
 
-export async function streamOllamaChat(
+export function isOllamaConfigured(): boolean {
+  return Boolean(ollamaConfig().key.trim());
+}
+
+async function requestOllamaChat(
   messages: ProxyChatMessage[],
-  opts: { voiceMode?: boolean; signal?: AbortSignal },
-): Promise<ReadableStream<Uint8Array>> {
+  opts: { voiceMode?: boolean; signal?: AbortSignal; stream: boolean },
+) {
   const { url, key, model } = ollamaConfig();
   if (!key) {
     throw new Error('OLLAMA_API_KEY not configured on server');
   }
 
-  const response = await fetch(`${url}/api/chat`, {
+  return fetch(`${url}/api/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -34,7 +38,7 @@ export async function streamOllamaChat(
     body: JSON.stringify({
       model,
       messages,
-      stream: true,
+      stream: opts.stream,
       options: {
         temperature: opts.voiceMode ? 0.25 : 0.15,
         top_p: 0.85,
@@ -44,6 +48,31 @@ export async function streamOllamaChat(
     }),
     signal: opts.signal,
   });
+}
+
+export async function completeOllamaChat(
+  messages: ProxyChatMessage[],
+  opts: { voiceMode?: boolean; signal?: AbortSignal } = {},
+): Promise<string> {
+  const response = await requestOllamaChat(messages, { ...opts, stream: false });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Ollama error ${response.status}`);
+  }
+
+  const data = (await response.json()) as { message?: { content?: string }; error?: string };
+  const content = data.message?.content?.trim() ?? '';
+  if (content) return content;
+  if (data.error) throw new Error(data.error);
+  throw new Error('Ollama returned an empty response');
+}
+
+export async function streamOllamaChat(
+  messages: ProxyChatMessage[],
+  opts: { voiceMode?: boolean; signal?: AbortSignal },
+): Promise<ReadableStream<Uint8Array>> {
+  const response = await requestOllamaChat(messages, { ...opts, stream: true });
 
   if (!response.ok) {
     const text = await response.text();
