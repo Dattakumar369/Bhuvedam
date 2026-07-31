@@ -1,6 +1,5 @@
 import { config } from 'dotenv';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
@@ -93,8 +92,7 @@ import { streamOllamaChat, type ProxyChatMessage } from '../services/aiProxyServ
 
 const app = new Hono<{ Variables: FarmerAuthVariables }>();
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const publicRoot = path.join(__dirname, '../../public');
+const publicRoot = path.join(process.cwd(), 'public');
 
 app.use('*', cors());
 

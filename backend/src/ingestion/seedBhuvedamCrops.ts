@@ -1,13 +1,11 @@
 import { config } from 'dotenv';
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 config({ path: '.env' });
 
 import { db } from '../db';
 import { crops } from '../db/schema';
 import { buildCropSearchAliases } from '../services/cropSearch';
+import catalogData from '../data/crops.catalog.json';
 
 type CatalogCrop = {
   id: string;
@@ -25,9 +23,7 @@ type CatalogCrop = {
   tips: string[];
 };
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const catalogPath = join(__dirname, '../data/crops.catalog.json');
-const catalog = JSON.parse(readFileSync(catalogPath, 'utf8')) as CatalogCrop[];
+const catalog = catalogData as CatalogCrop[];
 
 export async function seedBhuvedamCrops() {
   console.log(`Seeding ${catalog.length} Bhuvedam crops into Neon...`);
