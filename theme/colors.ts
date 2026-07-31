@@ -1,0 +1,30 @@
+export const colors = {
+  primary: '#2E7D32',
+  primaryLight: '#66BB6A',
+  primaryDark: '#1B5E20',
+  accent: '#FFA726',
+  accentLight: '#FFB74D',
+  background: '#F7F9F5',
+  surface: '#FFFFFF',
+  surfaceVariant: '#EEF2EA',
+  textPrimary: '#1B4332',
+  textSecondary: '#5F6F52',
+  textTertiary: '#8A9A7E',
+  border: '#E7ECEF',
+  error: '#D32F2F',
+  success: '#388E3C',
+  warning: '#F57C00',
+  info: '#1976D2',
+  white: '#FFFFFF',
+  black: '#000000',
+  overlay: 'rgba(27, 67, 50, 0.45)',
+  glass: 'rgba(255, 255, 255, 0.72)',
+  gradient: {
+    nature: ['#2E7D32', '#66BB6A', '#A5D6A7'] as const,
+    sunrise: ['#FFA726', '#FFB74D', '#FFE0B2'] as const,
+    sky: ['#1976D2', '#42A5F5', '#90CAF9'] as const,
+    header: ['#1B4332', '#2E7D32', '#388E3C'] as const,
+  },
+} as const;
+
+export type ColorKey = keyof typeof colors;

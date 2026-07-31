@@ -1,0 +1,43 @@
+{
+  "name": "bhuvedam-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/server/index.ts",
+    "start": "tsx src/server/index.ts",
+    "sync": "tsx src/ingestion/syncAll.ts",
+    "sync:crops": "tsx src/ingestion/syncAll.ts crops",
+    "sync:crops:full": "tsx src/ingestion/syncAll.ts crops && npm run db:seed:crops",
+    "sync:mandi": "tsx src/ingestion/syncAll.ts mandi",
+    "sync:soil": "tsx src/ingestion/syncAll.ts soil",
+    "sync:weather": "tsx src/ingestion/syncAll.ts weather",
+    "sync:fertilizers": "tsx src/ingestion/syncAll.ts fertilizers",
+    "sync:fertilizer-catalog": "tsx src/ingestion/syncAll.ts fertilizer-catalog",
+    "sync:ag-catalog": "tsx src/ingestion/syncAll.ts ag-catalog",
+    "sync:bulk-catalog": "tsx src/ingestion/syncAll.ts bulk-catalog",
+    "sync:knowledge": "tsx src/ingestion/syncAll.ts knowledge",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:migrate:auth": "tsx scripts/migrate-auth-columns.ts",
+    "db:seed:crops": "tsx src/ingestion/seedBhuvedamCrops.ts",
+    "export:crops": "cd .. && npx tsx --tsconfig tsconfig.json scripts/export-crops-catalog.ts",
+    "count:crops": "tsx scripts/count-crops.ts",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.0",
+    "@neondatabase/serverless": "^1.0.1",
+    "drizzle-orm": "^0.44.2",
+    "expo-server-sdk": "^3.15.0",
+    "hono": "^4.9.6"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "dotenv": "^17.2.1",
+    "drizzle-kit": "^0.31.4",
+    "tsx": "^4.20.3",
+    "typescript": "~6.0.3"
+  }
+}

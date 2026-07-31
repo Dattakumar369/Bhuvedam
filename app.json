@@ -1,0 +1,95 @@
+{
+  "expo": {
+    "name": "Bhuvedam",
+    "slug": "bhuvedam",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "bhuvedam",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bhuvedam.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Bhuvedam uses your location to show accurate local weather and farming recommendations for your area.",
+        "NSSpeechRecognitionUsageDescription": "Bhuvedam uses speech recognition so you can talk to your AI farming assistant.",
+        "NSMicrophoneUsageDescription": "Bhuvedam uses the microphone so you can speak questions to the AI assistant.",
+        "NSCameraUsageDescription": "Bhuvedam uses the camera so you can photograph crops and get AI analysis.",
+        "NSPhotoLibraryUsageDescription": "Bhuvedam uses your photo library to upload farm images for AI analysis."
+      }
+    },
+    "android": {
+      "package": "com.bhuvedam.app",
+      "versionCode": 1,
+      "softwareKeyboardLayoutMode": "resize",
+      "adaptiveIcon": {
+        "backgroundColor": "#2E7D32",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "RECORD_AUDIO",
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "POST_NOTIFICATIONS"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#2E7D32"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Bhuvedam uses your photos to analyze crops, pests, and field problems with AI.",
+          "cameraPermission": "Bhuvedam uses the camera to photograph crops for AI analysis."
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Bhuvedam uses your location to show accurate local weather and farming recommendations for your area."
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Bhuvedam uses the microphone so you can speak questions to the AI assistant.",
+          "speechRecognitionPermission": "Bhuvedam uses speech recognition so you can talk to your AI farming assistant."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#2E7D32"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "REPLACE_AFTER_EAS_INIT"
+      }
+    }
+  }
+}

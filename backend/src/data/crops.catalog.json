@@ -1,0 +1,1180 @@
+[
+  {
+    "id": "rice",
+    "name": "Rice",
+    "nameTe": "వరి",
+    "category": "cereal",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్ (జూన–జులై)",
+    "icon": "grain",
+    "color": "#66BB6A",
+    "sowingPeriod": "June – July (transplant)",
+    "harvestPeriod": "October – November",
+    "waterNeeds": "High — standing water 5–10 cm",
+    "soilType": "Clay loam with good water retention",
+    "tips": [
+      "Maintain 5 cm water level during active growth",
+      "Apply NPK at tillering and panicle initiation",
+      "Harvest when 80% grains turn golden yellow"
+    ]
+  },
+  {
+    "id": "wheat",
+    "name": "Wheat",
+    "nameTe": "గోధుమ",
+    "category": "cereal",
+    "season": "rabi",
+    "seasonLabel": "రబీ (అక్టో–నవ)",
+    "icon": "barley",
+    "color": "#F9A825",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "March – April",
+    "waterNeeds": "Moderate — 4–6 irrigations",
+    "soilType": "Loamy, well-drained (pH 6–7.5)",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "maize",
+    "name": "Maize",
+    "nameTe": "మొక్కజొన్న",
+    "category": "cereal",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్",
+    "icon": "corn",
+    "color": "#FFB300",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "September – October",
+    "waterNeeds": "Moderate",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "jowar",
+    "name": "Jowar",
+    "nameTe": "జొన్న",
+    "category": "cereal",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్ / రబీ",
+    "icon": "grain",
+    "color": "#BCAAA4",
+    "sowingPeriod": "June – July or Oct – Nov",
+    "harvestPeriod": "90–110 days",
+    "waterNeeds": "Low to moderate",
+    "soilType": "Black & red soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "bajra",
+    "name": "Bajra",
+    "nameTe": "సజ్జ",
+    "category": "cereal",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్",
+    "icon": "grain",
+    "color": "#A1887F",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "80–90 days",
+    "waterNeeds": "Low — drought tolerant",
+    "soilType": "Sandy loam to black soil",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "ragi",
+    "name": "Ragi",
+    "nameTe": "రాగి",
+    "category": "cereal",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్ / రabi",
+    "icon": "grain",
+    "color": "#8D6E63",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "110–120 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Red & sandy loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "korra",
+    "name": "Foxtail millet",
+    "nameTe": "కొర్ర",
+    "category": "cereal",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్",
+    "icon": "grain",
+    "color": "#D4A574",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "80–90 days",
+    "waterNeeds": "Low",
+    "soilType": "Well-drained soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "barley",
+    "name": "Barley",
+    "nameTe": "బార్లీ",
+    "category": "cereal",
+    "season": "rabi",
+    "seasonLabel": "రబీ",
+    "icon": "barley",
+    "color": "#FFE082",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "March – April",
+    "waterNeeds": "Moderate",
+    "soilType": "Loamy soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "redgram",
+    "name": "Red gram",
+    "nameTe": "కంది / పప్పు",
+    "category": "pulse",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్",
+    "icon": "seed",
+    "color": "#C62828",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "December – January",
+    "waterNeeds": "Moderate",
+    "soilType": "Black cotton & red soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "greengram",
+    "name": "Green gram",
+    "nameTe": "పెసర",
+    "category": "pulse",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్ / రabi",
+    "icon": "seed",
+    "color": "#7CB342",
+    "sowingPeriod": "June – July or Feb",
+    "harvestPeriod": "60–70 days",
+    "waterNeeds": "Low to moderate",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "blackgram",
+    "name": "Black gram",
+    "nameTe": "మినుములు",
+    "category": "pulse",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్ / రabi",
+    "icon": "seed",
+    "color": "#424242",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "70–80 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Black & clay loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "chickpea",
+    "name": "Chickpea",
+    "nameTe": "శనగ / చన",
+    "category": "pulse",
+    "season": "rabi",
+    "seasonLabel": "రబీ",
+    "icon": "leaf",
+    "color": "#A1887F",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "February – March",
+    "waterNeeds": "Low",
+    "soilType": "Black or red soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "horsegram",
+    "name": "Horse gram",
+    "nameTe": "ఉలవ",
+    "category": "pulse",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్",
+    "icon": "seed",
+    "color": "#795548",
+    "sowingPeriod": "August – September",
+    "harvestPeriod": "90 days",
+    "waterNeeds": "Low",
+    "soilType": "Red & marginal soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "cowpea",
+    "name": "Cowpea",
+    "nameTe": "అలసంద",
+    "category": "pulse",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్",
+    "icon": "seed",
+    "color": "#8BC34A",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "70–80 days",
+    "waterNeeds": "Low",
+    "soilType": "Sandy loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "lentil",
+    "name": "Lentil",
+    "nameTe": "మసూర్ పప్పు",
+    "category": "pulse",
+    "season": "rabi",
+    "seasonLabel": "రబీ",
+    "icon": "seed",
+    "color": "#FF8F00",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "February – March",
+    "waterNeeds": "Low",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "groundnut",
+    "name": "Groundnut",
+    "nameTe": "వేరుశనగ",
+    "category": "oilseed",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్ / రabi",
+    "icon": "seed",
+    "color": "#D84315",
+    "sowingPeriod": "June – July or Dec – Jan",
+    "harvestPeriod": "110–120 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Sandy loam & red soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "sunflower",
+    "name": "Sunflower",
+    "nameTe": "పువ్వు గింజ",
+    "category": "oilseed",
+    "season": "rabi",
+    "seasonLabel": "రabi / summer",
+    "icon": "flower",
+    "color": "#FDD835",
+    "sowingPeriod": "October – February",
+    "harvestPeriod": "90–100 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Black & red soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "safflower",
+    "name": "Safflower",
+    "nameTe": "కుసుమ",
+    "category": "oilseed",
+    "season": "rabi",
+    "seasonLabel": "రabi",
+    "icon": "flower",
+    "color": "#FF7043",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "120 days",
+    "waterNeeds": "Low",
+    "soilType": "Deep black soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "sesame",
+    "name": "Sesame",
+    "nameTe": "నువ్వulu",
+    "category": "oilseed",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్ / summer",
+    "icon": "seed",
+    "color": "#FFF176",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "90 days",
+    "waterNeeds": "Low to moderate",
+    "soilType": "Well-drained soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "castor",
+    "name": "Castor",
+    "nameTe": "ఆమudamu",
+    "category": "oilseed",
+    "season": "kharif",
+    "seasonLabel": "year-round",
+    "icon": "seed",
+    "color": "#7E57C2",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "150+ days",
+    "waterNeeds": "Moderate",
+    "soilType": "Red & black soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "soybean",
+    "name": "Soybean",
+    "nameTe": "సోయా",
+    "category": "oilseed",
+    "season": "kharif",
+    "seasonLabel": "ఖరీఫ్",
+    "icon": "seed",
+    "color": "#8D6E63",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "September – October",
+    "waterNeeds": "Moderate",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "mustard",
+    "name": "Mustard",
+    "nameTe": "ఆవalu",
+    "category": "oilseed",
+    "season": "rabi",
+    "seasonLabel": "రabi",
+    "icon": "flower",
+    "color": "#FFEB3B",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "February – March",
+    "waterNeeds": "Moderate",
+    "soilType": "Loamy soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "niger",
+    "name": "Niger",
+    "nameTe": "వెర్రి నువvulu",
+    "category": "oilseed",
+    "season": "kharif",
+    "seasonLabel": "ఖharif",
+    "icon": "seed",
+    "color": "#616161",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "100–110 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Marginal & hill soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "cotton",
+    "name": "Cotton",
+    "nameTe": "పత్తి",
+    "category": "commercial",
+    "season": "kharif",
+    "seasonLabel": "ఖharif",
+    "icon": "flower",
+    "color": "#7986CB",
+    "sowingPeriod": "May – June",
+    "harvestPeriod": "October – January",
+    "waterNeeds": "Moderate",
+    "soilType": "Black cotton soil",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "chilli",
+    "name": "Chilli",
+    "nameTe": "మిరప",
+    "category": "commercial",
+    "season": "year-round",
+    "seasonLabel": "year-round",
+    "icon": "fruit-cherries",
+    "color": "#E53935",
+    "sowingPeriod": "June – July / Oct – Nov",
+    "harvestPeriod": "90–120 days",
+    "waterNeeds": "Moderate — drip ideal",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "tobacco",
+    "name": "Tobacco",
+    "nameTe": "పొగాకu",
+    "category": "commercial",
+    "season": "rabi",
+    "seasonLabel": "రabi / summer",
+    "icon": "leaf",
+    "color": "#8D6E63",
+    "sowingPeriod": "October – December",
+    "harvestPeriod": "100–120 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Light sandy loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "turmeric",
+    "name": "Turmeric",
+    "nameTe": "పసుపు",
+    "category": "commercial",
+    "season": "year-round",
+    "seasonLabel": "June planting",
+    "icon": "leaf",
+    "color": "#FF8F00",
+    "sowingPeriod": "May – June",
+    "harvestPeriod": "8–9 months",
+    "waterNeeds": "Moderate to high",
+    "soilType": "Red loam & well-drained",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "sugarcane",
+    "name": "Sugarcane",
+    "nameTe": "చెరకు",
+    "category": "commercial",
+    "season": "year-round",
+    "seasonLabel": "year-round",
+    "icon": "grass",
+    "color": "#7CB342",
+    "sowingPeriod": "Oct – Nov / Feb – Mar",
+    "harvestPeriod": "10–12 months",
+    "waterNeeds": "Very high",
+    "soilType": "Deep fertile loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "tomato",
+    "name": "Tomato",
+    "nameTe": "టమాట",
+    "category": "vegetable",
+    "season": "year-round",
+    "seasonLabel": "year-round",
+    "icon": "fruit-cherries",
+    "color": "#E53935",
+    "sowingPeriod": "Nursery then transplant",
+    "harvestPeriod": "60–80 days",
+    "waterNeeds": "Regular — drip ideal",
+    "soilType": "Sandy loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "onion",
+    "name": "Onion",
+    "nameTe": "ఉల్లి",
+    "category": "vegetable",
+    "season": "rabi",
+    "seasonLabel": "రabi / summer",
+    "icon": "leaf",
+    "color": "#CE93D8",
+    "sowingPeriod": "October – December",
+    "harvestPeriod": "120–130 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Red loam & sandy loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "potato",
+    "name": "Potato",
+    "nameTe": "బంగాళాదుంప",
+    "category": "vegetable",
+    "season": "rabi",
+    "seasonLabel": "రabi",
+    "icon": "leaf",
+    "color": "#BCAAA4",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "90–100 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "brinjal",
+    "name": "Brinjal",
+    "nameTe": "వంకాయ",
+    "category": "vegetable",
+    "season": "year-round",
+    "seasonLabel": "year-round",
+    "icon": "fruit-cherries",
+    "color": "#7E57C2",
+    "sowingPeriod": "Nursery transplant",
+    "harvestPeriod": "80–100 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Loamy soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "okra",
+    "name": "Okra",
+    "nameTe": "బెండకాయ",
+    "category": "vegetable",
+    "season": "year-round",
+    "seasonLabel": "summer / kharif",
+    "icon": "leaf",
+    "color": "#66BB6A",
+    "sowingPeriod": "Feb – July",
+    "harvestPeriod": "45–60 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "cabbage",
+    "name": "Cabbage",
+    "nameTe": "కośu",
+    "category": "vegetable",
+    "season": "rabi",
+    "seasonLabel": "రabi",
+    "icon": "leaf",
+    "color": "#AED581",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "90 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Cool season — loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "cauliflower",
+    "name": "Cauliflower",
+    "nameTe": "ఫlōరīkōṣ",
+    "category": "vegetable",
+    "season": "rabi",
+    "seasonLabel": "రabi",
+    "icon": "leaf",
+    "color": "#E0E0E0",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "90–100 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "beans",
+    "name": "Beans",
+    "nameTe": "చిక్కుడు",
+    "category": "vegetable",
+    "season": "year-round",
+    "seasonLabel": "year-round",
+    "icon": "seed",
+    "color": "#81C784",
+    "sowingPeriod": "June – July / Oct",
+    "harvestPeriod": "60–70 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Loamy soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "cucumber",
+    "name": "Cucumber",
+    "nameTe": "దosakāya",
+    "category": "vegetable",
+    "season": "year-round",
+    "seasonLabel": "summer",
+    "icon": "leaf",
+    "color": "#A5D6A7",
+    "sowingPeriod": "Jan – July",
+    "harvestPeriod": "50–60 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Sandy loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "bottlegourd",
+    "name": "Bottle gourd",
+    "nameTe": "సొరకాయ",
+    "category": "vegetable",
+    "season": "year-round",
+    "seasonLabel": "summer / kharif",
+    "icon": "leaf",
+    "color": "#C5E1A5",
+    "sowingPeriod": "Feb – July",
+    "harvestPeriod": "60 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "bittergourd",
+    "name": "Bitter gourd",
+    "nameTe": "కాకరకాయ",
+    "category": "vegetable",
+    "season": "year-round",
+    "seasonLabel": "summer",
+    "icon": "leaf",
+    "color": "#558B2F",
+    "sowingPeriod": "Feb – July",
+    "harvestPeriod": "60 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Loamy soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "ridgegourd",
+    "name": "Ridge gourd",
+    "nameTe": "బీరకాయ",
+    "category": "vegetable",
+    "season": "year-round",
+    "seasonLabel": "summer",
+    "icon": "leaf",
+    "color": "#689F38",
+    "sowingPeriod": "Feb – July",
+    "harvestPeriod": "60 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Loamy soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "pumpkin",
+    "name": "Pumpkin",
+    "nameTe": "గుమ్మడికాయ",
+    "category": "vegetable",
+    "season": "year-round",
+    "seasonLabel": "summer",
+    "icon": "leaf",
+    "color": "#FF9800",
+    "sowingPeriod": "Feb – July",
+    "harvestPeriod": "90 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "carrot",
+    "name": "Carrot",
+    "nameTe": "క్యారట్",
+    "category": "vegetable",
+    "season": "rabi",
+    "seasonLabel": "రabi",
+    "icon": "leaf",
+    "color": "#FF5722",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "90 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Sandy loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "beetroot",
+    "name": "Beetroot",
+    "nameTe": "బీట్రూట్",
+    "category": "vegetable",
+    "season": "rabi",
+    "seasonLabel": "రabi",
+    "icon": "leaf",
+    "color": "#AD1457",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "60–70 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Loamy soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "spinach",
+    "name": "Spinach",
+    "nameTe": "పాలకూర",
+    "category": "vegetable",
+    "season": "year-round",
+    "seasonLabel": "year-round",
+    "icon": "leaf",
+    "color": "#2E7D32",
+    "sowingPeriod": "Year-round",
+    "harvestPeriod": "30–40 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Loamy soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "drumstick",
+    "name": "Drumstick",
+    "nameTe": "మునగాకు",
+    "category": "vegetable",
+    "season": "year-round",
+    "seasonLabel": "year-round",
+    "icon": "leaf",
+    "color": "#33691E",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "Perennial",
+    "waterNeeds": "Low to moderate",
+    "soilType": "Red & sandy loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "mango",
+    "name": "Mango",
+    "nameTe": "మామిడి",
+    "category": "fruit",
+    "season": "year-round",
+    "seasonLabel": "orchard",
+    "icon": "fruit-cherries",
+    "color": "#FFB300",
+    "sowingPeriod": "June – July planting",
+    "harvestPeriod": "April – June",
+    "waterNeeds": "Moderate",
+    "soilType": "Deep loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "banana",
+    "name": "Banana",
+    "nameTe": "అరటి",
+    "category": "fruit",
+    "season": "year-round",
+    "seasonLabel": "year-round",
+    "icon": "fruit-cherries",
+    "color": "#FFEB3B",
+    "sowingPeriod": "Year-round",
+    "harvestPeriod": "12–15 months",
+    "waterNeeds": "High",
+    "soilType": "Rich loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "papaya",
+    "name": "Papaya",
+    "nameTe": "బొప్పాయి",
+    "category": "fruit",
+    "season": "year-round",
+    "seasonLabel": "year-round",
+    "icon": "fruit-cherries",
+    "color": "#FFA726",
+    "sowingPeriod": "Year-round",
+    "harvestPeriod": "8–10 months",
+    "waterNeeds": "Moderate",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "watermelon",
+    "name": "Watermelon",
+    "nameTe": "పుచ్చకాయ",
+    "category": "fruit",
+    "season": "year-round",
+    "seasonLabel": "summer",
+    "icon": "fruit-cherries",
+    "color": "#EF5350",
+    "sowingPeriod": "Jan – March",
+    "harvestPeriod": "90 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Sandy loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "muskmelon",
+    "name": "Muskmelon",
+    "nameTe": "ఖర్బూజ",
+    "category": "fruit",
+    "season": "year-round",
+    "seasonLabel": "summer",
+    "icon": "fruit-cherries",
+    "color": "#FFCC80",
+    "sowingPeriod": "Jan – March",
+    "harvestPeriod": "90 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Sandy loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "citrus",
+    "name": "Citrus",
+    "nameTe": "నిమ్మ / నారింజ",
+    "category": "fruit",
+    "season": "year-round",
+    "seasonLabel": "orchard",
+    "icon": "fruit-cherries",
+    "color": "#FB8C00",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "Nov – Feb",
+    "waterNeeds": "Moderate",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "pomegranate",
+    "name": "Pomegranate",
+    "nameTe": "దానిమ్మ",
+    "category": "fruit",
+    "season": "year-round",
+    "seasonLabel": "orchard",
+    "icon": "fruit-cherries",
+    "color": "#C62828",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "July – August",
+    "waterNeeds": "Moderate",
+    "soilType": "Loamy soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "guava",
+    "name": "Guava",
+    "nameTe": "జామ",
+    "category": "fruit",
+    "season": "year-round",
+    "seasonLabel": "orchard",
+    "icon": "fruit-cherries",
+    "color": "#66BB6A",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "Year-round bearing",
+    "waterNeeds": "Moderate",
+    "soilType": "Well-drained soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "sapota",
+    "name": "Sapota",
+    "nameTe": "సపోటా",
+    "category": "fruit",
+    "season": "year-round",
+    "seasonLabel": "orchard",
+    "icon": "fruit-cherries",
+    "color": "#6D4C41",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "Feb – May",
+    "waterNeeds": "Moderate",
+    "soilType": "Deep loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "grapes",
+    "name": "Grapes",
+    "nameTe": "ద్రాక్ష",
+    "category": "fruit",
+    "season": "year-round",
+    "seasonLabel": "orchard",
+    "icon": "fruit-cherries",
+    "color": "#7B1FA2",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "Feb – April",
+    "waterNeeds": "Moderate — drip",
+    "soilType": "Well-drained loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "coconut",
+    "name": "Coconut",
+    "nameTe": "కొబ్బరి",
+    "category": "fruit",
+    "season": "year-round",
+    "seasonLabel": "coastal",
+    "icon": "fruit-cherries",
+    "color": "#795548",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "Year-round",
+    "waterNeeds": "High",
+    "soilType": "Coastal sandy loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "coriander",
+    "name": "Coriander",
+    "nameTe": "ధనియాలు",
+    "category": "spice",
+    "season": "rabi",
+    "seasonLabel": "రabi",
+    "icon": "leaf",
+    "color": "#81C784",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "90 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Loamy soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "cumin",
+    "name": "Cumin",
+    "nameTe": "జీలకర్ర",
+    "category": "spice",
+    "season": "rabi",
+    "seasonLabel": "రabi",
+    "icon": "seed",
+    "color": "#BCAAA4",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "110 days",
+    "waterNeeds": "Low",
+    "soilType": "Sandy loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "fenugreek",
+    "name": "Fenugreek",
+    "nameTe": "మెంతులు",
+    "category": "spice",
+    "season": "rabi",
+    "seasonLabel": "రabi",
+    "icon": "seed",
+    "color": "#FFD54F",
+    "sowingPeriod": "October – November",
+    "harvestPeriod": "90 days",
+    "waterNeeds": "Moderate",
+    "soilType": "Loamy soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "cashew",
+    "name": "Cashew",
+    "nameTe": "జీడిపappu",
+    "category": "other",
+    "season": "year-round",
+    "seasonLabel": "orchard",
+    "icon": "seed",
+    "color": "#FFAB91",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "March – May",
+    "waterNeeds": "Low to moderate",
+    "soilType": "Red & sandy soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "arecanut",
+    "name": "Arecanut",
+    "nameTe": "పకka chekka",
+    "category": "other",
+    "season": "year-round",
+    "seasonLabel": "orchard",
+    "icon": "seed",
+    "color": "#8D6E63",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "Year-round",
+    "waterNeeds": "High",
+    "soilType": "Well-drained red loam",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  },
+  {
+    "id": "tamarind",
+    "name": "Tamarind",
+    "nameTe": "చintapandu",
+    "category": "other",
+    "season": "year-round",
+    "seasonLabel": "orchard",
+    "icon": "leaf",
+    "color": "#5D4037",
+    "sowingPeriod": "June – July",
+    "harvestPeriod": "March – April",
+    "waterNeeds": "Low",
+    "soilType": "Deep red soils",
+    "tips": [
+      "Local agriculture officer suggestions follow avvandi",
+      "Certified seeds use cheyandi",
+      "Weather batti neeti / spray schedule adjust cheyandi"
+    ]
+  }
+]
