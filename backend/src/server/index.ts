@@ -945,20 +945,29 @@ app.post('/api/farmers/me/notifications/push', farmerAuthMiddleware, async (c) =
   return c.json({ success: true, ...result });
 });
 
-/** Low-cost cron — free cron-job.org hits this daily (set CRON_SECRET header) */
-app.post('/api/notifications/cron/daily', async (c) => {
+/** Low-cost cron — cron-job.org (POST) or Vercel Cron (GET + Bearer CRON_SECRET) */
+async function runDailyNotificationCron(c: { req: { header: (name: string) => string | undefined }; json: (data: unknown, status?: number) => Response }) {
   const secret = process.env.CRON_SECRET?.trim();
   if (!secret) {
     if (process.env.NODE_ENV === 'production') {
       return c.json({ error: 'CRON_SECRET not configured' }, 503);
     }
-  } else if (c.req.header('x-cron-secret') !== secret) {
-    return c.json({ error: 'Unauthorized' }, 401);
+  } else {
+    const bearer = c.req.header('authorization');
+    const headerSecret = c.req.header('x-cron-secret');
+    const authorized =
+      headerSecret === secret || bearer === `Bearer ${secret}`;
+    if (!authorized) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
   }
 
   const result = await dispatchDailyFarmReminders();
   return c.json({ ok: true, ...result });
-});
+}
+
+app.get('/api/notifications/cron/daily', runDailyNotificationCron);
+app.post('/api/notifications/cron/daily', runDailyNotificationCron);
 
 /** AI chat stream — keys stay on server (Ollama proxy) */
 app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
@@ -985,6 +994,11 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
   }
 });
 
-const port = Number(process.env.PORT ?? 3001);
-console.log(`Bhuvedam API → http://localhost:${port}`);
-serve({ fetch: app.fetch, port });
+export default app;
+
+/** Local / Railway — Vercel sets VERCEL=1 and uses the default export as a serverless handler */
+if (process.env.VERCEL !== '1') {
+  const port = Number(process.env.PORT ?? 3001);
+  console.log(`Bhuvedam API → http://localhost:${port}`);
+  serve({ fetch: app.fetch, port });
+}
