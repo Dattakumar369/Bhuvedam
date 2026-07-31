@@ -103,7 +103,10 @@ async function main() {
   console.log('\nSync complete.');
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+const isDirectRun = process.argv[1]?.includes('syncAll');
+if (isDirectRun) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

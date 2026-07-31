@@ -18,7 +18,7 @@ export function getDataGovApiKey(): string {
 export function getDatabaseUrl(): string {
   const url = process.env.DATABASE_URL?.trim();
   if (!url) {
-    throw new Error('DATABASE_URL missing in backend/.env');
+    throw new Error('DATABASE_URL is not set — add it in Vercel/Railway environment variables');
   }
   return url;
 }
