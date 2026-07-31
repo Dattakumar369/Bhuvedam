@@ -6,6 +6,7 @@ import {
 } from '@expo-google-fonts/poppins';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -24,6 +25,8 @@ import {
   clearLocalSessionStores,
 } from '@/services/auth/userSession';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useAppUpdates } from '@/hooks/useAppUpdates';
+import { getAppColors } from '@/theme/colorPalettes';
 import { darkTheme, lightTheme } from '@/theme';
 import { API_CONFIG } from '@/constants/app';
 import { logger } from '@/utils/logger';
@@ -51,6 +54,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const isDark = useThemeStore((s) => s.isDark);
 
   usePushNotifications();
+  useAppUpdates();
 
   useEffect(() => {
     logger.app.info('App config', {
@@ -103,9 +107,12 @@ export function AppProvider({ children }: AppProviderProps) {
 
   if (!fontsLoaded) return null;
 
+  const appColors = getAppColors(isDark);
+
   return (
-    <GestureHandlerRootView style={styles.root}>
+    <GestureHandlerRootView style={[styles.root, { backgroundColor: appColors.background }]}>
       <SafeAreaProvider>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
         <PaperProvider theme={isDark ? darkTheme : lightTheme}>{children}</PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

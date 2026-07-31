@@ -50,7 +50,18 @@ async function streamFromBackend({ messages, language, systemPrompt, onChunk, si
     signal,
   });
 
-  if (!response.ok) throw new Error('Backend AI stream failed');
+  if (!response.ok) {
+    let code = 'AI_UNAVAILABLE';
+    try {
+      const errBody = (await response.json()) as { code?: string };
+      if (errBody.code) code = errBody.code;
+    } catch {
+      // ignore parse errors
+    }
+    const err = new Error(code) as Error & { code?: string };
+    err.code = code;
+    throw err;
+  }
 
   const reader = response.body?.getReader();
   if (!reader) throw new Error('Streaming not supported');

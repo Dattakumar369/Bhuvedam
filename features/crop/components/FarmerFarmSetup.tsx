@@ -18,7 +18,11 @@ import { useFarmerContextStore } from '@/store/farmerContextStore';
 import { useWeatherStore } from '@/store/weatherStore';
 import { colors, radius, spacing } from '@/theme';
 
-export function FarmerFarmSetup() {
+interface FarmerFarmSetupProps {
+  onWizardActiveChange?: (active: boolean) => void;
+}
+
+export function FarmerFarmSetup({ onWizardActiveChange }: FarmerFarmSetupProps = {}) {
   const { farm, app, language } = useTranslation();
   const crops = useFarmerContextStore((s) => s.crops);
   const cropPlantings = useFarmerContextStore((s) => s.cropPlantings);
@@ -48,6 +52,10 @@ export function FarmerFarmSetup() {
   }, [weatherLocation, soilProfile, soilLoading, fetchSoilFromLocation]);
 
   const showForm = needsSetup() || editing;
+
+  useEffect(() => {
+    onWizardActiveChange?.(showForm);
+  }, [showForm, onWizardActiveChange]);
 
   const wizardInitial: FarmSetupWizardValues = {
     selectedCrops: crops,

@@ -7,15 +7,17 @@ import { Card, Header } from '@/components/ui';
 import { Body, Caption, Subtitle } from '@/components/ui/Typography';
 import { APP } from '@/constants/app';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAppColors } from '@/hooks/useAppColors';
 import { useLanguageStore } from '@/store/languageStore';
 import { useThemeStore } from '@/store/themeStore';
 import { useWeatherStore } from '@/store/weatherStore';
 import { useAlertStore } from '@/store/alertStore';
 import { notificationsSupported } from '@/services/alerts/localNotifications';
-import { colors, layout, radius, spacing } from '@/theme';
+import { layout, spacing } from '@/theme';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const c = useAppColors();
   const { app } = useTranslation();
   const isDark = useThemeStore((s) => s.isDark);
   const setMode = useThemeStore((s) => s.setMode);
@@ -25,7 +27,7 @@ export default function SettingsScreen() {
   const setNotificationsEnabled = useAlertStore((s) => s.setNotificationsEnabled);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <Header title={app.settingsTitle} showBack onBack={() => router.back()} />
 
       <ScrollView
@@ -44,8 +46,8 @@ export default function SettingsScreen() {
               <Switch
                 value={isDark}
                 onValueChange={(val) => void setMode(val ? 'dark' : 'light')}
-                trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={colors.white}
+                trackColor={{ false: c.border, true: c.primaryLight }}
+                thumbColor={c.white}
               />
             }
           />
@@ -63,12 +65,12 @@ export default function SettingsScreen() {
                   <Switch
                     value={notificationsEnabled}
                     onValueChange={(val) => void setNotificationsEnabled(val)}
-                    trackColor={{ false: colors.border, true: colors.primaryLight }}
-                    thumbColor={colors.white}
+                    trackColor={{ false: c.border, true: c.primaryLight }}
+                    thumbColor={c.white}
                   />
                 }
               />
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: c.border }]} />
             </>
           ) : null}
           <SettingRow
@@ -77,7 +79,7 @@ export default function SettingsScreen() {
             description={app.languageCurrent(language)}
             onPress={() => router.push('/language')}
           />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: c.border }]} />
           <SettingRow
             icon="map-marker-outline"
             label={app.location}
@@ -88,7 +90,7 @@ export default function SettingsScreen() {
         <Caption style={styles.sectionLabel}>{app.about}</Caption>
         <Card variant="elevated" style={styles.card}>
           <SettingRow icon="information-outline" label={app.appVersion} description={APP.version} />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: c.border }]} />
           <SettingRow
             icon="email-outline"
             label={app.support}
@@ -113,10 +115,12 @@ function SettingRow({
   trailing?: React.ReactNode;
   onPress?: () => void;
 }) {
+  const c = useAppColors();
+
   return (
     <Pressable style={styles.row} onPress={onPress} disabled={!onPress}>
-      <View style={styles.iconBox}>
-        <MaterialCommunityIcons name={icon} size={20} color={colors.primary} />
+      <View style={[styles.iconBox, { backgroundColor: `${c.primary}12` }]}>
+        <MaterialCommunityIcons name={icon} size={20} color={c.primary} />
       </View>
       <View style={styles.rowContent}>
         <Body style={styles.rowLabel}>{label}</Body>
@@ -124,7 +128,7 @@ function SettingRow({
       </View>
       {trailing ?? (
         onPress ? (
-          <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textTertiary} />
+          <MaterialCommunityIcons name="chevron-right" size={20} color={c.textTertiary} />
         ) : null
       )}
     </Pressable>
@@ -132,7 +136,7 @@ function SettingRow({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   content: { padding: layout.screenPadding, gap: spacing.sm },
   sectionLabel: {
     marginTop: spacing.lg,
@@ -151,13 +155,12 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 36,
     height: 36,
-    borderRadius: radius.sm,
-    backgroundColor: `${colors.primary}12`,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rowContent: { flex: 1 },
   rowLabel: { fontFamily: 'Poppins_500Medium' },
   rowDesc: { fontSize: 12, marginTop: 2 },
-  divider: { height: 1, backgroundColor: colors.border, marginHorizontal: spacing.md },
+  divider: { height: 1, marginHorizontal: spacing.md },
 });

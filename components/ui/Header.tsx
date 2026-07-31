@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Headline, Subtitle } from '@/components/ui/Typography';
-import { colors, spacing } from '@/theme';
+import { useAppColors } from '@/hooks/useAppColors';
+import { spacing } from '@/theme';
 
 interface HeaderProps {
   title: string;
@@ -23,19 +24,19 @@ export function Header({
   transparent = false,
 }: HeaderProps) {
   const insets = useSafeAreaInsets();
+  const c = useAppColors();
 
   return (
     <View
       style={[
         styles.container,
-        { paddingTop: insets.top + spacing.sm },
-        transparent && styles.transparent,
+        { paddingTop: insets.top + spacing.sm, backgroundColor: transparent ? 'transparent' : c.background },
       ]}
     >
       <View style={styles.row}>
         {showBack ? (
           <Pressable onPress={onBack} style={styles.backButton} accessibilityLabel="Go back">
-            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.textPrimary} />
+            <MaterialCommunityIcons name="arrow-left" size={24} color={c.textPrimary} />
           </Pressable>
         ) : (
           <View style={styles.spacer} />
@@ -54,9 +55,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
-    backgroundColor: colors.background,
   },
-  transparent: { backgroundColor: 'transparent' },
   row: { flexDirection: 'row', alignItems: 'center' },
   backButton: {
     width: 44,

@@ -1,32 +1,55 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Headline, Subtitle, Body } from '@/components/ui';
+import { Button, Header, Headline, Subtitle, Body } from '@/components/ui';
 import { APP } from '@/constants/app';
 import { LANGUAGES, type LanguageCode } from '@/constants/languages';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useAppColors } from '@/hooks/useAppColors';
+import { useCropCatalogStore } from '@/store/cropCatalogStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { useUserStore } from '@/store/userStore';
-import { colors, layout, radius, spacing } from '@/theme';
+import { layout, radius, spacing } from '@/theme';
 
 export default function LanguageScreen() {
   const insets = useSafeAreaInsets();
+  const c = useAppColors();
+  const { app } = useTranslation();
   const language = useLanguageStore((s) => s.language);
   const setLanguage = useLanguageStore((s) => s.setLanguage);
   const setOnboardingComplete = useUserStore((s) => s.setOnboardingComplete);
+  const isAuthenticated = useUserStore((s) => s.isAuthenticated);
+  const refreshCropCatalog = useCropCatalogStore((s) => s.setLanguage);
 
-  const handleContinue = async () => {
+  const pickLanguage = async (code: LanguageCode) => {
+    await setLanguage(code);
+    if (isAuthenticated) {
+      refreshCropCatalog(code);
+    }
+  };
+
+  const handlePrimaryAction = async () => {
+    if (isAuthenticated) {
+      router.back();
+      return;
+    }
     await setOnboardingComplete(true);
     router.replace('/login');
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.xxl }]}>
-      <Animated.View entering={FadeInDown.springify()} style={styles.header}>
-        <Headline>Choose Language</Headline>
-        <Subtitle>अपनी भाषा चुनें · Choose your preferred language</Subtitle>
-      </Animated.View>
+    <View style={[styles.container, { backgroundColor: c.background, paddingTop: isAuthenticated ? 0 : insets.top + spacing.xxl }]}>
+      {isAuthenticated ? (
+        <Header title={app.language} showBack onBack={() => router.back()} />
+      ) : (
+        <Animated.View entering={FadeInDown.springify()} style={styles.header}>
+          <Headline>Choose Language</Headline>
+          <Subtitle>अपनी भाषा चुनें · Choose your preferred language</Subtitle>
+        </Animated.View>
+      )}
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
         {LANGUAGES.map((lang, index) => (
@@ -36,15 +59,24 @@ export default function LanguageScreen() {
               name={lang.name}
               nativeName={lang.nativeName}
               selected={language === lang.code}
-              onPress={() => void setLanguage(lang.code as LanguageCode)}
+              onPress={() => void pickLanguage(lang.code as LanguageCode)}
             />
           </Animated.View>
         ))}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
-        <Button label="Continue" onPress={() => void handleContinue()} fullWidth size="lg" />
-        <Body style={styles.footerText}>{APP.name} · {APP.tagline}</Body>
+        <Button
+          label={isAuthenticated ? 'Done' : 'Continue'}
+          onPress={() => void handlePrimaryAction()}
+          fullWidth
+          size="lg"
+        />
+        {!isAuthenticated ? (
+          <Body style={[styles.footerText, { color: c.textTertiary }]}>
+            {APP.name} · {APP.tagline}
+          </Body>
+        ) : null}
       </View>
     </View>
   );
@@ -63,46 +95,49 @@ function LanguageOption({
   selected: boolean;
   onPress: () => void;
 }) {
+  const c = useAppColors();
+
   return (
     <Pressable
-      style={[styles.option, selected && styles.optionSelected]}
+      style={[
+        styles.option,
+        {
+          backgroundColor: c.surface,
+          borderColor: selected ? c.primary : c.border,
+        },
+        selected && { backgroundColor: `${c.primary}12` },
+      ]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected }}
     >
       <Body style={styles.flag}>{flag}</Body>
       <View style={styles.optionText}>
-        <Body style={styles.optionName}>{name}</Body>
+        <Body style={[styles.optionName, { color: c.textPrimary }]}>{name}</Body>
         <Subtitle>{nativeName}</Subtitle>
       </View>
-      {selected ? <Body style={styles.check}>✓</Body> : null}
+      {selected ? <Body style={[styles.check, { color: c.primary }]}>✓</Body> : null}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   header: { paddingHorizontal: layout.screenPadding, marginBottom: spacing.xl },
   list: { paddingHorizontal: layout.screenPadding, gap: spacing.sm, paddingBottom: spacing.xxl },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1.5,
-    borderColor: colors.border,
     gap: spacing.md,
     minHeight: layout.minTouchTarget + 16,
-  },
-  optionSelected: {
-    borderColor: colors.primary,
-    backgroundColor: `${colors.primary}08`,
   },
   flag: { fontSize: 28 },
   optionText: { flex: 1 },
   optionName: { fontFamily: 'Poppins_600SemiBold' },
-  check: { color: colors.primary, fontSize: 20, fontFamily: 'Poppins_700Bold' },
+  check: { fontSize: 20, fontFamily: 'Poppins_700Bold' },
   footer: { paddingHorizontal: layout.screenPadding, gap: spacing.md },
-  footerText: { textAlign: 'center', color: colors.textTertiary },
+  footerText: { textAlign: 'center' },
 });

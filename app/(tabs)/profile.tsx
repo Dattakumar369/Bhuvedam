@@ -9,14 +9,16 @@ import { AppDialog, Avatar, Card, GradientHeader } from '@/components/ui';
 import { Body, Caption, Subtitle, Title } from '@/components/ui/Typography';
 import { LANGUAGES } from '@/constants/languages';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAppColors } from '@/hooks/useAppColors';
 import { useLanguageStore } from '@/store/languageStore';
 import { useThemeStore } from '@/store/themeStore';
 import { useUserStore } from '@/store/userStore';
 import { formatPhone } from '@/utils/format';
-import { colors, layout, radius, spacing } from '@/theme';
+import { layout, radius, spacing } from '@/theme';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const c = useAppColors();
   const { app } = useTranslation();
   const user = useUserStore((s) => s.user);
   const logout = useUserStore((s) => s.logout);
@@ -34,7 +36,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <GradientHeader title={app.profileTitle} subtitle={app.profileSubtitle}>
         <View style={styles.profileHeader}>
           <Avatar name={user?.name ?? app.farmerDefault} size={72} />
@@ -69,16 +71,16 @@ export default function ProfileScreen() {
             <Divider />
             <View style={styles.menuRow}>
               <View style={styles.menuLeft}>
-                <View style={[styles.iconBox, { backgroundColor: `${colors.accent}18` }]}>
-                  <MaterialCommunityIcons name="theme-light-dark" size={20} color={colors.accent} />
+                <View style={[styles.iconBox, { backgroundColor: `${c.accent}18` }]}>
+                  <MaterialCommunityIcons name="theme-light-dark" size={20} color={c.accent} />
                 </View>
                 <Body>{app.darkMode}</Body>
               </View>
               <Switch
                 value={isDark}
                 onValueChange={(val) => void setMode(val ? 'dark' : 'light')}
-                trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={colors.white}
+                trackColor={{ false: c.border, true: c.primaryLight }}
+                thumbColor={c.white}
                 accessibilityLabel="Toggle dark mode"
               />
             </View>
@@ -102,13 +104,16 @@ export default function ProfileScreen() {
 
         <Animated.View entering={FadeInDown.delay(300).springify()}>
           <Pressable
-            style={styles.logoutButton}
+            style={[
+              styles.logoutButton,
+              { backgroundColor: `${c.error}10`, borderColor: `${c.error}30` },
+            ]}
             onPress={() => setShowLogoutDialog(true)}
             accessibilityRole="button"
             accessibilityLabel={app.logout}
           >
-            <MaterialCommunityIcons name="logout" size={20} color={colors.error} />
-            <Body style={styles.logoutText}>{app.logout}</Body>
+            <MaterialCommunityIcons name="logout" size={20} color={c.error} />
+            <Body style={[styles.logoutText, { color: c.error }]}>{app.logout}</Body>
           </Pressable>
         </Animated.View>
       </ScrollView>
@@ -137,30 +142,33 @@ function MenuItem({
   value?: string;
   onPress: () => void;
 }) {
+  const c = useAppColors();
+
   return (
     <Pressable style={styles.menuRow} onPress={onPress} accessibilityRole="button">
       <View style={styles.menuLeft}>
-        <View style={styles.iconBox}>
-          <MaterialCommunityIcons name={icon} size={20} color={colors.primary} />
+        <View style={[styles.iconBox, { backgroundColor: `${c.primary}12` }]}>
+          <MaterialCommunityIcons name={icon} size={20} color={c.primary} />
         </View>
         <Body>{label}</Body>
       </View>
       <View style={styles.menuRight}>
-        {value ? <Caption style={styles.menuValue}>{value}</Caption> : null}
-        <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textTertiary} />
+        {value ? <Caption style={[styles.menuValue, { color: c.textTertiary }]}>{value}</Caption> : null}
+        <MaterialCommunityIcons name="chevron-right" size={20} color={c.textTertiary} />
       </View>
     </Pressable>
   );
 }
 
 function Divider() {
-  return <View style={styles.divider} />;
+  const c = useAppColors();
+  return <View style={[styles.divider, { backgroundColor: c.border }]} />;
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   profileHeader: { alignItems: 'center', marginTop: spacing.lg },
-  name: { color: colors.white, marginTop: spacing.md },
+  name: { color: '#FFFFFF', marginTop: spacing.md },
   phone: { color: 'rgba(255,255,255,0.85)' },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: spacing.xs },
   location: { color: 'rgba(255,255,255,0.8)' },
@@ -185,26 +193,23 @@ const styles = StyleSheet.create({
   },
   menuLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   menuRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  menuValue: { color: colors.textTertiary },
+  menuValue: {},
   iconBox: {
     width: 36,
     height: 36,
     borderRadius: radius.sm,
-    backgroundColor: `${colors.primary}12`,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  divider: { height: 1, backgroundColor: colors.border, marginHorizontal: spacing.md },
+  divider: { height: 1, marginHorizontal: spacing.md },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
     padding: spacing.lg,
-    backgroundColor: `${colors.error}10`,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: `${colors.error}30`,
   },
-  logoutText: { color: colors.error, fontFamily: 'Poppins_600SemiBold' },
+  logoutText: { fontFamily: 'Poppins_600SemiBold' },
 });

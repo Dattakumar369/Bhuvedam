@@ -20,18 +20,20 @@ export function resolveApiError(
   err: unknown,
   fallbackCode = 'DEFAULT',
 ): string {
-  const apiErr = err as ApiError;
   const language = useLanguageStore.getState().language;
 
-  if (!apiErr.code && !apiErr.statusCode && err instanceof Error) {
-    // Offline / no response — always friendly network message
-    if (!('statusCode' in apiErr) || apiErr.statusCode === 0) {
+  if (err && typeof err === 'object' && ('code' in err || 'statusCode' in err)) {
+    const apiErr = err as ApiError;
+
+    if (!apiErr.code && (apiErr.statusCode === 0 || apiErr.statusCode === undefined)) {
       return getUserErrorMessage('NETWORK_ERROR', language);
     }
+
+    return getUserErrorMessage(apiErr.code, language, {
+      retryAfterSec: apiErr.retryAfterSec,
+      fallbackCode: apiErr.code ? undefined : fallbackCode,
+    });
   }
 
-  return getUserErrorMessage(apiErr.code, language, {
-    retryAfterSec: apiErr.retryAfterSec,
-    fallbackCode: apiErr.code ? undefined : fallbackCode,
-  });
+  return getUserErrorMessage(fallbackCode, language);
 }

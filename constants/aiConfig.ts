@@ -19,8 +19,7 @@ export const AI_CONFIG = {
   ollamaVisionModel: process.env.EXPO_PUBLIC_OLLAMA_VISION_MODEL ?? 'llama3.2-vision',
   useBackend:
     process.env.EXPO_PUBLIC_USE_BACKEND_AI === 'true' ||
-    (!process.env.EXPO_PUBLIC_OLLAMA_API_KEY?.trim() &&
-      process.env.EXPO_PUBLIC_USE_BACKEND_AI !== 'false'),
+    !process.env.EXPO_PUBLIC_OLLAMA_API_KEY?.trim(),
 };
 
 export function hasRealAIProvider(): boolean {

@@ -3,11 +3,13 @@ import { Redirect, Tabs } from 'expo-router';
 import { Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useAppColors } from '@/hooks/useAppColors';
 import { useUserStore } from '@/store/userStore';
-import { colors, layout, spacing } from '@/theme';
+import { layout, spacing } from '@/theme';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const c = useAppColors();
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
   const token = useUserStore((s) => s.token);
 
@@ -19,13 +21,15 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textTertiary,
+        tabBarActiveTintColor: c.primary,
+        tabBarInactiveTintColor: c.textTertiary,
         tabBarStyle: [
           styles.tabBar,
           {
             height: layout.tabBarHeight + insets.bottom,
             paddingBottom: insets.bottom + spacing.xs,
+            backgroundColor: c.surface,
+            borderTopColor: c.border,
           },
         ],
         tabBarLabelStyle: styles.tabLabel,
@@ -74,13 +78,10 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
     paddingTop: spacing.xs,
     ...Platform.select({
       ios: {
-        shadowColor: colors.textPrimary,
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.06,
         shadowRadius: 8,

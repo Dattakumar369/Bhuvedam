@@ -18,6 +18,7 @@ import { LiveLocationBadge } from '@/features/weather/components/LocationBanner'
 import { FarmAlertsCard } from '@/features/alerts/FarmAlertsCard';
 import { getLocalizedGreeting } from '@/constants/i18n/appTranslations';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAppColors } from '@/hooks/useAppColors';
 import { useWeather } from '@/hooks/useWeather';
 import { useAIStore } from '@/store/aiStore';
 import { useAlertStore } from '@/store/alertStore';
@@ -27,6 +28,7 @@ import { colors, layout, radius, spacing } from '@/theme';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const c = useAppColors();
   const { app, language } = useTranslation();
   const user = useUserStore((s) => s.user);
   const { data, isLoading, load, location, lastFetched } = useWeather();
@@ -44,7 +46,7 @@ export default function HomeScreen() {
   const greeting = getLocalizedGreeting(language);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <GradientHeader
         title={`${greeting}, ${firstName}!`}
         subtitle={app.homeSubtitle}
@@ -183,7 +185,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   headerIllustration: {
     position: 'absolute',
     right: spacing.lg,

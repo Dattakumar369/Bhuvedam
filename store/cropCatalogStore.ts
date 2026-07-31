@@ -33,17 +33,16 @@ export const useCropCatalogStore = create<CropCatalogState>((set, get) => ({
 
   hydrate: async (language) => {
     const lang = language ?? get().language;
-    if (get().loading) return;
     set({ loading: true, error: null, language: lang });
     try {
       const rows = await fetchCropsFromBackend(undefined, lang);
       set({
-        crops: rows,
+        crops: rows.length ? rows : CROPS,
         loading: false,
         source: rows.length > CROPS.length ? 'neon' : 'local',
         lastFetched: new Date().toISOString(),
       });
-    } catch (err) {
+    } catch {
       set({
         loading: false,
         error: getUserErrorMessage('CROPS_LOAD_FAILED', lang),

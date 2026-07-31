@@ -1,5 +1,6 @@
-import { Text, TextProps, StyleSheet } from 'react-native';
+import { Text, TextProps } from 'react-native';
 
+import { useAppColors } from '@/hooks/useAppColors';
 import { typography, TypographyVariant } from '@/theme';
 
 interface AppTextProps extends TextProps {
@@ -8,10 +9,14 @@ interface AppTextProps extends TextProps {
 }
 
 export function AppText({ variant = 'body', color, style, ...props }: AppTextProps) {
+  const c = useAppColors();
+  const defaultColor =
+    variant === 'caption' || variant === 'subtitle' ? c.textSecondary : c.textPrimary;
+
   return (
     <Text
       {...props}
-      style={[typography[variant], color ? { color } : undefined, style]}
+      style={[typography[variant], { color: color ?? defaultColor }, style]}
     />
   );
 }

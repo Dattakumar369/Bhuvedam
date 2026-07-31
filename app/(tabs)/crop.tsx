@@ -9,26 +9,27 @@ import { CROPS, CROP_SEASONS, type CropSeason } from '@/constants/crops';
 import { cropMatchesQuery } from '@/constants/cropSearchAliases';
 import { CropCard } from '@/features/crop/components/CropCard';
 import { FarmerFarmSetup } from '@/features/crop/components/FarmerFarmSetup';
+import { useAppColors } from '@/hooks/useAppColors';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useCropCatalogStore } from '@/store/cropCatalogStore';
 import { useFarmerContextStore } from '@/store/farmerContextStore';
 import { useWeatherStore } from '@/store/weatherStore';
 import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
-import { colors, layout, radius, spacing } from '@/theme';
+import { layout, radius, spacing } from '@/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type SeasonFilter = 'all' | CropSeason;
 
 export default function CropScreen() {
   const insets = useSafeAreaInsets();
+  const c = useAppColors();
   const keyboardHeight = useKeyboardHeight();
   const [search, setSearch] = useState('');
   const [season, setSeason] = useState<SeasonFilter>('all');
   const [showAllCrops, setShowAllCrops] = useState(false);
+  const [wizardActive, setWizardActive] = useState(false);
 
   const fetchWeather = useWeatherStore((s) => s.fetchWeather);
-  const weatherLocation = useWeatherStore((s) => s.location);
-  const fetchSoilFromLocation = useFarmerContextStore((s) => s.fetchSoilFromLocation);
   const farmerCrops = useFarmerContextStore((s) => s.crops);
   const setupComplete = useFarmerContextStore((s) => s.setupComplete);
 
@@ -57,32 +58,34 @@ export default function CropScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <GradientHeader
-        title={farm.cropTabTitle}
-        subtitle={farm.cropTabSubtitle}
-      />
+    <View style={[styles.container, { backgroundColor: c.background }]}>
+      <GradientHeader title={farm.cropTabTitle} subtitle={farm.cropTabSubtitle} />
 
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={[
           styles.content,
           { paddingBottom: insets.bottom + spacing.xxl + keyboardHeight },
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+        scrollEnabled={!wizardActive}
       >
-        <FarmerFarmSetup />
+        <FarmerFarmSetup onWizardActiveChange={setWizardActive} />
 
         {!setupComplete ? (
-          <View style={styles.lockedBox}>
-            <MaterialCommunityIcons name="lock-outline" size={32} color={colors.textTertiary} />
+          <View style={[styles.lockedBox, { backgroundColor: c.surfaceVariant }]}>
+            <MaterialCommunityIcons name="lock-outline" size={32} color={c.textTertiary} />
             <Body style={styles.lockedText}>{farm.lockedMessage}</Body>
           </View>
         ) : (
           <>
             {myCrops.length > 0 ? (
               <View style={styles.section}>
-                <Title style={styles.sectionTitle}>🌾 {farm.myCropInfo}</Title>
+                <Title style={[styles.sectionTitle, { color: c.primary }]}>
+                  🌾 {farm.myCropInfo}
+                </Title>
                 {myCrops.map((crop, index) => (
                   <CropCard key={crop.id} crop={crop} index={index} expanded />
                 ))}
@@ -91,14 +94,14 @@ export default function CropScreen() {
 
             <Pressable
               onPress={() => setShowAllCrops((v) => !v)}
-              style={styles.expandBtn}
+              style={[styles.expandBtn, { backgroundColor: `${c.primary}10` }]}
             >
               <MaterialCommunityIcons
                 name={showAllCrops ? 'chevron-up' : 'chevron-down'}
                 size={24}
-                color={colors.primary}
+                color={c.primary}
               />
-              <Body style={styles.expandText}>
+              <Body style={[styles.expandText, { color: c.primary }]}>
                 {showAllCrops ? farm.hideOtherCrops : farm.showOtherCrops}
               </Body>
             </Pressable>
@@ -113,6 +116,7 @@ export default function CropScreen() {
 
                 <ScrollView
                   horizontal
+                  nestedScrollEnabled
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.seasonRow}
                 >
@@ -120,12 +124,24 @@ export default function CropScreen() {
                     <Pressable
                       key={item.id}
                       onPress={() => setSeason(item.id)}
-                      style={[styles.seasonChip, season === item.id && styles.seasonChipOn]}
+                      style={[
+                        styles.seasonChip,
+                        { backgroundColor: c.surface, borderColor: c.border },
+                        season === item.id && {
+                          backgroundColor: c.primary,
+                          borderColor: c.primary,
+                        },
+                      ]}
                     >
                       <Caption
-                        style={[styles.seasonChipText, season === item.id && styles.seasonChipTextOn]}
+                        style={[
+                          styles.seasonChipText,
+                          season === item.id && styles.seasonChipTextOn,
+                        ]}
                       >
-                        {language === 'te' ? (SEASON_TELUGU[item.id] ?? item.label) : (SEASON_EN[item.id] ?? item.label)}
+                        {language === 'te'
+                          ? (SEASON_TELUGU[item.id] ?? item.label)
+                          : (SEASON_EN[item.id] ?? item.label)}
                       </Caption>
                     </Pressable>
                   ))}
@@ -148,7 +164,8 @@ export default function CropScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
+  scroll: { flex: 1 },
   content: {
     paddingHorizontal: layout.screenPadding,
     marginTop: -spacing.lg,
@@ -158,33 +175,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     padding: spacing.xl,
-    backgroundColor: colors.surfaceVariant,
     borderRadius: radius.lg,
   },
-  lockedText: { textAlign: 'center', color: colors.textSecondary, lineHeight: 22 },
+  lockedText: { textAlign: 'center', lineHeight: 22 },
   section: { gap: spacing.md },
-  sectionTitle: { fontSize: 18, color: colors.primary },
+  sectionTitle: { fontSize: 18 },
   expandBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
     padding: spacing.md,
-    backgroundColor: `${colors.primary}10`,
     borderRadius: radius.lg,
   },
-  expandText: { color: colors.primary, fontFamily: 'Poppins_600SemiBold' },
+  expandText: { fontFamily: 'Poppins_600SemiBold' },
   seasonRow: { gap: spacing.sm, paddingVertical: spacing.xs },
   seasonChip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.full,
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
   },
-  seasonChipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
   seasonChipText: { fontFamily: 'Poppins_500Medium' },
-  seasonChipTextOn: { color: colors.surface },
-  empty: { textAlign: 'center', color: colors.textSecondary, paddingVertical: spacing.lg },
+  seasonChipTextOn: { color: '#FFFFFF' },
+  empty: { textAlign: 'center', paddingVertical: spacing.lg },
 });

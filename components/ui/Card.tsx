@@ -1,7 +1,8 @@
 import { StyleSheet, View, ViewProps } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { colors, radius, shadows, spacing } from '@/theme';
+import { useAppColors } from '@/hooks/useAppColors';
+import { radius, shadows, spacing } from '@/theme';
 
 interface CardProps extends ViewProps {
   children: React.ReactNode;
@@ -20,11 +21,29 @@ export function Card({
   style,
   ...props
 }: CardProps) {
+  const c = useAppColors();
+
+  const variantStyle =
+    variant === 'elevated'
+      ? { backgroundColor: c.surface, borderRadius: radius.lg, ...shadows.md }
+      : variant === 'filled'
+        ? { backgroundColor: c.surfaceVariant, borderRadius: radius.lg }
+        : variant === 'outlined'
+          ? {
+              backgroundColor: c.surface,
+              borderRadius: radius.lg,
+              borderWidth: 1,
+              borderColor: c.border,
+            }
+          : {
+              backgroundColor: c.glass,
+              borderRadius: radius.lg,
+              borderWidth: 1,
+              borderColor: 'rgba(255,255,255,0.3)',
+            };
+
   const content = (
-    <View
-      {...props}
-      style={[styles.base, VARIANT_STYLES[variant], { padding }, style]}
-    >
+    <View {...props} style={[styles.base, variantStyle, { padding }, style]}>
       {children}
     </View>
   );
@@ -39,30 +58,6 @@ export function Card({
 
   return content;
 }
-
-const VARIANT_STYLES = StyleSheet.create({
-  elevated: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    ...shadows.md,
-  },
-  filled: {
-    backgroundColor: colors.surfaceVariant,
-    borderRadius: radius.lg,
-  },
-  outlined: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  glass: {
-    backgroundColor: colors.glass,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-});
 
 const styles = StyleSheet.create({
   base: { overflow: 'hidden' },

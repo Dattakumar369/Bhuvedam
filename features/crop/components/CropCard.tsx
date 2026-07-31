@@ -47,67 +47,73 @@ export function CropCard({ crop, index, onPress, expanded = false }: CropCardPro
     };
   }, [showFull, crop.id, language]);
 
-  return (
-    <Animated.View entering={FadeInDown.delay(index * 60).springify()}>
-      <Pressable onPress={onPress} disabled={!onPress}>
-        <Card variant="elevated" style={styles.card}>
-          <View style={styles.header}>
-            <View style={[styles.iconBox, { backgroundColor: `${display.color}22` }]}>
-              <MaterialCommunityIcons name={display.icon} size={28} color={colors.primary} />
-            </View>
-            <View style={styles.headerText}>
-              <Title style={styles.name}>{display.nameTe}</Title>
-              <Caption>{display.name}</Caption>
-            </View>
-            <View style={[styles.seasonBadge, seasonBadgeStyle(display.season)]}>
-              <Label style={styles.seasonBadgeText}>{display.season.toUpperCase()}</Label>
-            </View>
-          </View>
+  const card = (
+    <Card variant="elevated" style={styles.card}>
+      <View style={styles.header}>
+        <View style={[styles.iconBox, { backgroundColor: `${display.color}22` }]}>
+          <MaterialCommunityIcons name={display.icon} size={28} color={colors.primary} />
+        </View>
+        <View style={styles.headerText}>
+          <Title style={styles.name}>{display.nameTe}</Title>
+          <Caption>{display.name}</Caption>
+        </View>
+        <View style={[styles.seasonBadge, seasonBadgeStyle(display.season)]}>
+          <Label style={styles.seasonBadgeText}>{display.season.toUpperCase()}</Label>
+        </View>
+      </View>
 
-          {showFull && (
+      {showFull && (
+        <>
+          {loadingDetail && !detail ? (
+            <ActivityIndicator color={colors.primary} style={styles.loader} />
+          ) : (
             <>
-              {loadingDetail && !detail ? (
-                <ActivityIndicator color={colors.primary} style={styles.loader} />
-              ) : (
-                <>
-                  <View style={styles.metaRow}>
-                    <MetaItem icon="calendar-start" label="Sowing" value={display.sowingPeriod} />
-                    <MetaItem icon="calendar-check" label="Harvest" value={display.harvestPeriod} />
-                  </View>
+              <View style={styles.metaRow}>
+                <MetaItem icon="calendar-start" label="Sowing" value={display.sowingPeriod} />
+                <MetaItem icon="calendar-check" label="Harvest" value={display.harvestPeriod} />
+              </View>
 
-                  <View style={styles.metaRow}>
-                    <MetaItem icon="water" label="Water" value={display.waterNeeds} />
-                    <MetaItem icon="terrain" label="Soil" value={display.soilType} />
-                  </View>
+              <View style={styles.metaRow}>
+                <MetaItem icon="water" label="Water" value={display.waterNeeds} />
+                <MetaItem icon="terrain" label="Soil" value={display.soilType} />
+              </View>
 
-                  {display.tips.length > 0 && (
-                    <View style={styles.tipsSection}>
-                      <Label style={styles.tipsTitle}>Farming Tips</Label>
-                      {display.tips.map((tip) => (
-                        <View key={tip} style={styles.tipRow}>
-                          <MaterialCommunityIcons
-                            name="check-circle"
-                            size={16}
-                            color={colors.primaryLight}
-                          />
-                          <Body style={styles.tipText}>{tip}</Body>
-                        </View>
-                      ))}
+              {display.tips.length > 0 && (
+                <View style={styles.tipsSection}>
+                  <Label style={styles.tipsTitle}>Farming Tips</Label>
+                  {display.tips.map((tip) => (
+                    <View key={tip} style={styles.tipRow}>
+                      <MaterialCommunityIcons
+                        name="check-circle"
+                        size={16}
+                        color={colors.primaryLight}
+                      />
+                      <Body style={styles.tipText}>{tip}</Body>
                     </View>
-                  )}
-                </>
+                  ))}
+                </View>
               )}
             </>
           )}
+        </>
+      )}
 
-          {!showFull && (display.sowingPeriod || display.harvestPeriod) && (
-            <View style={styles.metaRow}>
-              <MetaItem icon="calendar-start" label="Sowing" value={display.sowingPeriod} />
-              <MetaItem icon="calendar-check" label="Harvest" value={display.harvestPeriod} />
-            </View>
-          )}
-        </Card>
-      </Pressable>
+      {!showFull && (display.sowingPeriod || display.harvestPeriod) && (
+        <View style={styles.metaRow}>
+          <MetaItem icon="calendar-start" label="Sowing" value={display.sowingPeriod} />
+          <MetaItem icon="calendar-check" label="Harvest" value={display.harvestPeriod} />
+        </View>
+      )}
+    </Card>
+  );
+
+  return (
+    <Animated.View entering={FadeInDown.delay(index * 60).springify()}>
+      {onPress ? (
+        <Pressable onPress={onPress}>{card}</Pressable>
+      ) : (
+        card
+      )}
     </Animated.View>
   );
 }
