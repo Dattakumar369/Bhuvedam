@@ -112,6 +112,14 @@ app.use(
   }),
 );
 
+app.get('/', (c) =>
+  c.json({
+    service: 'bhuvedam-api',
+    health: '/health',
+    docs: 'Use /api/auth/* and other /api routes from the mobile app',
+  }),
+);
+
 app.get('/health', (c) => {
   const database = Boolean(process.env.DATABASE_URL?.trim());
   const jwt = Boolean(process.env.JWT_SECRET?.trim());
