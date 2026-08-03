@@ -236,7 +236,12 @@ export function buildFullSystemPrompt(
 
   sections.push(
     '',
+    '=== FARMER QUESTION (answer THIS — nothing else unless they asked) ===',
+    `"${userQuery.trim().slice(0, 300)}"`,
+    '',
     '=== HOW TO REPLY ===',
+    '- Talk like a real person at the field — warm, simple, human.',
+    '- Answer ONLY what they asked. No spray/mandu/dose/acre unless the question is about that.',
     `- ${AI_CONTEXT_PRIVACY_NOTE}`,
     `- ${AI_REFUSAL_STYLE}`,
     ...agent.rules.map((r) => `- ${r}`),

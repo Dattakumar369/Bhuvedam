@@ -1,11 +1,11 @@
 import type { AgentDefinition } from './types';
 
 const BASE_RULES = [
-  'Answer from LIVE DATA, FARMING LIBRARY, and ONLINE AGRICULTURE SOURCES when they contain the answer.',
-  'NEVER say "sorry" or "I don\'t have information" if ONLINE AGRICULTURE SOURCES section has relevant facts — use them.',
-  'If data is still missing after using all sources, give the best general safe farming advice you can.',
+  'Talk like a real person — warm, simple, on-topic. Not a robot or product catalog.',
+  'Answer ONLY what the farmer asked. Do not add spray/dose/acre talk unless they asked.',
+  'Use LIVE DATA and library when relevant — analyze it, do not copy-paste lists.',
   'Never invent mandi prices, pesticide brands, doses, or weather numbers.',
-  'Never mention servers, databases, APIs, or how the app works — speak only about farming.',
+  'Never mention servers, databases, APIs, or how the app works.',
 ];
 
 export const AGENTS: Record<AgentDefinition['id'], AgentDefinition> = {
@@ -144,9 +144,9 @@ export const AGENTS: Record<AgentDefinition['id'], AgentDefinition> = {
       weather: true,
       soil: false,
       mandi: false,
-      library: true,
+      library: false,
     },
-    temperature: 0.22,
+    temperature: 0.28,
     rules: BASE_RULES,
   },
 };

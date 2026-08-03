@@ -3,7 +3,6 @@ import { Platform } from 'react-native';
 import { AI_CONFIG, hasRealAIProvider } from '@/constants/aiConfig';
 import type { LanguageCode } from '@/constants/languages';
 import { API_CONFIG, STORAGE_KEYS } from '@/constants/app';
-import { fetchWebResearchContext } from '@/services/agData/knowledgeService';
 import { streamFromOllama } from '@/services/ai/ollamaStreamService';
 import { streamFromOpenAICompat } from '@/services/ai/openAICompatStreamService';
 import { buildOpenAIMessageContent } from '@/services/ai/visionMessages';
@@ -129,11 +128,32 @@ async function webResearchFallback(
   query: string,
   onChunk: (content: string) => void,
   cropIds?: string[],
+  voiceMode = false,
 ): Promise<string> {
-  const context = await fetchWebResearchContext(query, { cropIds });
-  const answer = context.trim()
-    ? `Here is verified agriculture information I found:\n\n${context.slice(0, 2200)}\n\nPlease confirm with your local agriculture officer for your field.`
-    : 'I am searching for more details. Please ask again with your crop name and village.';
+  // Last resort — never dump raw web snippets to the farmer.
+  try {
+    const retry = await apiClient.post<{ content?: string }>(
+      ENDPOINTS.ai.send,
+      {
+        messages: [{ role: 'user', content: query }],
+        voiceMode,
+        cropIds,
+        agentId: 'general',
+      },
+      { timeout: AI_REQUEST_TIMEOUT_MS },
+    );
+    const content = retry.data.content?.trim();
+    if (content && content.length >= 20) {
+      onChunk(content);
+      return content;
+    }
+  } catch {
+    /* use human message below */
+  }
+
+  const answer = voiceMode
+    ? `${query.slice(0, 60)} gurinchi inka details collect chestunnanu. Crop peru tho malli adagandi — meeku sariga cheptanu.`
+    : `Mee prashna **"${query.slice(0, 100)}"** gurinchi inka clear ga research chestunnanu.\n\nCrop peru, village tho malli adagandi — meeku sariga, manishi la cheptanu.`;
   onChunk(answer);
   return answer;
 }
@@ -215,7 +235,7 @@ export async function streamAIResponse(options: StreamOptions): Promise<string> 
       try {
         return await chatFromBackend(options);
       } catch {
-        return webResearchFallback(lastUser.content, options.onChunk, options.cropIds);
+        return webResearchFallback(lastUser.content, options.onChunk, options.cropIds, options.voiceMode);
       }
     }
 
@@ -226,13 +246,13 @@ export async function streamAIResponse(options: StreamOptions): Promise<string> 
         try {
           return await chatFromBackend(options);
         } catch {
-          return webResearchFallback(lastUser.content, options.onChunk, options.cropIds);
+          return webResearchFallback(lastUser.content, options.onChunk, options.cropIds, options.voiceMode);
         }
       }
       try {
         return await chatFromBackend(options);
       } catch {
-        return webResearchFallback(lastUser.content, options.onChunk, options.cropIds);
+        return webResearchFallback(lastUser.content, options.onChunk, options.cropIds, options.voiceMode);
       }
     }
   }

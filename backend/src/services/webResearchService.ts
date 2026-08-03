@@ -1,5 +1,5 @@
 import { fetchJson } from '../ingestion/utils';
-import { buildKnowledgeContextForAI } from './knowledgeSearch';
+import { formatKnowledgeForAI, searchKnowledge } from './knowledgeSearch';
 import { isCorrectionMessage } from './correctionDetect';
 
 export interface WebSnippet {
@@ -50,6 +50,39 @@ function invertAbstract(index?: Record<string, number[]>): string {
     .map((p) => p[1])
     .join(' ')
     .slice(0, 500);
+}
+
+function scoreSnippetRelevance(query: string, snippet: WebSnippet): number {
+  const words = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 2);
+  const blob = `${snippet.title} ${snippet.snippet}`.toLowerCase();
+  let score = 0;
+  for (const w of words) {
+    if (blob.includes(w)) score += 2;
+  }
+  if (snippet.source === 'serper') score += 1;
+  return score;
+}
+
+function rankSnippets(query: string, snippets: WebSnippet[]): WebSnippet[] {
+  return [...snippets].sort(
+    (a, b) => scoreSnippetRelevance(query, b) - scoreSnippetRelevance(query, a),
+  );
+}
+
+async function loadDbContextForQuery(
+  query: string,
+  cropIds: string[],
+  fullCatalog: boolean,
+): Promise<string> {
+  if (fullCatalog) {
+    const { buildKnowledgeContextForAI } = await import('./knowledgeSearch');
+    return buildKnowledgeContextForAI(query, cropIds).catch(() => '');
+  }
+  const hits = await searchKnowledge(query, 6).catch(() => []);
+  return formatKnowledgeForAI(hits, query, '');
 }
 
 function buildSearchQuery(query: string, correctionNote?: string): string {
@@ -198,7 +231,12 @@ export function formatWebSnippetsForAI(
 /** Search trusted online agriculture sources + local DB. Never throws. */
 export async function researchAgricultureOnline(
   query: string,
-  opts: { correction?: boolean; correctionNote?: string; cropIds?: string[] } = {},
+  opts: {
+    correction?: boolean;
+    correctionNote?: string;
+    cropIds?: string[];
+    fullCatalog?: boolean;
+  } = {},
 ): Promise<WebResearchResult> {
   const q = query.trim();
   if (!q) {
@@ -206,7 +244,8 @@ export async function researchAgricultureOnline(
   }
 
   const searchQuery = buildSearchQuery(q, opts.correctionNote);
-  const dbContext = await buildKnowledgeContextForAI(q, opts.cropIds ?? []).catch(() => '');
+  const fullCatalog = opts.fullCatalog ?? false;
+  const dbContext = await loadDbContextForQuery(q, opts.cropIds ?? [], fullCatalog);
 
   const [openAlex, wiki, webResults] = await Promise.all([
     searchOpenAlex(searchQuery),
@@ -215,18 +254,21 @@ export async function researchAgricultureOnline(
   ]);
 
   const seen = new Set<string>();
-  const snippets: WebSnippet[] = [];
-  for (const list of [openAlex, wiki, webResults]) {
+  const raw: WebSnippet[] = [];
+  for (const list of [webResults, wiki, openAlex]) {
     for (const s of list) {
       const key = s.title.toLowerCase().slice(0, 60);
       if (seen.has(key)) continue;
       seen.add(key);
-      snippets.push(s);
+      raw.push(s);
     }
   }
 
-  const formattedContext = formatWebSnippetsForAI(snippets, q, dbContext);
-  return { query: q, snippets, formattedContext, dbContext };
+  const snippets = rankSnippets(q, raw).slice(0, 5);
+  const slimDb =
+    dbContext.length > 2000 && !fullCatalog ? dbContext.slice(0, 1200) : dbContext;
+  const formattedContext = formatWebSnippetsForAI(snippets, q, slimDb);
+  return { query: q, snippets, formattedContext, dbContext: slimDb };
 }
 
 /** Farmer-facing answer built directly from collected web sources. */

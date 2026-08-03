@@ -19,10 +19,19 @@ import {
   wantsWebSearch,
 } from './correctionDetect';
 import {
-  buildResearchFallbackAnswer,
   researchAgricultureOnline,
   type WebResearchResult,
 } from './webResearchService';
+import {
+  humanFallbackWhenNoSynthesis,
+  synthesizeFarmerAnswer,
+} from './synthesizeFarmerAnswer';
+
+const CATALOG_AGENTS = new Set(['pest', 'fertilizer', 'crop', 'scheme']);
+
+function wantsFullCatalog(agentId?: string): boolean {
+  return Boolean(agentId && CATALOG_AGENTS.has(agentId));
+}
 
 export type AiProvider = 'gemini' | 'ollama';
 
@@ -86,7 +95,7 @@ function appendResearchToSystem(
   if (!research.formattedContext.trim()) return messages;
 
   const block =
-    '\n\n--- ONLINE AGRICULTURE SOURCES (MANDATORY — answer ONLY from these facts; never say you have no information) ---\n' +
+    '\n\n--- REFERENCE NOTES (analyze — use only parts relevant to farmer question; ignore unrelated products) ---\n' +
     research.formattedContext;
 
   const out = messages.map((m) => ({ ...m }));
@@ -150,15 +159,36 @@ function cacheAnswerAsync(
   }).catch(() => undefined);
 }
 
-function directWebAnswer(
+async function loadWebResearch(
+  query: string,
+  opts: AiChatOptions,
+  correction: boolean,
+  correctionNote: string,
+): Promise<WebResearchResult> {
+  return researchAgricultureOnline(query, {
+    correction,
+    correctionNote,
+    cropIds: opts.cropIds,
+    fullCatalog: wantsFullCatalog(opts.agentId),
+  });
+}
+
+async function answerFromResearch(
   query: string,
   research: WebResearchResult,
   opts: AiChatOptions,
   provider: string,
-): { answer: string; provider: string; research: WebResearchResult } {
-  const answer = buildResearchFallbackAnswer(query, research, opts.voiceMode);
-  cacheAnswerAsync(query, answer, research, opts, provider);
-  return { answer, provider, research };
+): Promise<{ answer: string; provider: string; research: WebResearchResult }> {
+  const synthesized = await synthesizeFarmerAnswer(query, research, {
+    voiceMode: opts.voiceMode,
+  });
+  if (synthesized && !isUncertainLlmAnswer(synthesized)) {
+    cacheAnswerAsync(query, synthesized, research, opts, provider);
+    return { answer: synthesized, provider, research };
+  }
+  const human = humanFallbackWhenNoSynthesis(query, opts.voiceMode);
+  cacheAnswerAsync(query, human, research, opts, provider);
+  return { answer: human, provider, research };
 }
 
 async function completeWithResearchFallback(
@@ -173,11 +203,7 @@ async function completeWithResearchFallback(
 
   // STEP 1: No library answer yet → search web FIRST (before LLM).
   if (shouldSearchWebFirst(messages) || correction || wantsWebSearch(query)) {
-    research = await researchAgricultureOnline(query, {
-      correction,
-      correctionNote,
-      cropIds: opts.cropIds,
-    });
+    research = await loadWebResearch(query, opts, correction, correctionNote);
     if (research.formattedContext.trim()) {
       workingMessages = appendResearchToSystem(messages, research);
     }
@@ -192,7 +218,7 @@ async function completeWithResearchFallback(
       cacheAnswerAsync(query, llmWithWeb, research, opts, getAiProvider());
       return { answer: llmWithWeb, provider: getAiProvider(), research };
     }
-    return directWebAnswer(
+    return answerFromResearch(
       query,
       research,
       opts,
@@ -205,11 +231,7 @@ async function completeWithResearchFallback(
 
   if (answer && isUncertainLlmAnswer(answer)) {
     if (!research.formattedContext.trim()) {
-      research = await researchAgricultureOnline(query, {
-        correction,
-        correctionNote,
-        cropIds: opts.cropIds,
-      });
+      research = await loadWebResearch(query, opts, correction, correctionNote);
       workingMessages = appendResearchToSystem(messages, research);
     }
     if (research.snippets.length > 0) {
@@ -218,7 +240,7 @@ async function completeWithResearchFallback(
         cacheAnswerAsync(query, retry, research, opts, getAiProvider());
         return { answer: retry, provider: getAiProvider(), research };
       }
-      return directWebAnswer(
+      return answerFromResearch(
         query,
         research,
         opts,
@@ -234,11 +256,7 @@ async function completeWithResearchFallback(
 
   // STEP 4: LLM failed — final web search + direct web answer.
   if (!research.formattedContext.trim()) {
-    research = await researchAgricultureOnline(query, {
-      correction,
-      correctionNote,
-      cropIds: opts.cropIds,
-    });
+    research = await loadWebResearch(query, opts, correction, correctionNote);
     workingMessages = appendResearchToSystem(messages, research);
   }
 
@@ -248,7 +266,7 @@ async function completeWithResearchFallback(
       cacheAnswerAsync(query, llmLast, research, opts, getAiProvider());
       return { answer: llmLast, provider: getAiProvider(), research };
     }
-    return directWebAnswer(
+    return answerFromResearch(
       query,
       research,
       opts,
@@ -256,7 +274,7 @@ async function completeWithResearchFallback(
     );
   }
 
-  return directWebAnswer(query, research, opts, 'web_research');
+  return answerFromResearch(query, research, opts, 'web_research');
 }
 
 export async function completeAiChat(

@@ -66,10 +66,5 @@ export function isPestOrDiseaseQuery(query: string): boolean {
 }
 
 export function needsKnowledgeSearch(topics: Set<QueryTopic>): boolean {
-  return (
-    topics.has('pest') ||
-    topics.has('fertilizer') ||
-    topics.has('crop') ||
-    topics.has('general')
-  );
+  return topics.has('pest') || topics.has('fertilizer') || topics.has('crop');
 }
