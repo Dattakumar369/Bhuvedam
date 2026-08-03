@@ -11,7 +11,12 @@ import { ENDPOINTS } from '@/services/api/endpoints';
 import type { ChatMessage } from '@/types/ai';
 import { secureStorage } from '@/utils/storage';
 
-const AI_REQUEST_TIMEOUT_MS = 55000;
+const AI_REQUEST_TIMEOUT_MS = 58000;
+
+function capSystemPrompt(systemPrompt: string, maxChars = 8000): string {
+  if (systemPrompt.length <= maxChars) return systemPrompt;
+  return `${systemPrompt.slice(-maxChars)}\n\n[Context trimmed for speed.]`;
+}
 
 async function ensureAuthToken(): Promise<string | null> {
   let token = getAuthToken();
@@ -99,7 +104,7 @@ async function chatFromBackend({
   const res = await apiClient.post<{ content?: string }>(
     ENDPOINTS.ai.send,
     {
-      messages: buildOpenAIMessages(messages, systemPrompt),
+      messages: buildOpenAIMessages(messages, capSystemPrompt(systemPrompt)),
       voiceMode,
     },
     { timeout: AI_REQUEST_TIMEOUT_MS, signal },

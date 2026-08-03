@@ -7,9 +7,9 @@ export const APP = {
 } as const;
 
 export const API_CONFIG = {
-  baseUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://api.bhuvedam.com',
+  baseUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://bhuvedam.vercel.app',
   useBackendData: process.env.EXPO_PUBLIC_USE_BACKEND_DATA === 'true',
-  timeout: 30000,
+  timeout: 45000,
   retryAttempts: 3,
   retryDelay: 1000,
 } as const;

@@ -68,7 +68,11 @@ export function createApiClient(): AxiosInstance {
       };
 
       if (!error.response) {
-        apiError.code = 'NETWORK_ERROR';
+        if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+          apiError.code = 'SERVER_ERROR';
+        } else {
+          apiError.code = 'NETWORK_ERROR';
+        }
         apiError.statusCode = 0;
       } else if (!apiError.code && apiError.statusCode >= 500) {
         apiError.code = 'SERVER_ERROR';
