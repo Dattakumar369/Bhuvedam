@@ -43,6 +43,9 @@ function extractAssistantContent(data: OllamaChatResponse): string {
   const content = data.message?.content?.trim() ?? '';
   if (content) return content;
 
+  const thinking = data.message?.thinking?.trim() ?? '';
+  if (thinking) return thinking;
+
   if (data.error) return data.error;
 
   return '';
@@ -62,6 +65,18 @@ async function requestOllamaChat(
 
   const useVision = historyHasVisionImage(messages);
   const model = useVision ? AI_CONFIG.ollamaVisionModel : AI_CONFIG.ollamaModel;
+  const payload: Record<string, unknown> = {
+    model,
+    messages: buildOllamaMessages(messages, systemPrompt),
+    stream,
+    options: {
+      temperature: voiceMode ? 0.25 : 0.15,
+      top_p: 0.85,
+      repeat_penalty: 1.15,
+      num_predict: voiceMode ? 768 : 1536,
+    },
+  };
+  if (model.includes('gpt-oss')) payload.think = 'low';
 
   const response = await fetch(`${AI_CONFIG.ollamaUrl}/api/chat`, {
     method: 'POST',
@@ -69,17 +84,7 @@ async function requestOllamaChat(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${AI_CONFIG.ollamaApiKey}`,
     },
-    body: JSON.stringify({
-      model,
-      messages: buildOllamaMessages(messages, systemPrompt),
-      stream,
-      options: {
-        temperature: voiceMode ? 0.25 : 0.15,
-        top_p: 0.85,
-        repeat_penalty: 1.15,
-        num_predict: voiceMode ? 512 : 1024,
-      },
-    }),
+    body: JSON.stringify(payload),
     signal,
   });
 
@@ -129,7 +134,7 @@ async function consumeOllamaStream(
           message?: { content?: string };
         };
         lastPayload = parsed;
-        const token = parsed.message?.content;
+        const token = parsed.message?.content ?? parsed.message?.thinking;
         if (token) {
           fullContent += token;
           onChunk?.(fullContent);

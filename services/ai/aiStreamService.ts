@@ -2,15 +2,25 @@ import { Platform } from 'react-native';
 
 import { AI_CONFIG, hasRealAIProvider } from '@/constants/aiConfig';
 import type { LanguageCode } from '@/constants/languages';
-import { API_CONFIG } from '@/constants/app';
+import { API_CONFIG, STORAGE_KEYS } from '@/constants/app';
 import { streamFromOllama } from '@/services/ai/ollamaStreamService';
 import { streamFromOpenAICompat } from '@/services/ai/openAICompatStreamService';
 import { buildOpenAIMessageContent } from '@/services/ai/visionMessages';
 import { apiClient, getAuthToken, setAuthToken } from '@/services/api/client';
 import { ENDPOINTS } from '@/services/api/endpoints';
 import type { ChatMessage } from '@/types/ai';
+import { secureStorage } from '@/utils/storage';
 
 const AI_REQUEST_TIMEOUT_MS = 55000;
+
+async function ensureAuthToken(): Promise<string | null> {
+  let token = getAuthToken();
+  if (!token) {
+    token = await secureStorage.get(STORAGE_KEYS.authToken);
+    if (token) setAuthToken(token);
+  }
+  return token;
+}
 
 interface StreamOptions {
   messages: ChatMessage[];
@@ -82,7 +92,7 @@ async function chatFromBackend({
   signal,
   voiceMode,
 }: StreamOptions): Promise<string> {
-  if (!getAuthToken()) {
+  if (!(await ensureAuthToken())) {
     throwBackendError('UNAUTHORIZED');
   }
 

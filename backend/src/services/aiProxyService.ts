@@ -5,6 +5,8 @@ export interface ProxyChatMessage {
   content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
 }
 
+type OllamaMessage = { content?: string; thinking?: string };
+
 function ollamaConfig() {
   return {
     url: (process.env.OLLAMA_API_URL ?? process.env.EXPO_PUBLIC_OLLAMA_API_URL ?? 'https://ollama.com').replace(
@@ -12,12 +14,42 @@ function ollamaConfig() {
       '',
     ),
     key: process.env.OLLAMA_API_KEY ?? process.env.EXPO_PUBLIC_OLLAMA_API_KEY ?? '',
-    model: process.env.OLLAMA_MODEL ?? process.env.EXPO_PUBLIC_OLLAMA_MODEL ?? 'llama3.2',
+    model: process.env.OLLAMA_MODEL ?? process.env.EXPO_PUBLIC_OLLAMA_MODEL ?? 'gpt-oss:20b',
   };
 }
 
 export function isOllamaConfigured(): boolean {
   return Boolean(ollamaConfig().key.trim());
+}
+
+function ollamaThinkParam(model: string): string | undefined {
+  if (model.includes('gpt-oss')) return 'low';
+  return undefined;
+}
+
+function messageText(content: ProxyChatMessage['content']): string {
+  if (typeof content === 'string') return content;
+  return content.map((part) => part.text ?? '').join(' ').trim();
+}
+
+/** Reasoning models can exceed context — keep system prompt bounded. */
+function trimMessagesForOllama(messages: ProxyChatMessage[]): ProxyChatMessage[] {
+  const maxSystemChars = 10000;
+  return messages.map((message) => {
+    if (message.role !== 'system') return message;
+    const text = messageText(message.content);
+    if (text.length <= maxSystemChars) return message;
+    return {
+      ...message,
+      content: `${text.slice(-maxSystemChars)}\n\n[Earlier context trimmed for speed.]`,
+    };
+  });
+}
+
+function extractAssistantText(message?: OllamaMessage): string {
+  const content = message?.content?.trim() ?? '';
+  if (content) return content;
+  return message?.thinking?.trim() ?? '';
 }
 
 async function requestOllamaChat(
@@ -29,23 +61,27 @@ async function requestOllamaChat(
     throw new Error('OLLAMA_API_KEY not configured on server');
   }
 
+  const think = ollamaThinkParam(model);
+  const payload: Record<string, unknown> = {
+    model,
+    messages: trimMessagesForOllama(messages),
+    stream: opts.stream,
+    options: {
+      temperature: opts.voiceMode ? 0.25 : 0.15,
+      top_p: 0.85,
+      repeat_penalty: 1.15,
+      num_predict: opts.voiceMode ? 768 : 1536,
+    },
+  };
+  if (think) payload.think = think;
+
   return fetch(`${url}/api/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${key}`,
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      stream: opts.stream,
-      options: {
-        temperature: opts.voiceMode ? 0.25 : 0.15,
-        top_p: 0.85,
-        repeat_penalty: 1.15,
-        num_predict: opts.voiceMode ? 512 : 1024,
-      },
-    }),
+    body: JSON.stringify(payload),
     signal: opts.signal,
   });
 }
@@ -61,8 +97,8 @@ export async function completeOllamaChat(
     throw new Error(text || `Ollama error ${response.status}`);
   }
 
-  const data = (await response.json()) as { message?: { content?: string }; error?: string };
-  const content = data.message?.content?.trim() ?? '';
+  const data = (await response.json()) as { message?: OllamaMessage; error?: string };
+  const content = extractAssistantText(data.message);
   if (content) return content;
   if (data.error) throw new Error(data.error);
   throw new Error('Ollama returned an empty response');
@@ -104,8 +140,10 @@ export async function streamOllamaChat(
             const trimmed = line.trim();
             if (!trimmed) continue;
             try {
-              const parsed = JSON.parse(trimmed) as { message?: { content?: string } };
-              const token = parsed.message?.content;
+              const parsed = JSON.parse(trimmed) as { message?: OllamaMessage };
+              const token =
+                parsed.message?.content ??
+                (full ? '' : parsed.message?.thinking);
               if (token) {
                 full += token;
                 controller.enqueue(
