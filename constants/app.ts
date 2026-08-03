@@ -20,9 +20,19 @@ function resolveApiBaseUrl(): string {
   return (fromEnv || 'http://localhost:3001').replace(/\/$/, '');
 }
 
+/** OTA updates may omit EXPO_PUBLIC_* — default on in production APK. */
+function resolveUseBackendData(): boolean {
+  const flag = process.env.EXPO_PUBLIC_USE_BACKEND_DATA?.trim().toLowerCase();
+  if (flag === 'true') return true;
+  if (flag === 'false') return false;
+  if (!__DEV__) return true;
+  const url = resolveApiBaseUrl();
+  return url.includes('vercel.app') || url.includes('bhuvedam.com');
+}
+
 export const API_CONFIG = {
   baseUrl: resolveApiBaseUrl(),
-  useBackendData: process.env.EXPO_PUBLIC_USE_BACKEND_DATA === 'true',
+  useBackendData: resolveUseBackendData(),
   timeout: 45000,
   retryAttempts: 3,
   retryDelay: 1000,
@@ -41,4 +51,7 @@ export const STORAGE_KEYS = {
   alertPrefs: 'bhuvedam_alert_prefs',
   pushToken: 'bhuvedam_push_token',
   lastUserId: 'bhuvedam_last_user_id',
+  productCacheFertilizers: 'bhuvedam_product_cache_fertilizers',
+  productCachePesticides: 'bhuvedam_product_cache_pesticides',
+  productCacheFungicides: 'bhuvedam_product_cache_fungicides',
 } as const;

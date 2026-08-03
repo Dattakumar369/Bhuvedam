@@ -10,7 +10,7 @@ const CONFIG: CatalogBrowseConfig = {
   heroIcon: 'spray',
   searchPlaceholder: 'Search — Monocil, Confidor, Imidacloprid...',
   basePath: '/pesticides',
-  sourceLabel: '30 CIB&RC insecticide actives',
+  sourceLabel: 'CIB&RC insecticides — Neon catalog',
   targetFilters: PEST_TARGET_FILTERS,
   targetFilterLabel: 'Purugu / Pest',
 };

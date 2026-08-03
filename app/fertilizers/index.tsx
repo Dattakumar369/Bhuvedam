@@ -48,9 +48,12 @@ export default function FertilizersScreen() {
       });
       setProducts(result.products);
       setSource(result.source);
-      if (result.source === 'offline') {
+      if (result.source === 'offline' && result.products.length > 0) {
         const lang = useLanguageStore.getState().language;
         setError(getUserErrorMessage('PRODUCTS_OFFLINE', lang));
+      } else if (result.source === 'offline' && !result.products.length) {
+        const lang = useLanguageStore.getState().language;
+        setError(getUserErrorMessage('PRODUCTS_LOAD_FAILED', lang));
       }
     } catch {
       const lang = useLanguageStore.getState().language;

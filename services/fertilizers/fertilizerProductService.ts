@@ -1,7 +1,13 @@
 import { API_CONFIG } from '@/constants/app';
 import { apiClient } from '@/services/api/client';
 import { ENDPOINTS } from '@/services/api/endpoints';
+import {
+  loadCachedFertilizers,
+  saveFertilizersCache,
+} from '@/services/catalog/productCache';
 import type { FertilizerProduct, FertilizerProductFilters } from '@/types/fertilizerProduct';
+
+const PRODUCT_TIMEOUT_MS = 20000;
 
 interface DbFertilizerProductRow {
   id: string;
@@ -54,46 +60,85 @@ function mapDbRow(row: DbFertilizerProductRow): FertilizerProduct {
   };
 }
 
+function applyClientFilters(
+  products: FertilizerProduct[],
+  filters: FertilizerProductFilters,
+): FertilizerProduct[] {
+  let out = products;
+
+  if (filters.brand && filters.brand !== 'all') {
+    out = out.filter((p) => p.brand.toLowerCase() === filters.brand!.toLowerCase());
+  }
+  if (filters.category && filters.category !== 'all') {
+    out = out.filter((p) => p.category === filters.category);
+  }
+  if (filters.crop) {
+    out = out.filter((p) => p.crops.includes(filters.crop!));
+  }
+  if (filters.search?.trim()) {
+    const q = filters.search.trim().toLowerCase();
+    out = out.filter((p) => {
+      const blob = `${p.name} ${p.brand} ${p.npk ?? ''} ${p.category}`.toLowerCase();
+      return blob.includes(q);
+    });
+  }
+
+  return out.slice(0, filters.limit ?? 200);
+}
+
 export async function fetchFertilizerProducts(
   filters: FertilizerProductFilters = {},
 ): Promise<{ products: FertilizerProduct[]; source: 'catalog' | 'offline' }> {
-  if (!API_CONFIG.useBackendData) {
-    return { products: [], source: 'offline' };
-  }
-
-  try {
-    const response = await apiClient.get<{ data: DbFertilizerProductRow[] }>(
-      ENDPOINTS.fertilizerProducts.list,
-      {
-        params: {
-          search: filters.search?.trim() || undefined,
-          brand: filters.brand && filters.brand !== 'all' ? filters.brand : undefined,
-          category: filters.category && filters.category !== 'all' ? filters.category : undefined,
-          crop: filters.crop || undefined,
-          limit: filters.limit ?? 200,
+  if (API_CONFIG.useBackendData) {
+    try {
+      const response = await apiClient.get<{ data: DbFertilizerProductRow[] }>(
+        ENDPOINTS.fertilizerProducts.list,
+        {
+          params: {
+            search: filters.search?.trim() || undefined,
+            brand: filters.brand && filters.brand !== 'all' ? filters.brand : undefined,
+            category: filters.category && filters.category !== 'all' ? filters.category : undefined,
+            crop: filters.crop || undefined,
+            limit: filters.limit ?? 200,
+          },
+          timeout: PRODUCT_TIMEOUT_MS,
         },
-        timeout: 8000,
-      },
-    );
+      );
 
-    const products = (response.data.data ?? []).map(mapDbRow);
-    return { products, source: 'catalog' };
-  } catch {
-    return { products: [], source: 'offline' };
+      const products = (response.data.data ?? []).map(mapDbRow);
+      if (products.length) {
+        void saveFertilizersCache(products);
+        return { products, source: 'catalog' };
+      }
+    } catch {
+      /* try cache below */
+    }
   }
+
+  const cached = await loadCachedFertilizers();
+  if (cached.length) {
+    return {
+      products: applyClientFilters(cached, filters),
+      source: 'offline',
+    };
+  }
+
+  return { products: [], source: 'offline' };
 }
 
 export async function fetchFertilizerProductById(id: string): Promise<FertilizerProduct | null> {
-  if (!API_CONFIG.useBackendData) return null;
-
-  try {
-    const response = await apiClient.get<{ data: DbFertilizerProductRow }>(
-      ENDPOINTS.fertilizerProducts.detail(id),
-      { timeout: 8000 },
-    );
-    if (response.data.data) return mapDbRow(response.data.data);
-    return null;
-  } catch {
-    return null;
+  if (API_CONFIG.useBackendData) {
+    try {
+      const response = await apiClient.get<{ data: DbFertilizerProductRow }>(
+        ENDPOINTS.fertilizerProducts.detail(id),
+        { timeout: PRODUCT_TIMEOUT_MS },
+      );
+      if (response.data.data) return mapDbRow(response.data.data);
+    } catch {
+      /* fall through */
+    }
   }
+
+  const cached = await loadCachedFertilizers();
+  return cached.find((p) => p.id === id) ?? null;
 }
