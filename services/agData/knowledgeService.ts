@@ -105,3 +105,26 @@ export async function cacheAiKnowledgeAnswer(
     /* non-blocking — chat already succeeded */
   }
 }
+
+/** Search online agriculture sources when DB is empty or farmer says answer was wrong. */
+export async function fetchWebResearchContext(
+  userQuery: string,
+  opts: { cropIds?: string[]; correction?: boolean; priorQuery?: string } = {},
+): Promise<string> {
+  if (!API_CONFIG.useBackendData || !userQuery.trim()) return '';
+
+  try {
+    const response = await apiClient.get<{ context?: string }>(ENDPOINTS.knowledge.research, {
+      params: {
+        q: userQuery.slice(0, 200),
+        crop: opts.cropIds?.slice(0, 2).join(',') || undefined,
+        correction: opts.correction ? 'true' : undefined,
+        priorQuery: opts.priorQuery?.slice(0, 200) || undefined,
+      },
+      timeout: 12000,
+    });
+    return response.data.context ?? '';
+  } catch {
+    return '';
+  }
+}

@@ -68,11 +68,12 @@ function buildPrompt(messages: ProxyChatMessage[], voiceMode: boolean) {
 
 export async function completeGeminiChat(
   messages: ProxyChatMessage[],
-  opts: { voiceMode?: boolean; signal?: AbortSignal } = {},
+  opts: { voiceMode?: boolean; signal?: AbortSignal; temperature?: number } = {},
 ): Promise<string> {
   const { model } = geminiConfig();
   const ai = getClient();
   const { systemInstruction, userPrompt, voiceMode } = buildPrompt(messages, opts.voiceMode ?? false);
+  const temperature = opts.temperature ?? (voiceMode ? 0.25 : 0.15);
 
   const response = await ai.models.generateContent({
     model,
@@ -80,7 +81,7 @@ export async function completeGeminiChat(
     config: {
       systemInstruction,
       maxOutputTokens: voiceMode ? 768 : 2048,
-      temperature: voiceMode ? 0.25 : 0.15,
+      temperature,
       abortSignal: opts.signal,
     },
   });
@@ -92,7 +93,7 @@ export async function completeGeminiChat(
 
 export async function streamGeminiChat(
   messages: ProxyChatMessage[],
-  opts: { voiceMode?: boolean; signal?: AbortSignal },
+  opts: { voiceMode?: boolean; signal?: AbortSignal; temperature?: number },
 ): Promise<ReadableStream<Uint8Array>> {
   const content = await completeGeminiChat(messages, opts);
   const encoder = new TextEncoder();

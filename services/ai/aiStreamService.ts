@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { AI_CONFIG, hasRealAIProvider } from '@/constants/aiConfig';
 import type { LanguageCode } from '@/constants/languages';
 import { API_CONFIG, STORAGE_KEYS } from '@/constants/app';
+import { fetchWebResearchContext } from '@/services/agData/knowledgeService';
 import { streamFromOllama } from '@/services/ai/ollamaStreamService';
 import { streamFromOpenAICompat } from '@/services/ai/openAICompatStreamService';
 import { buildOpenAIMessageContent } from '@/services/ai/visionMessages';
@@ -35,6 +36,8 @@ interface StreamOptions {
   onChunk: (content: string) => void;
   signal?: AbortSignal;
   voiceMode?: boolean;
+  agentId?: string;
+  cropIds?: string[];
 }
 
 function buildOpenAIMessages(messages: ChatMessage[], systemPrompt: string) {
@@ -97,6 +100,8 @@ async function chatFromBackend({
   onChunk,
   signal,
   voiceMode,
+  agentId,
+  cropIds,
 }: StreamOptions): Promise<string> {
   if (!(await ensureAuthToken())) {
     throwBackendError('UNAUTHORIZED');
@@ -107,6 +112,8 @@ async function chatFromBackend({
     {
       messages: buildOpenAIMessages(messages, capSystemPrompt(systemPrompt)),
       voiceMode,
+      agentId,
+      cropIds,
     },
     { timeout: AI_REQUEST_TIMEOUT_MS, signal },
   );
@@ -118,8 +125,21 @@ async function chatFromBackend({
   return content;
 }
 
+async function webResearchFallback(
+  query: string,
+  onChunk: (content: string) => void,
+  cropIds?: string[],
+): Promise<string> {
+  const context = await fetchWebResearchContext(query, { cropIds });
+  const answer = context.trim()
+    ? `Here is verified agriculture information I found:\n\n${context.slice(0, 2200)}\n\nPlease confirm with your local agriculture officer for your field.`
+    : 'I am searching for more details. Please ask again with your crop name and village.';
+  onChunk(answer);
+  return answer;
+}
+
 async function streamFromBackend(options: StreamOptions): Promise<string> {
-  const { messages, systemPrompt, onChunk, signal, voiceMode } = options;
+  const { messages, systemPrompt, onChunk, signal, voiceMode, agentId } = options;
   const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
   if (!lastUserMessage) throw new Error('No user message');
 
@@ -135,6 +155,8 @@ async function streamFromBackend(options: StreamOptions): Promise<string> {
       message: lastUserMessage.content,
       language: options.language,
       voiceMode,
+      agentId,
+      cropIds: options.cropIds,
     }),
     signal,
   });
@@ -190,21 +212,33 @@ export async function streamAIResponse(options: StreamOptions): Promise<string> 
   if (AI_CONFIG.useBackend) {
     // React Native fetch cannot reliably read SSE streams on device.
     if (Platform.OS !== 'web') {
-      return chatFromBackend(options);
+      try {
+        return await chatFromBackend(options);
+      } catch {
+        return webResearchFallback(lastUser.content, options.onChunk, options.cropIds);
+      }
     }
 
     try {
       return await streamFromBackend(options);
     } catch (error) {
       if (error instanceof Error && error.message === 'Streaming not supported') {
-        return chatFromBackend(options);
+        try {
+          return await chatFromBackend(options);
+        } catch {
+          return webResearchFallback(lastUser.content, options.onChunk, options.cropIds);
+        }
       }
-      throw error;
+      try {
+        return await chatFromBackend(options);
+      } catch {
+        return webResearchFallback(lastUser.content, options.onChunk, options.cropIds);
+      }
     }
   }
 
   if (AI_CONFIG.provider === 'ollama' && AI_CONFIG.ollamaApiKey) {
-    return streamFromOllama(options);
+    return streamFromOllama({ ...options, agentId: options.agentId });
   }
 
   if (AI_CONFIG.provider === 'openai' && AI_CONFIG.apiKey) {

@@ -297,7 +297,7 @@ export const useAIStore = create<AIState>((set, get) => ({
       let spokeEarly = false;
 
       await prepareContextBeforeChat(messageText);
-      const { prompt: baseSystemPrompt, dbContext, cropIds } = await buildFullSystemPromptAsync(
+      const { prompt: baseSystemPrompt, dbContext, cropIds, agentId } = await buildFullSystemPromptAsync(
         language,
         get().conversations,
         conversationId,
@@ -314,6 +314,8 @@ export const useAIStore = create<AIState>((set, get) => ({
         language: replyLanguage,
         systemPrompt,
         voiceMode,
+        agentId,
+        cropIds,
         signal: abortController.signal,
         onChunk: (chunk) => {
           // Early TTS while streaming conflicts with voice mode (cuts off full answer, mic hears echo).

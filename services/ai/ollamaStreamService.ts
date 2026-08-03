@@ -1,5 +1,6 @@
 import { AI_CONFIG } from '@/constants/aiConfig';
 import type { LanguageCode } from '@/constants/languages';
+import { getAgentTemperature } from '@/services/ai/agents';
 import {
   buildOllamaMessage,
   historyHasVisionImage,
@@ -14,6 +15,7 @@ interface OllamaStreamOptions {
   onChunk: (content: string) => void;
   signal?: AbortSignal;
   voiceMode?: boolean;
+  agentId?: string;
 }
 
 type OllamaChatResponse = {
@@ -59,6 +61,7 @@ async function requestOllamaChat(
   signal?: AbortSignal,
   voiceMode = false,
   onChunk?: (content: string) => void,
+  agentId?: string,
 ): Promise<OllamaChatResponse> {
   if (!AI_CONFIG.ollamaApiKey) {
     throw userApiError('AI_NOT_CONFIGURED');
@@ -66,12 +69,14 @@ async function requestOllamaChat(
 
   const useVision = historyHasVisionImage(messages);
   const model = useVision ? AI_CONFIG.ollamaVisionModel : AI_CONFIG.ollamaModel;
+  const baseTemp = getAgentTemperature(agentId ?? 'general');
+  const temperature = voiceMode ? Math.min(baseTemp + 0.05, 0.3) : baseTemp;
   const payload: Record<string, unknown> = {
     model,
     messages: buildOllamaMessages(messages, systemPrompt),
     stream,
     options: {
-      temperature: voiceMode ? 0.25 : 0.15,
+      temperature,
       top_p: 0.85,
       repeat_penalty: 1.15,
       num_predict: voiceMode ? 768 : 1536,
@@ -161,6 +166,7 @@ export async function streamFromOllama({
   onChunk,
   signal,
   voiceMode = false,
+  agentId,
 }: OllamaStreamOptions): Promise<string> {
   try {
     const data = await requestOllamaChat(
@@ -170,6 +176,7 @@ export async function streamFromOllama({
       signal,
       voiceMode,
       onChunk,
+      agentId,
     );
     const content = extractAssistantContent(data);
     if (!content) {

@@ -11,6 +11,10 @@ export interface FarmerLearnedFact {
 const CORRECTION_RE =
   /\b(wrong|incorrect|not correct|that's wrong|actually|correct is|fix this|tappu|tappadu|kadu|kadhu|nijam|mari|cheppaledu)\b|తప్ప|కాదు|నిజం|మార/i;
 
+export function isFarmerCorrection(message: string): boolean {
+  return CORRECTION_RE.test(message.trim());
+}
+
 const TEACHING_RE =
   /\b(we use|we always|in our village|in my field|maaku|memu|manam|ikkada|maku telusu|gurtu pettuk|naku telisina|ma deggara|local shop)\b|మాకు|మేము|ఇక్కడ|గుర్త/i;
 

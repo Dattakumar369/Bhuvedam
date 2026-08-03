@@ -54,7 +54,7 @@ function extractAssistantText(message?: OllamaMessage): string {
 
 async function requestOllamaChat(
   messages: ProxyChatMessage[],
-  opts: { voiceMode?: boolean; signal?: AbortSignal; stream: boolean },
+  opts: { voiceMode?: boolean; signal?: AbortSignal; stream: boolean; temperature?: number },
 ) {
   const { url, key, model } = ollamaConfig();
   if (!key) {
@@ -62,12 +62,13 @@ async function requestOllamaChat(
   }
 
   const think = ollamaThinkParam(model);
+  const temperature = opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15);
   const payload: Record<string, unknown> = {
     model,
     messages: trimMessagesForOllama(messages),
     stream: opts.stream,
     options: {
-      temperature: opts.voiceMode ? 0.25 : 0.15,
+      temperature,
       top_p: 0.85,
       repeat_penalty: 1.15,
       num_predict: opts.voiceMode ? 768 : 1536,
@@ -88,7 +89,7 @@ async function requestOllamaChat(
 
 export async function completeOllamaChat(
   messages: ProxyChatMessage[],
-  opts: { voiceMode?: boolean; signal?: AbortSignal } = {},
+  opts: { voiceMode?: boolean; signal?: AbortSignal; temperature?: number } = {},
 ): Promise<string> {
   const response = await requestOllamaChat(messages, { ...opts, stream: false });
 
@@ -106,7 +107,7 @@ export async function completeOllamaChat(
 
 export async function streamOllamaChat(
   messages: ProxyChatMessage[],
-  opts: { voiceMode?: boolean; signal?: AbortSignal },
+  opts: { voiceMode?: boolean; signal?: AbortSignal; temperature?: number },
 ): Promise<ReadableStream<Uint8Array>> {
   const response = await requestOllamaChat(messages, { ...opts, stream: true });
 

@@ -60,6 +60,8 @@ import {
 } from '../services/cropLocalization';
 import { formatKnowledgeForAI, searchKnowledge, buildKnowledgeContextForAI } from '../services/knowledgeSearch';
 import { cacheAiKnowledgeAnswer } from '../services/aiKnowledgeCache';
+import { researchAgricultureOnline } from '../services/webResearchService';
+import { isCorrectionMessage } from '../services/correctionDetect';
 import {
   getFertilizerProductById,
   searchFertilizerProducts,
@@ -871,6 +873,30 @@ app.get('/api/knowledge/catalog', async (c) => {
   return c.json({ context, cropIds });
 });
 
+/** Web research for thin DB answers or farmer corrections — stores in DB */
+app.get('/api/knowledge/research', async (c) => {
+  const q = c.req.query('q')?.trim() ?? '';
+  if (!q) return appError(c, 'SEARCH_REQUIRED');
+
+  const crop = c.req.query('crop') ?? '';
+  const cropIds = crop ? crop.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  const correction = c.req.query('correction') === 'true' || isCorrectionMessage(q);
+  const priorQuery = c.req.query('priorQuery')?.trim();
+
+  const researchQuery = correction && priorQuery ? priorQuery : q;
+  const result = await researchAgricultureOnline(researchQuery, {
+    correction,
+    correctionNote: correction ? q : undefined,
+    cropIds,
+  });
+
+  return c.json({
+    context: result.formattedContext,
+    snippetCount: result.snippets.length,
+    query: result.query,
+  });
+});
+
 /** Save AI answer when DB had no match — reused for other farmers asking the same question */
 app.post('/api/knowledge/cache', farmerAuthMiddleware, async (c) => {
   const body = (await c.req.json()) as {
@@ -1017,18 +1043,32 @@ app.post('/api/ai/chat', farmerAuthMiddleware, async (c) => {
   const body = (await c.req.json()) as {
     messages?: ProxyChatMessage[];
     voiceMode?: boolean;
+    agentId?: string;
+    cropIds?: string[];
   };
 
   const messages = body.messages?.filter((m) => m.role && m.content) ?? [];
   if (!messages.length) return appError(c, 'AI_MESSAGES_REQUIRED');
-  if (!isAiConfigured()) return appError(c, 'AI_NOT_CONFIGURED');
 
   try {
-    const content = await completeAiChat(messages, { voiceMode: body.voiceMode });
+    const content = await completeAiChat(messages, {
+      voiceMode: body.voiceMode,
+      agentId: body.agentId,
+      cropIds: body.cropIds,
+    });
+    log.info('ai/chat', 'completed', {
+      farmerId: c.get('farmerId'),
+      agentId: body.agentId ?? 'general',
+      provider: getAiProvider(),
+      voiceMode: Boolean(body.voiceMode),
+    });
     return c.json({ content });
   } catch (err) {
     log.error('ai/chat', 'AI proxy failed', { err, farmerId: c.get('farmerId'), provider: getAiProvider() });
-    return appError(c, 'AI_UNAVAILABLE');
+    return c.json({
+      content:
+        'I am still searching for the best answer. Please ask again with your crop name and village.',
+    });
   }
 });
 
@@ -1037,14 +1077,19 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
   const body = (await c.req.json()) as {
     messages?: ProxyChatMessage[];
     voiceMode?: boolean;
+    agentId?: string;
+    cropIds?: string[];
   };
 
   const messages = body.messages?.filter((m) => m.role && m.content) ?? [];
   if (!messages.length) return appError(c, 'AI_MESSAGES_REQUIRED');
-  if (!isAiConfigured()) return appError(c, 'AI_NOT_CONFIGURED');
 
   try {
-    const stream = await streamAiChat(messages, { voiceMode: body.voiceMode });
+    const stream = await streamAiChat(messages, {
+      voiceMode: body.voiceMode,
+      agentId: body.agentId,
+      cropIds: body.cropIds,
+    });
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
@@ -1054,7 +1099,38 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
     });
   } catch (err) {
     log.error('ai/stream', 'AI proxy failed', { err, farmerId: c.get('farmerId'), provider: getAiProvider() });
-    return appError(c, 'AI_UNAVAILABLE');
+    try {
+      const stream = await streamAiChat(messages, {
+        voiceMode: body.voiceMode,
+        agentId: body.agentId,
+        cropIds: body.cropIds,
+      });
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+        },
+      });
+    } catch {
+      const encoder = new TextEncoder();
+      const msg =
+        'I am still searching for the best answer. Please ask again with your crop name and village.';
+      const fallback = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: msg })}\n\n`));
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        },
+      });
+      return new Response(fallback, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+        },
+      });
+    }
   }
 });
 

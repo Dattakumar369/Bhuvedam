@@ -1,10 +1,13 @@
 import { getSystemPrompt } from '@/constants/aiConfig';
+import { API_CONFIG } from '@/constants/app';
 import { AI_LOCAL_LANGUAGE_RULES_TE } from '@/constants/agLocalTerms';
 import {
   AI_CONTEXT_PRIVACY_NOTE,
   AI_REFUSAL_STYLE,
 } from '@/constants/trustPolicy';
-import { fetchKnowledgeContext } from '@/services/agData/knowledgeService';
+import { fetchKnowledgeContext, fetchWebResearchContext, isThinDbContext } from '@/services/agData/knowledgeService';
+import { routeToAgent, type AgentDefinition, type AgentId } from '@/services/ai/agents';
+import { isFarmerCorrection } from '@/services/ai/farmerKnowledge';
 import {
   detectQueryTopics,
   isPestOrDiseaseQuery,
@@ -30,7 +33,7 @@ const STALE_WEATHER_MS = 30 * 60 * 1000;
 export async function prepareContextBeforeChat(userQuery = ''): Promise<void> {
   const weather = useWeatherStore.getState();
   const mandi = useMandiStore.getState();
-  const topics = detectQueryTopics(userQuery);
+  const agent = routeToAgent(userQuery);
 
   const isStale =
     !weather.lastFetched ||
@@ -38,15 +41,11 @@ export async function prepareContextBeforeChat(userQuery = ''): Promise<void> {
 
   const tasks: Promise<void>[] = [];
 
-  const needsWeather =
-    topics.has('weather') || topics.has('general') || topics.has('crop') || !userQuery.trim();
-
-  if (needsWeather && (!weather.data || isStale)) {
+  if (agent.context.weather && (!weather.data || isStale)) {
     tasks.push(weather.fetchWeather(!weather.data).catch(() => undefined));
   }
 
-  const needsMandi = topics.has('mandi') || topics.has('general') || topics.has('crop');
-  if (needsMandi && !mandi.analytics.length) {
+  if (agent.context.mandi && !mandi.analytics.length) {
     tasks.push(mandi.fetchRates().catch(() => undefined));
   }
 
@@ -135,11 +134,30 @@ function formatMandiBlock(query: string, compact = false): string {
     .join('\n');
 }
 
-function shouldInclude(topics: Set<QueryTopic>, topic: QueryTopic): boolean {
-  if (topics.has(topic)) return true;
-  if (topics.has('general')) return topic === 'weather' || topic === 'soil';
-  if (topics.has('crop')) return topic === 'weather' || topic === 'soil' || topic === 'pest' || topic === 'fertilizer';
-  return false;
+/** Specialists always get their full context; general agent loads blocks only when the query asks. */
+function shouldIncludeBlock(
+  agent: AgentDefinition,
+  block: 'weather' | 'soil' | 'mandi',
+  topics: Set<QueryTopic>,
+): boolean {
+  if (!agent.context[block]) return false;
+  if (agent.id === 'general') {
+    const topicKey: Record<'weather' | 'soil' | 'mandi', QueryTopic> = {
+      weather: 'weather',
+      soil: 'soil',
+      mandi: 'mandi',
+    };
+    return topics.has(topicKey[block]);
+  }
+  return true;
+}
+
+function findPriorUserQuestion(conversations: Conversation[], activeConversationId: string): string {
+  const conv = conversations.find((c) => c.id === activeConversationId);
+  if (!conv) return '';
+  const users = conv.messages.filter((m) => m.role === 'user' && m.content.trim()).map((m) => m.content.trim());
+  if (users.length >= 2) return users[users.length - 2] ?? '';
+  return '';
 }
 
 export function buildFullSystemPrompt(
@@ -150,6 +168,7 @@ export function buildFullSystemPrompt(
   userQuery = '',
   dbReferenceContext = '',
   effectiveLanguage?: LanguageCode,
+  agent = routeToAgent(userQuery),
 ): string {
   const compact = voiceMode;
   const replyLang = effectiveLanguage ?? language;
@@ -159,11 +178,14 @@ export function buildFullSystemPrompt(
   const farmerSummary = useFarmerContextStore.getState().getSummary();
   const topics = detectQueryTopics(userQuery);
   const nowBlock = formatLiveClockBlock();
-  const timeOnly = topics.has('time') && topics.size === 1;
-  const pestOrCropHealth = topics.has('pest') || (topics.has('crop') && isPestOrDiseaseQuery(userQuery));
+  const timeOnly = agent.id === 'time';
+  const pestOrCropHealth = agent.id === 'pest' || (topics.has('crop') && isPestOrDiseaseQuery(userQuery));
 
   const sections: string[] = [
     `${base}`,
+    '',
+    `=== SPECIALIST MODE: ${agent.roleLabel} ===`,
+    'Stay in this role only — do not mix unrelated topics unless the farmer asks.',
     '',
     '=== CONTEXT FOR THIS FARMER ===',
     `Language: ${langLabel}`,
@@ -174,34 +196,42 @@ export function buildFullSystemPrompt(
   ];
 
   if (!timeOnly) {
-    sections.push('', '--- FARMER PROFILE & LEARNED FACTS ---', farmerSummary);
+    if (agent.context.farmerProfile) {
+      sections.push('', '--- FARMER PROFILE & LEARNED FACTS ---', farmerSummary);
+    }
 
-    if (shouldInclude(topics, 'weather')) {
+    if (shouldIncludeBlock(agent, 'weather', topics)) {
       sections.push('', '--- LIVE WEATHER ---', formatWeatherBlock());
     }
 
-    if (shouldInclude(topics, 'soil')) {
+    if (shouldIncludeBlock(agent, 'soil', topics)) {
       sections.push('', '--- SOIL & FIELD ---', formatSoilBlock());
     }
 
-    if (shouldInclude(topics, 'mandi')) {
+    if (shouldIncludeBlock(agent, 'mandi', topics)) {
       sections.push('', '--- MANDI RATES ---', formatMandiBlock(userQuery, compact));
     }
 
-    if (dbReferenceContext.trim()) {
-      sections.push(
-        '',
-        pestOrCropHealth
-          ? '--- FARMING LIBRARY (MANDATORY for rogam/purugu/mandu — exact product name + dose) ---'
-          : '--- FARMING LIBRARY (products & doses) ---',
-        dbReferenceContext.trim(),
-      );
-    } else if (needsKnowledgeSearch(topics)) {
-      sections.push(
-        '',
-        '--- FARMING LIBRARY ---',
-        'No library match for this question — answer fully from your agriculture expertise. Save a clear answer for other farmers.',
-      );
+    const fetchLibrary =
+      agent.context.library &&
+      (needsKnowledgeSearch(topics) || agent.id === 'scheme' || agent.id === 'fertilizer');
+
+    if (fetchLibrary) {
+      if (dbReferenceContext.trim()) {
+        sections.push(
+          '',
+          pestOrCropHealth
+            ? '--- FARMING LIBRARY (MANDATORY for rogam/purugu/mandu — exact product name + dose) ---'
+            : '--- FARMING LIBRARY (products & doses) ---',
+          dbReferenceContext.trim(),
+        );
+      } else {
+        sections.push(
+          '',
+          '--- FARMING LIBRARY ---',
+          'No library match for this question — answer from expertise only. Say when you are not sure. Save a clear answer for other farmers.',
+        );
+      }
     }
   }
 
@@ -210,11 +240,8 @@ export function buildFullSystemPrompt(
     '=== HOW TO REPLY ===',
     `- ${AI_CONTEXT_PRIVACY_NOTE}`,
     `- ${AI_REFUSAL_STYLE}`,
-    '- Think and answer naturally — local agriculture expert, not a lookup table.',
-    '- Use farmer profile, corrections, and local facts they taught you.',
-    '- For rogam/purugu/mandu: use FARMING LIBRARY — exact product, dose, Telugu local name.',
-    '- Never mention servers, databases, APIs, or how the app works — speak only about farming.',
-    '- If farmer says you were wrong, agree and follow their correction.',
+    ...agent.rules.map((r) => `- ${r}`),
+    '- If farmer says you were wrong, agree, search ONLINE AGRICULTURE SOURCES in context, and give corrected facts.',
     '- Time questions: answer ONLY from CURRENT DATE & TIME.',
   );
 
@@ -235,17 +262,37 @@ export async function buildFullSystemPromptAsync(
   activeConversationId: string,
   voiceMode: boolean,
   userQuery: string,
-): Promise<{ prompt: string; dbContext: string; cropIds: string[] }> {
+): Promise<{ prompt: string; dbContext: string; cropIds: string[]; agentId: AgentId }> {
   // Learn from farmer message BEFORE building prompt (corrections, local facts)
   await useFarmerContextStore.getState().learnFromUserMessage(userQuery);
 
+  const agent = routeToAgent(userQuery);
   const topics = detectQueryTopics(userQuery);
   const cropIds = resolveCropIdsForQuery(userQuery, useFarmerContextStore.getState().crops);
   const effectiveLanguage = detectQueryLanguage(userQuery, language);
   let dbReferenceContext = '';
 
-  if (needsKnowledgeSearch(topics)) {
+  const needsLibrary =
+    agent.context.library &&
+    (needsKnowledgeSearch(topics) || agent.id === 'scheme' || agent.id === 'fertilizer');
+
+  if (needsLibrary) {
     dbReferenceContext = await fetchKnowledgeContext(userQuery, cropIds);
+  }
+
+  const correction = isFarmerCorrection(userQuery);
+  const priorQuery = correction ? findPriorUserQuestion(conversations, activeConversationId) : '';
+  const needsWebResearch = correction || isThinDbContext(dbReferenceContext);
+
+  if (needsWebResearch && API_CONFIG.useBackendData) {
+    const webContext = await fetchWebResearchContext(userQuery, {
+      cropIds,
+      correction,
+      priorQuery: priorQuery || undefined,
+    });
+    if (webContext.trim()) {
+      dbReferenceContext = [dbReferenceContext, webContext].filter(Boolean).join('\n\n');
+    }
   }
 
   const prompt = buildFullSystemPrompt(
@@ -256,7 +303,8 @@ export async function buildFullSystemPromptAsync(
     userQuery,
     dbReferenceContext.slice(0, voiceMode ? 1500 : 3500),
     effectiveLanguage,
+    agent,
   );
 
-  return { prompt, dbContext: dbReferenceContext, cropIds };
+  return { prompt, dbContext: dbReferenceContext, cropIds, agentId: agent.id };
 }

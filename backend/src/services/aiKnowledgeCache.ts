@@ -39,19 +39,31 @@ export function shouldCacheAiAnswer(query: string, answer: string, dbContext = '
   return true;
 }
 
-/** Store AI answer in ag_knowledge so the next farmer with the same question gets DB context. */
+/** Store AI or web-research answer in ag_knowledge for reuse. */
 export async function cacheAiKnowledgeAnswer(
   query: string,
   answer: string,
-  opts: { cropIds?: string[]; provider?: string; dbContext?: string } = {},
+  opts: {
+    cropIds?: string[];
+    provider?: string;
+    dbContext?: string;
+    webSnippets?: { title: string; url: string; source: string }[];
+    forceStore?: boolean;
+  } = {},
 ): Promise<{ stored: boolean; id?: string }> {
   const q = query.trim().slice(0, MAX_QUERY_LEN);
   const a = answer.trim().slice(0, MAX_ANSWER_LEN);
-  if (!shouldCacheAiAnswer(q, a, opts.dbContext ?? '')) return { stored: false };
+  const force = opts.forceStore ?? false;
+  if (!force && !shouldCacheAiAnswer(q, a, opts.dbContext ?? '')) return { stored: false };
+  if (q.length < 8 || a.length < MIN_ANSWER_LEN) return { stored: false };
+  if (/^(sorry|error|failed|unavailable)/i.test(a)) return { stored: false };
 
+  const provider = opts.provider ?? 'ai';
+  const source = provider.includes('web') || provider.includes('correction') ? 'web_research' : SOURCE;
   const externalId = queryExternalId(q);
   const title = q.length > 200 ? `${q.slice(0, 197)}...` : q;
   const cropTags = (opts.cropIds ?? []).slice(0, 5);
+  const topUrl = opts.webSnippets?.[0]?.url;
 
   const [row] = await db
     .insert(agKnowledge)
@@ -61,15 +73,17 @@ export async function cacheAiKnowledgeAnswer(
       summary: a.slice(0, 600),
       content: a,
       authors: ['Bhuvedam AI'],
-      source: SOURCE,
+      source,
       externalId,
-      tags: ['ai_answer', 'farmer_qa'],
+      url: topUrl ?? null,
+      tags: ['ai_answer', 'farmer_qa', provider],
       cropTags,
       citationCount: 1,
       metadata: {
-        provider: opts.provider ?? 'ai',
+        provider,
         query: q,
         cachedAt: new Date().toISOString(),
+        webSources: opts.webSnippets?.slice(0, 5),
       },
     })
     .onConflictDoUpdate({
@@ -77,14 +91,16 @@ export async function cacheAiKnowledgeAnswer(
       set: {
         summary: a.slice(0, 600),
         content: a,
+        url: topUrl ?? undefined,
         cropTags,
         citationCount: sql`COALESCE(${agKnowledge.citationCount}, 0) + 1`,
         syncedAt: new Date(),
         metadata: {
-          provider: opts.provider ?? 'ai',
+          provider,
           query: q,
           cachedAt: new Date().toISOString(),
           updated: true,
+          webSources: opts.webSnippets?.slice(0, 5),
         },
       },
     })
