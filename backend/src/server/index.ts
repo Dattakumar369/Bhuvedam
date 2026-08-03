@@ -91,11 +91,12 @@ import {
   resetPasswordWithPhoneOtp,
 } from '../services/passwordAuth';
 import {
-  completeOllamaChat,
-  isOllamaConfigured,
-  streamOllamaChat,
+  completeAiChat,
+  isAiConfigured,
+  getAiProvider,
+  streamAiChat,
   type ProxyChatMessage,
-} from '../services/aiProxyService';
+} from '../services/aiChatService';
 
 const app = new Hono<{ Variables: FarmerAuthVariables }>();
 
@@ -123,11 +124,12 @@ app.get('/', (c) =>
 app.get('/health', (c) => {
   const database = Boolean(process.env.DATABASE_URL?.trim());
   const jwt = Boolean(process.env.JWT_SECRET?.trim());
-  const ollama = isOllamaConfigured();
+  const aiProvider = getAiProvider();
+  const ai = isAiConfigured();
   return c.json({
     ok: database && jwt,
     service: 'bhuvedam-api',
-    config: { database, jwt, ollama },
+    config: { database, jwt, ai, aiProvider },
   });
 });
 
@@ -991,13 +993,13 @@ app.post('/api/ai/chat', farmerAuthMiddleware, async (c) => {
 
   const messages = body.messages?.filter((m) => m.role && m.content) ?? [];
   if (!messages.length) return appError(c, 'AI_MESSAGES_REQUIRED');
-  if (!isOllamaConfigured()) return appError(c, 'AI_NOT_CONFIGURED');
+  if (!isAiConfigured()) return appError(c, 'AI_NOT_CONFIGURED');
 
   try {
-    const content = await completeOllamaChat(messages, { voiceMode: body.voiceMode });
+    const content = await completeAiChat(messages, { voiceMode: body.voiceMode });
     return c.json({ content });
   } catch (err) {
-    log.error('ai/chat', 'Ollama proxy failed', { err, farmerId: c.get('farmerId') });
+    log.error('ai/chat', 'AI proxy failed', { err, farmerId: c.get('farmerId'), provider: getAiProvider() });
     return appError(c, 'AI_UNAVAILABLE');
   }
 });
@@ -1011,10 +1013,10 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
 
   const messages = body.messages?.filter((m) => m.role && m.content) ?? [];
   if (!messages.length) return appError(c, 'AI_MESSAGES_REQUIRED');
-  if (!isOllamaConfigured()) return appError(c, 'AI_NOT_CONFIGURED');
+  if (!isAiConfigured()) return appError(c, 'AI_NOT_CONFIGURED');
 
   try {
-    const stream = await streamOllamaChat(messages, { voiceMode: body.voiceMode });
+    const stream = await streamAiChat(messages, { voiceMode: body.voiceMode });
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
@@ -1023,7 +1025,7 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
       },
     });
   } catch (err) {
-    log.error('ai/stream', 'Ollama proxy failed', { err, farmerId: c.get('farmerId') });
+    log.error('ai/stream', 'AI proxy failed', { err, farmerId: c.get('farmerId'), provider: getAiProvider() });
     return appError(c, 'AI_UNAVAILABLE');
   }
 });

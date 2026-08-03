@@ -41,7 +41,7 @@
         "EXPO_PUBLIC_USE_BACKEND_DATA": "true",
         "EXPO_PUBLIC_USE_BACKEND_AI": "true",
         "EXPO_PUBLIC_USE_BACKEND_WEATHER": "false",
-        "EXPO_PUBLIC_AI_PROVIDER": "ollama"
+        "EXPO_PUBLIC_AI_PROVIDER": "gemini"
       }
     }
   },
