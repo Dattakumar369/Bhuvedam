@@ -282,12 +282,15 @@ export async function buildFullSystemPromptAsync(
   const correction = isFarmerCorrection(userQuery);
   const priorQuery = correction ? findPriorUserQuestion(conversations, activeConversationId) : '';
   const researchQuery = correction && priorQuery ? priorQuery : userQuery;
+  const libraryEmpty = shouldFetchWebResearch(dbReferenceContext, userQuery);
+
+  // No DB answer → search web FIRST before LLM sees the question.
   const needsWebResearch =
     API_CONFIG.useBackendData &&
     (correction ||
       wantsWebSearch(userQuery) ||
-      shouldFetchWebResearch(dbReferenceContext, userQuery) ||
-      (agent.context.library && !/ONLINE AGRICULTURE SOURCES/i.test(dbReferenceContext)));
+      libraryEmpty ||
+      (needsLibrary && libraryEmpty));
 
   if (needsWebResearch) {
     const webContext = await fetchWebResearchContext(researchQuery, {

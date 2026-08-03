@@ -22,17 +22,38 @@ export function isUncertainLlmAnswer(text: string): boolean {
   return UNCERTAIN_ANSWER_RE.test(t);
 }
 
-export function systemNeedsWebResearch(messages: { role: string; content: unknown }[]): boolean {
-  const sys = messages.find((m) => m.role === 'system');
-  const sysText = messageText(sys?.content ?? '');
-  if (/ONLINE AGRICULTURE SOURCES/i.test(sysText)) return false;
+export function hasOnlineSourcesInSystem(messages: { role: string; content: unknown }[]): boolean {
+  const sysText = messageText(messages.find((m) => m.role === 'system')?.content ?? '');
+  return /ONLINE AGRICULTURE SOURCES/i.test(sysText);
+}
+
+export function hasThinLibraryInSystem(messages: { role: string; content: unknown }[]): boolean {
+  const sysText = messageText(messages.find((m) => m.role === 'system')?.content ?? '');
   if (/No library match|No matching entries in Bhuvedam|could not be loaded/i.test(sysText)) {
     return true;
   }
+  if (/--- FARMING LIBRARY ---/i.test(sysText) && !/MANDU|PESTICIDE|₹|dose|ml\/acre|research\/sources/i.test(sysText)) {
+    return true;
+  }
+  return false;
+}
+
+/** Search web BEFORE LLM when library/LLM has no usable answer yet. */
+export function shouldSearchWebFirst(messages: { role: string; content: unknown }[]): boolean {
+  if (hasOnlineSourcesInSystem(messages)) return false;
+  const sysText = messageText(messages.find((m) => m.role === 'system')?.content ?? '');
+  if (/SPECIALIST MODE: Time & date helper/i.test(sysText)) return false;
   const lastUser = messageText(
     messages.filter((m) => m.role === 'user').at(-1)?.content ?? '',
   );
-  return wantsWebSearch(lastUser);
+  if (wantsWebSearch(lastUser)) return true;
+  if (hasThinLibraryInSystem(messages)) return true;
+  // Default: no online sources loaded yet → search web first for farming questions.
+  return /SPECIALIST MODE:/i.test(sysText);
+}
+
+export function systemNeedsWebResearch(messages: { role: string; content: unknown }[]): boolean {
+  return shouldSearchWebFirst(messages);
 }
 
 /** Prior farmer question when they say the latest answer was wrong. */

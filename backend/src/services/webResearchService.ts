@@ -229,7 +229,7 @@ export async function researchAgricultureOnline(
   return { query: q, snippets, formattedContext, dbContext };
 }
 
-/** Farmer-facing answer when all LLM providers fail — built from web + DB snippets. */
+/** Farmer-facing answer built directly from collected web sources. */
 export function buildResearchFallbackAnswer(
   query: string,
   research: WebResearchResult,
@@ -242,21 +242,21 @@ export function buildResearchFallbackAnswer(
   }
 
   const lines: string[] = voiceMode
-    ? [`Here is what I found about ${query.slice(0, 80)}:`]
-    : [`Here is verified agriculture information for **${query.slice(0, 120)}**:\n`];
+    ? [`${query.slice(0, 80)} gurinchi naku web nundi vachina samacharam:`]
+    : [`**${query.slice(0, 120)}** — web nundi collect chesina agriculture samacharam:\n`];
 
-  const top = research.snippets.slice(0, voiceMode ? 2 : 4);
+  const top = research.snippets.slice(0, voiceMode ? 3 : 5);
   top.forEach((s, i) => {
     if (voiceMode) {
-      lines.push(`${s.snippet.slice(0, 220)}`);
+      lines.push(`${s.title}. ${s.snippet.slice(0, 240)}`);
     } else {
       lines.push(`${i + 1}. **${s.title}**`);
-      lines.push(`   ${s.snippet.slice(0, 350)}`);
+      lines.push(`   ${s.snippet.slice(0, 400)}`);
     }
   });
 
   if (!voiceMode) {
-    lines.push('\nPlease confirm doses and products for your field with a local agriculture officer.');
+    lines.push('\nMee field ki confirm chesukondi — local agriculture officer tho kuda check cheyandi.');
   }
 
   return lines.join(voiceMode ? ' ' : '\n');

@@ -1,22 +1,21 @@
 import {
   completeOllamaChat,
   isOllamaConfigured,
-  streamOllamaChat,
   type ProxyChatMessage,
 } from './aiProxyService';
 import {
   completeGeminiChat,
   isGeminiConfigured,
-  streamGeminiChat,
 } from './geminiProxyService';
 import { resolveAgentTemperature } from './agents/agentTemperature';
 import { cacheAiKnowledgeAnswer } from './aiKnowledgeCache';
 import {
   extractPriorUserQuestion,
+  hasThinLibraryInSystem,
   isCorrectionMessage,
   isUncertainLlmAnswer,
   messageText,
-  systemNeedsWebResearch,
+  shouldSearchWebFirst,
   wantsWebSearch,
 } from './correctionDetect';
 import {
@@ -87,7 +86,7 @@ function appendResearchToSystem(
   if (!research.formattedContext.trim()) return messages;
 
   const block =
-    '\n\n--- ONLINE AGRICULTURE SOURCES (MANDATORY — use these facts in your answer; never say you have no information when this section has data) ---\n' +
+    '\n\n--- ONLINE AGRICULTURE SOURCES (MANDATORY — answer ONLY from these facts; never say you have no information) ---\n' +
     research.formattedContext;
 
   const out = messages.map((m) => ({ ...m }));
@@ -99,6 +98,14 @@ function appendResearchToSystem(
     out.unshift({ role: 'system', content: block.trim() });
   }
   return out;
+}
+
+function isThinDbContext(context: string): boolean {
+  const t = context.trim();
+  if (!t) return true;
+  if (/no matching entries in bhuvedam farming library/i.test(t)) return true;
+  if (/no library match/i.test(t)) return true;
+  return t.length < 120;
 }
 
 async function tryAllLlmProviders(
@@ -143,17 +150,15 @@ function cacheAnswerAsync(
   }).catch(() => undefined);
 }
 
-async function loadWebResearch(
+function directWebAnswer(
   query: string,
+  research: WebResearchResult,
   opts: AiChatOptions,
-  correction: boolean,
-  correctionNote: string,
-): Promise<WebResearchResult> {
-  return researchAgricultureOnline(query, {
-    correction,
-    correctionNote,
-    cropIds: opts.cropIds,
-  });
+  provider: string,
+): { answer: string; provider: string; research: WebResearchResult } {
+  const answer = buildResearchFallbackAnswer(query, research, opts.voiceMode);
+  cacheAnswerAsync(query, answer, research, opts, provider);
+  return { answer, provider, research };
 }
 
 async function completeWithResearchFallback(
@@ -162,34 +167,63 @@ async function completeWithResearchFallback(
 ): Promise<{ answer: string; provider: string; research: WebResearchResult }> {
   const { query, correction, correctionNote } = extractResearchQuery(messages);
   const chatOpts = { ...opts, temperature: resolveTemperature(opts) };
-  const userAskedWeb = wantsWebSearch(query) || wantsWebSearch(correctionNote);
 
   let research = emptyResearch(query);
   let workingMessages = messages;
 
-  // Search web BEFORE LLM when DB was empty, user asked to search, or correction.
-  if (userAskedWeb || correction || systemNeedsWebResearch(messages)) {
-    research = await loadWebResearch(query, opts, correction, correctionNote);
+  // STEP 1: No library answer yet → search web FIRST (before LLM).
+  if (shouldSearchWebFirst(messages) || correction || wantsWebSearch(query)) {
+    research = await researchAgricultureOnline(query, {
+      correction,
+      correctionNote,
+      cropIds: opts.cropIds,
+    });
     if (research.formattedContext.trim()) {
       workingMessages = appendResearchToSystem(messages, research);
     }
   }
 
+  const dbEmpty = isThinDbContext(research.dbContext) || hasThinLibraryInSystem(messages);
+
+  // STEP 2: Web found info + DB had nothing → answer from web (no "sorry").
+  if (research.snippets.length > 0 && dbEmpty) {
+    const llmWithWeb = await tryAllLlmProviders(workingMessages, chatOpts);
+    if (llmWithWeb && !isUncertainLlmAnswer(llmWithWeb)) {
+      cacheAnswerAsync(query, llmWithWeb, research, opts, getAiProvider());
+      return { answer: llmWithWeb, provider: getAiProvider(), research };
+    }
+    return directWebAnswer(
+      query,
+      research,
+      opts,
+      correction ? 'correction_research' : 'web_research',
+    );
+  }
+
+  // STEP 3: Normal LLM with whatever context we have.
   let answer = await tryAllLlmProviders(workingMessages, chatOpts);
 
-  // LLM said "sorry / don't know" — search web and retry (even if LLM API succeeded).
   if (answer && isUncertainLlmAnswer(answer)) {
     if (!research.formattedContext.trim()) {
-      research = await loadWebResearch(query, opts, correction, correctionNote);
-    }
-    if (research.formattedContext.trim()) {
+      research = await researchAgricultureOnline(query, {
+        correction,
+        correctionNote,
+        cropIds: opts.cropIds,
+      });
       workingMessages = appendResearchToSystem(messages, research);
+    }
+    if (research.snippets.length > 0) {
       const retry = await tryAllLlmProviders(workingMessages, chatOpts);
       if (retry && !isUncertainLlmAnswer(retry)) {
         cacheAnswerAsync(query, retry, research, opts, getAiProvider());
         return { answer: retry, provider: getAiProvider(), research };
       }
-      answer = retry ?? answer;
+      return directWebAnswer(
+        query,
+        research,
+        opts,
+        correction ? 'correction_research' : 'web_research',
+      );
     }
   }
 
@@ -198,31 +232,31 @@ async function completeWithResearchFallback(
     return { answer, provider: getAiProvider(), research };
   }
 
-  // LLM failed completely — web search + retry + web-only answer.
+  // STEP 4: LLM failed — final web search + direct web answer.
   if (!research.formattedContext.trim()) {
-    research = await loadWebResearch(query, opts, correction, correctionNote);
+    research = await researchAgricultureOnline(query, {
+      correction,
+      correctionNote,
+      cropIds: opts.cropIds,
+    });
     workingMessages = appendResearchToSystem(messages, research);
   }
 
-  const llmAfterWeb = await tryAllLlmProviders(workingMessages, chatOpts);
-  if (llmAfterWeb && !isUncertainLlmAnswer(llmAfterWeb)) {
-    cacheAnswerAsync(query, llmAfterWeb, research, opts, getAiProvider());
-    return { answer: llmAfterWeb, provider: getAiProvider(), research };
+  if (research.snippets.length > 0) {
+    const llmLast = await tryAllLlmProviders(workingMessages, chatOpts);
+    if (llmLast && !isUncertainLlmAnswer(llmLast)) {
+      cacheAnswerAsync(query, llmLast, research, opts, getAiProvider());
+      return { answer: llmLast, provider: getAiProvider(), research };
+    }
+    return directWebAnswer(
+      query,
+      research,
+      opts,
+      correction ? 'correction_research' : 'web_research',
+    );
   }
 
-  const fallback = buildResearchFallbackAnswer(query, research, opts.voiceMode);
-  cacheAnswerAsync(
-    query,
-    fallback,
-    research,
-    opts,
-    correction ? 'correction_research' : 'web_research',
-  );
-  return {
-    answer: fallback,
-    provider: correction ? 'correction_research' : 'web_research',
-    research,
-  };
+  return directWebAnswer(query, research, opts, 'web_research');
 }
 
 export async function completeAiChat(
