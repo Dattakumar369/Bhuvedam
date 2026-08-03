@@ -1,6 +1,8 @@
 import { STORAGE_KEYS } from '@/constants/app';
 import { fetchFarmerProfileFromDatabase } from '@/services/farmers/farmerSyncService';
 import { imageSessionCache } from '@/services/media/imageSessionCache';
+import { notificationsSupported } from '@/services/alerts/localNotifications';
+import { registerForPushNotifications } from '@/services/notifications/pushService';
 import { useAIStore } from '@/store/aiStore';
 import { useAlertStore } from '@/store/alertStore';
 import { useFarmerContextStore } from '@/store/farmerContextStore';
@@ -121,6 +123,10 @@ export async function bootstrapAuthenticatedSession(user: User): Promise<void> {
   await ensureStorageMatchesUser(user.id);
   await loadFarmerProfileForUser(user);
   await hydrateUserScopedStores(user.id);
+
+  if (notificationsSupported && useAlertStore.getState().notificationsEnabled) {
+    void registerForPushNotifications();
+  }
 }
 
 export async function isStorageOwnedByUser(userId: string): Promise<boolean> {

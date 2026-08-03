@@ -119,6 +119,9 @@ export const useAlertStore = create<AlertState>((set, get) => ({
       } catch {
         /* ignore */
       }
+    } else if (notificationsSupported) {
+      // First login — enable farm alerts by default for farmers
+      await get().setNotificationsEnabled(true);
     }
   },
 

@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import type { LanguageCode } from '@/constants/languages';
 import { API_CONFIG } from '@/constants/app';
 import { getLocaleConfig } from '@/constants/i18n/localeConfig';
@@ -5,6 +7,15 @@ import { getSpokenStylePrompt } from '@/constants/i18n/spokenStyle';
 import { AI_TRUST_AND_LEGAL_RULES } from '@/constants/trustPolicy';
 
 export type AIProvider = 'ollama' | 'openai';
+
+function resolveUseBackend(): boolean {
+  if (process.env.EXPO_PUBLIC_USE_BACKEND_AI === 'true') return true;
+  // Direct Ollama streaming breaks on Android/iOS APK — always proxy via Vercel.
+  if (Platform.OS !== 'web') return true;
+  if (!process.env.EXPO_PUBLIC_OLLAMA_API_KEY?.trim()) return true;
+  const api = API_CONFIG.baseUrl;
+  return api.includes('vercel.app') || api.includes('bhuvedam.com');
+}
 
 export const AI_CONFIG = {
   provider: (process.env.EXPO_PUBLIC_AI_PROVIDER ?? 'ollama') as AIProvider,
@@ -17,9 +28,7 @@ export const AI_CONFIG = {
   model: process.env.EXPO_PUBLIC_AI_MODEL ?? 'gpt-4o-mini',
   /** Vision model for image analysis (Ollama: llama3.2-vision, llava, etc.) */
   ollamaVisionModel: process.env.EXPO_PUBLIC_OLLAMA_VISION_MODEL ?? 'llama3.2-vision',
-  useBackend:
-    process.env.EXPO_PUBLIC_USE_BACKEND_AI === 'true' ||
-    !process.env.EXPO_PUBLIC_OLLAMA_API_KEY?.trim(),
+  useBackend: resolveUseBackend(),
 };
 
 export function hasRealAIProvider(): boolean {

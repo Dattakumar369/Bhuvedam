@@ -6,9 +6,11 @@ import { API_CONFIG } from '@/constants/app';
 import { streamFromOllama } from '@/services/ai/ollamaStreamService';
 import { streamFromOpenAICompat } from '@/services/ai/openAICompatStreamService';
 import { buildOpenAIMessageContent } from '@/services/ai/visionMessages';
+import { apiClient, getAuthToken, setAuthToken } from '@/services/api/client';
 import { ENDPOINTS } from '@/services/api/endpoints';
-import { getAuthToken, setAuthToken } from '@/services/api/client';
 import type { ChatMessage } from '@/types/ai';
+
+const AI_REQUEST_TIMEOUT_MS = 55000;
 
 interface StreamOptions {
   messages: ChatMessage[];
@@ -80,26 +82,20 @@ async function chatFromBackend({
   signal,
   voiceMode,
 }: StreamOptions): Promise<string> {
-  const response = await fetch(`${API_CONFIG.baseUrl}${ENDPOINTS.ai.send}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
-    },
-    body: JSON.stringify({
-      messages: buildOpenAIMessages(messages, systemPrompt),
-      voiceMode,
-    }),
-    signal,
-  });
-
-  if (!response.ok) {
-    await parseBackendError(response);
+  if (!getAuthToken()) {
+    throwBackendError('UNAUTHORIZED');
   }
 
-  const data = (await response.json()) as { content?: string };
-  const content = data.content?.trim() ?? '';
+  const res = await apiClient.post<{ content?: string }>(
+    ENDPOINTS.ai.send,
+    {
+      messages: buildOpenAIMessages(messages, systemPrompt),
+      voiceMode,
+    },
+    { timeout: AI_REQUEST_TIMEOUT_MS, signal },
+  );
+
+  const content = res.data.content?.trim() ?? '';
   if (!content) throwBackendError('AI_UNAVAILABLE');
 
   onChunk(content);
