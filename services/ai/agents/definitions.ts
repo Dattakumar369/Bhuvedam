@@ -1,11 +1,11 @@
 import type { AgentDefinition } from './types';
 
 const BASE_RULES = [
-  'Answer ONLY from LIVE DATA and FARMING LIBRARY sections when they contain the answer.',
-  'If data is missing, say clearly you do not have that exact rate/product/name — then give general safe advice.',
+  'Answer from LIVE DATA, FARMING LIBRARY, and ONLINE AGRICULTURE SOURCES when they contain the answer.',
+  'NEVER say "sorry" or "I don\'t have information" if ONLINE AGRICULTURE SOURCES section has relevant facts — use them.',
+  'If data is still missing after using all sources, give the best general safe farming advice you can.',
   'Never invent mandi prices, pesticide brands, doses, or weather numbers.',
   'Never mention servers, databases, APIs, or how the app works — speak only about farming.',
-  'If ONLINE AGRICULTURE SOURCES are in context, use those facts — do not say you cannot answer.',
 ];
 
 export const AGENTS: Record<AgentDefinition['id'], AgentDefinition> = {

@@ -14,7 +14,10 @@ import { cacheAiKnowledgeAnswer } from './aiKnowledgeCache';
 import {
   extractPriorUserQuestion,
   isCorrectionMessage,
+  isUncertainLlmAnswer,
   messageText,
+  systemNeedsWebResearch,
+  wantsWebSearch,
 } from './correctionDetect';
 import {
   buildResearchFallbackAnswer,
@@ -58,7 +61,6 @@ export function getAiProvider(): AiProvider {
   return 'ollama';
 }
 
-/** Web research works without LLM keys — chat should never hard-fail. */
 export function isAiConfigured(): boolean {
   return true;
 }
@@ -74,6 +76,10 @@ function extractResearchQuery(messages: ProxyChatMessage[]): {
   return { query: query || lastUser, correction, correctionNote: lastUser };
 }
 
+function emptyResearch(query: string): WebResearchResult {
+  return { query, snippets: [], formattedContext: '', dbContext: '' };
+}
+
 function appendResearchToSystem(
   messages: ProxyChatMessage[],
   research: WebResearchResult,
@@ -81,7 +87,7 @@ function appendResearchToSystem(
   if (!research.formattedContext.trim()) return messages;
 
   const block =
-    '\n\n--- ONLINE AGRICULTURE SOURCES (use these facts; farmer must not see website names in reply) ---\n' +
+    '\n\n--- ONLINE AGRICULTURE SOURCES (MANDATORY — use these facts in your answer; never say you have no information when this section has data) ---\n' +
     research.formattedContext;
 
   const out = messages.map((m) => ({ ...m }));
@@ -137,39 +143,71 @@ function cacheAnswerAsync(
   }).catch(() => undefined);
 }
 
+async function loadWebResearch(
+  query: string,
+  opts: AiChatOptions,
+  correction: boolean,
+  correctionNote: string,
+): Promise<WebResearchResult> {
+  return researchAgricultureOnline(query, {
+    correction,
+    correctionNote,
+    cropIds: opts.cropIds,
+  });
+}
+
 async function completeWithResearchFallback(
   messages: ProxyChatMessage[],
   opts: AiChatOptions,
 ): Promise<{ answer: string; provider: string; research: WebResearchResult }> {
   const { query, correction, correctionNote } = extractResearchQuery(messages);
   const chatOpts = { ...opts, temperature: resolveTemperature(opts) };
-  const emptyResearch: WebResearchResult = {
-    query,
-    snippets: [],
-    formattedContext: '',
-    dbContext: '',
-  };
+  const userAskedWeb = wantsWebSearch(query) || wantsWebSearch(correctionNote);
 
-  // Client prompt often already includes DB + web context — try LLM first (fast path).
-  const llmFirst = await tryAllLlmProviders(messages, chatOpts);
-  if (llmFirst) {
-    if (correction) {
-      cacheAnswerAsync(query, llmFirst, emptyResearch, opts, 'correction');
+  let research = emptyResearch(query);
+  let workingMessages = messages;
+
+  // Search web BEFORE LLM when DB was empty, user asked to search, or correction.
+  if (userAskedWeb || correction || systemNeedsWebResearch(messages)) {
+    research = await loadWebResearch(query, opts, correction, correctionNote);
+    if (research.formattedContext.trim()) {
+      workingMessages = appendResearchToSystem(messages, research);
     }
-    return { answer: llmFirst, provider: getAiProvider(), research: emptyResearch };
   }
 
-  // LLM unavailable — search online, retry LLM, then return web-only answer.
-  const research = await researchAgricultureOnline(query, {
-    correction,
-    correctionNote,
-    cropIds: opts.cropIds,
-  });
-  const augmented = appendResearchToSystem(messages, research);
-  const llmSecond = await tryAllLlmProviders(augmented, chatOpts);
-  if (llmSecond) {
-    cacheAnswerAsync(query, llmSecond, research, opts, getAiProvider());
-    return { answer: llmSecond, provider: getAiProvider(), research };
+  let answer = await tryAllLlmProviders(workingMessages, chatOpts);
+
+  // LLM said "sorry / don't know" — search web and retry (even if LLM API succeeded).
+  if (answer && isUncertainLlmAnswer(answer)) {
+    if (!research.formattedContext.trim()) {
+      research = await loadWebResearch(query, opts, correction, correctionNote);
+    }
+    if (research.formattedContext.trim()) {
+      workingMessages = appendResearchToSystem(messages, research);
+      const retry = await tryAllLlmProviders(workingMessages, chatOpts);
+      if (retry && !isUncertainLlmAnswer(retry)) {
+        cacheAnswerAsync(query, retry, research, opts, getAiProvider());
+        return { answer: retry, provider: getAiProvider(), research };
+      }
+      answer = retry ?? answer;
+    }
+  }
+
+  if (answer && !isUncertainLlmAnswer(answer)) {
+    if (correction) cacheAnswerAsync(query, answer, research, opts, 'correction');
+    return { answer, provider: getAiProvider(), research };
+  }
+
+  // LLM failed completely — web search + retry + web-only answer.
+  if (!research.formattedContext.trim()) {
+    research = await loadWebResearch(query, opts, correction, correctionNote);
+    workingMessages = appendResearchToSystem(messages, research);
+  }
+
+  const llmAfterWeb = await tryAllLlmProviders(workingMessages, chatOpts);
+  if (llmAfterWeb && !isUncertainLlmAnswer(llmAfterWeb)) {
+    cacheAnswerAsync(query, llmAfterWeb, research, opts, getAiProvider());
+    return { answer: llmAfterWeb, provider: getAiProvider(), research };
   }
 
   const fallback = buildResearchFallbackAnswer(query, research, opts.voiceMode);
@@ -199,26 +237,6 @@ export async function streamAiChat(
   messages: ProxyChatMessage[],
   opts: AiChatOptions,
 ): Promise<ReadableStream<Uint8Array>> {
-  const chatOpts = { ...opts, temperature: resolveTemperature(opts) };
-
-  const streamAttempts: (() => Promise<ReadableStream<Uint8Array>>)[] = [];
-  if (getAiProvider() === 'ollama' && isOllamaConfigured()) {
-    streamAttempts.push(() => streamOllamaChat(messages, chatOpts));
-  } else if (isGeminiConfigured()) {
-    streamAttempts.push(() => streamGeminiChat(messages, chatOpts));
-  }
-  if (isOllamaConfigured() && getAiProvider() !== 'ollama') {
-    streamAttempts.push(() => streamOllamaChat(messages, chatOpts));
-  }
-
-  for (const attempt of streamAttempts) {
-    try {
-      return await attempt();
-    } catch {
-      /* fall through */
-    }
-  }
-
   const { answer } = await completeWithResearchFallback(messages, opts);
   const encoder = new TextEncoder();
   return new ReadableStream<Uint8Array>({

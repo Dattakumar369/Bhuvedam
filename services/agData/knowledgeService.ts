@@ -1,4 +1,5 @@
 import { API_CONFIG } from '@/constants/app';
+import { wantsWebSearch } from '@/services/ai/farmerKnowledge';
 import { apiClient } from '@/services/api/client';
 import { ENDPOINTS } from '@/services/api/endpoints';
 
@@ -75,11 +76,20 @@ export async function searchKnowledge(query: string): Promise<KnowledgeHit[]> {
 export function isThinDbContext(context: string): boolean {
   const t = context.trim();
   if (!t) return true;
-  if (/no knowledge db hits/i.test(t)) return true;
+  if (/no matching entries in bhuvedam farming library/i.test(t)) return true;
   if (/no library match/i.test(t)) return true;
   if (/farming library could not be loaded/i.test(t)) return true;
   if (/library not loaded/i.test(t)) return true;
+  if (/ONLINE AGRICULTURE SOURCES/i.test(t)) return false;
   return t.length < 120;
+}
+
+/** Client should fetch web research when DB is thin or web sources not yet loaded. */
+export function shouldFetchWebResearch(context: string, userQuery: string): boolean {
+  if (wantsWebSearch(userQuery)) return true;
+  if (isThinDbContext(context)) return true;
+  if (!/ONLINE AGRICULTURE SOURCES/i.test(context)) return true;
+  return false;
 }
 
 /** When DB had no answer, save AI reply for other farmers (fire-and-forget). */
@@ -121,7 +131,7 @@ export async function fetchWebResearchContext(
         correction: opts.correction ? 'true' : undefined,
         priorQuery: opts.priorQuery?.slice(0, 200) || undefined,
       },
-      timeout: 12000,
+      timeout: 20000,
     });
     return response.data.context ?? '';
   } catch {

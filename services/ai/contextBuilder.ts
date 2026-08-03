@@ -1,32 +1,31 @@
+import { AI_LOCAL_LANGUAGE_RULES_TE } from '@/constants/agLocalTerms';
 import { getSystemPrompt } from '@/constants/aiConfig';
 import { API_CONFIG } from '@/constants/app';
-import { AI_LOCAL_LANGUAGE_RULES_TE } from '@/constants/agLocalTerms';
-import {
-  AI_CONTEXT_PRIVACY_NOTE,
-  AI_REFUSAL_STYLE,
-} from '@/constants/trustPolicy';
-import { fetchKnowledgeContext, fetchWebResearchContext, isThinDbContext } from '@/services/agData/knowledgeService';
-import { routeToAgent, type AgentDefinition, type AgentId } from '@/services/ai/agents';
-import { isFarmerCorrection } from '@/services/ai/farmerKnowledge';
-import {
-  detectQueryTopics,
-  isPestOrDiseaseQuery,
-  needsKnowledgeSearch,
-  resolveCropIdsForQuery,
-  type QueryTopic,
-} from '@/services/ai/queryIntent';
-import { getSoilTypeLabel } from '@/constants/soilTypes';
-import { CROPS } from '@/constants/crops';
-import { analyticsKey } from '@/services/mandi/mandiService';
-import { WEATHER_CONDITIONS } from '@/constants/weather';
 import { LANGUAGES, type LanguageCode } from '@/constants/languages';
+import { getSoilTypeLabel } from '@/constants/soilTypes';
+import {
+    AI_CONTEXT_PRIVACY_NOTE,
+    AI_REFUSAL_STYLE,
+} from '@/constants/trustPolicy';
+import { WEATHER_CONDITIONS } from '@/constants/weather';
+import { fetchKnowledgeContext, fetchWebResearchContext, shouldFetchWebResearch } from '@/services/agData/knowledgeService';
+import { routeToAgent, type AgentDefinition, type AgentId } from '@/services/ai/agents';
+import { isFarmerCorrection, wantsWebSearch } from '@/services/ai/farmerKnowledge';
+import {
+    detectQueryTopics,
+    isPestOrDiseaseQuery,
+    needsKnowledgeSearch,
+    resolveCropIdsForQuery,
+    type QueryTopic,
+} from '@/services/ai/queryIntent';
+import { analyticsKey } from '@/services/mandi/mandiService';
 import { useFarmerContextStore } from '@/store/farmerContextStore';
 import { useMandiStore } from '@/store/mandiStore';
 import { useUserStore } from '@/store/userStore';
 import { useWeatherStore } from '@/store/weatherStore';
 import type { Conversation } from '@/types/ai';
-import { formatLiveClockBlock } from '@/utils/liveClock';
 import { detectQueryLanguage } from '@/utils/detectQueryLanguage';
+import { formatLiveClockBlock } from '@/utils/liveClock';
 
 const STALE_WEATHER_MS = 30 * 60 * 1000;
 
@@ -229,7 +228,7 @@ export function buildFullSystemPrompt(
         sections.push(
           '',
           '--- FARMING LIBRARY ---',
-          'No library match for this question — answer from expertise only. Say when you are not sure. Save a clear answer for other farmers.',
+          'No library match — use ONLINE AGRICULTURE SOURCES below if present. Give the best farming answer you can from those sources.',
         );
       }
     }
@@ -282,10 +281,16 @@ export async function buildFullSystemPromptAsync(
 
   const correction = isFarmerCorrection(userQuery);
   const priorQuery = correction ? findPriorUserQuestion(conversations, activeConversationId) : '';
-  const needsWebResearch = correction || isThinDbContext(dbReferenceContext);
+  const researchQuery = correction && priorQuery ? priorQuery : userQuery;
+  const needsWebResearch =
+    API_CONFIG.useBackendData &&
+    (correction ||
+      wantsWebSearch(userQuery) ||
+      shouldFetchWebResearch(dbReferenceContext, userQuery) ||
+      (agent.context.library && !/ONLINE AGRICULTURE SOURCES/i.test(dbReferenceContext)));
 
-  if (needsWebResearch && API_CONFIG.useBackendData) {
-    const webContext = await fetchWebResearchContext(userQuery, {
+  if (needsWebResearch) {
+    const webContext = await fetchWebResearchContext(researchQuery, {
       cropIds,
       correction,
       priorQuery: priorQuery || undefined,
