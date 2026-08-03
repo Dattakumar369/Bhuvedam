@@ -5,6 +5,7 @@ import {
   historyHasVisionImage,
 } from '@/services/ai/visionMessages';
 import type { ChatMessage } from '@/types/ai';
+import { userApiError } from '@/utils/apiUserError';
 
 interface OllamaStreamOptions {
   messages: ChatMessage[];
@@ -60,7 +61,7 @@ async function requestOllamaChat(
   onChunk?: (content: string) => void,
 ): Promise<OllamaChatResponse> {
   if (!AI_CONFIG.ollamaApiKey) {
-    throw new Error('Ollama API key is not configured. Add EXPO_PUBLIC_OLLAMA_API_KEY to .env');
+    throw userApiError('AI_NOT_CONFIGURED');
   }
 
   const useVision = historyHasVisionImage(messages);
@@ -89,8 +90,7 @@ async function requestOllamaChat(
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(parseOllamaError(response.status, errorText));
+    throw userApiError('AI_UNAVAILABLE');
   }
 
   if (stream) {
@@ -173,7 +173,7 @@ export async function streamFromOllama({
     );
     const content = extractAssistantContent(data);
     if (!content) {
-      throw new Error('Ollama returned an empty response. Try a faster model in .env (e.g. llama3.2).');
+      throw userApiError('AI_UNAVAILABLE');
     }
     onChunk(content);
     return content;
@@ -182,7 +182,7 @@ export async function streamFromOllama({
       const data = await requestOllamaChat(messages, systemPrompt, false, signal, voiceMode);
       const content = extractAssistantContent(data);
       if (!content) {
-        throw new Error('Ollama returned an empty response');
+        throw userApiError('AI_UNAVAILABLE');
       }
       onChunk(content);
       return content;

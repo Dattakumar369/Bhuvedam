@@ -107,7 +107,7 @@ function formatMandiBlock(query: string, compact = false): string {
   const mandi = useMandiStore.getState();
   const { analytics, forecasts, source, lastFetched } = mandi;
   if (!analytics.length) {
-    return 'Status: Not loaded — open Mandi Rates screen or check backend/WiFi.';
+    return 'Mandi rates not loaded yet — open Mandi Rates once or check internet connection.';
   }
 
   const cropIds = resolveCropIdsForQuery(query, useFarmerContextStore.getState().crops);
@@ -192,15 +192,15 @@ export function buildFullSystemPrompt(
       sections.push(
         '',
         pestOrCropHealth
-          ? '--- DATABASE REFERENCE (MANDATORY — rogam/purugu/mandu ki ivi use cheyandi; exact peru + dose cheppandi) ---'
-          : '--- DATABASE REFERENCE (products & doses from DB) ---',
+          ? '--- FARMING LIBRARY (MANDATORY for rogam/purugu/mandu — exact product name + dose) ---'
+          : '--- FARMING LIBRARY (products & doses) ---',
         dbReferenceContext.trim(),
       );
     } else if (needsKnowledgeSearch(topics)) {
       sections.push(
         '',
-        '--- DATABASE REFERENCE ---',
-        'Status: Backend catalog not loaded. Use your agriculture knowledge + farmer profile above.',
+        '--- FARMING LIBRARY ---',
+        'No library match for this question — answer fully from your agriculture expertise. Save a clear answer for other farmers.',
       );
     }
   }
@@ -212,7 +212,8 @@ export function buildFullSystemPrompt(
     `- ${AI_REFUSAL_STYLE}`,
     '- Think and answer naturally — local agriculture expert, not a lookup table.',
     '- Use farmer profile, corrections, and local facts they taught you.',
-    '- For rogam/purugu/mandu: use DATABASE REFERENCE — exact product, dose, Telugu local name.',
+    '- For rogam/purugu/mandu: use FARMING LIBRARY — exact product, dose, Telugu local name.',
+    '- Never mention servers, databases, APIs, or how the app works — speak only about farming.',
     '- If farmer says you were wrong, agree and follow their correction.',
     '- Time questions: answer ONLY from CURRENT DATE & TIME.',
   );
@@ -234,7 +235,7 @@ export async function buildFullSystemPromptAsync(
   activeConversationId: string,
   voiceMode: boolean,
   userQuery: string,
-): Promise<string> {
+): Promise<{ prompt: string; dbContext: string; cropIds: string[] }> {
   // Learn from farmer message BEFORE building prompt (corrections, local facts)
   await useFarmerContextStore.getState().learnFromUserMessage(userQuery);
 
@@ -247,7 +248,7 @@ export async function buildFullSystemPromptAsync(
     dbReferenceContext = await fetchKnowledgeContext(userQuery, cropIds);
   }
 
-  return buildFullSystemPrompt(
+  const prompt = buildFullSystemPrompt(
     language,
     conversations,
     activeConversationId,
@@ -256,4 +257,6 @@ export async function buildFullSystemPromptAsync(
     dbReferenceContext.slice(0, voiceMode ? 1500 : 3500),
     effectiveLanguage,
   );
+
+  return { prompt, dbContext: dbReferenceContext, cropIds };
 }

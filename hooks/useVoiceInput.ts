@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Platform } from 'react-native';
+import { Alert } from 'react-native';
 
 import { getLocaleConfig } from '@/constants/i18n/localeConfig';
 import { getTranslations } from '@/constants/i18n/translations';
+import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
 import type { LanguageCode } from '@/constants/languages';
 import {
   getNativeSpeechRecognition,
@@ -18,6 +19,8 @@ interface UseVoiceInputOptions {
   onPartialResult?: (transcript: string) => void;
   language?: LanguageCode;
   enabled?: boolean;
+  /** When true, ignore mic results and stop any active session (during TTS / AI reply). */
+  blocked?: boolean;
 }
 
 export function useVoiceInput({
@@ -25,6 +28,7 @@ export function useVoiceInput({
   onPartialResult,
   language: languageOverride,
   enabled = true,
+  blocked = false,
 }: UseVoiceInputOptions) {
   const storeLanguage = useLanguageStore((s) => s.language);
   const language = languageOverride ?? storeLanguage;
@@ -38,9 +42,21 @@ export function useVoiceInput({
   const onResultRef = useRef(onResult);
   const onPartialResultRef = useRef(onPartialResult);
   const isListeningRef = useRef(false);
+  const blockedRef = useRef(blocked);
 
   onResultRef.current = onResult;
   onPartialResultRef.current = onPartialResult;
+  blockedRef.current = blocked;
+
+  useEffect(() => {
+    if (!blocked) return;
+    const module = getNativeSpeechRecognition();
+    if (module && isListeningRef.current) {
+      module.abort();
+      isListeningRef.current = false;
+      setIsListening(false);
+    }
+  }, [blocked]);
 
   useEffect(() => {
     const module = getNativeSpeechRecognition();
@@ -57,6 +73,8 @@ export function useVoiceInput({
         setIsListening(false);
       }),
       module.addListener('result', (event) => {
+        if (blockedRef.current) return;
+
         const payload = event as SpeechRecognitionResultEvent;
         const text = payload.results[0]?.transcript ?? '';
         setTranscript(text);
@@ -91,22 +109,11 @@ export function useVoiceInput({
   const showDevBuildAlert = useCallback(() => {
     Alert.alert(strings.voiceInputTitle, strings.voiceInputMessage, [
       { text: strings.voiceInputOk, style: 'default' },
-      ...(Platform.OS === 'android'
-        ? [
-            {
-              text: strings.voiceInputLearnMore,
-              onPress: () =>
-                void Linking.openURL(
-                  'https://docs.expo.dev/develop/development-builds/introduction/',
-                ),
-            },
-          ]
-        : []),
     ]);
   }, [strings]);
 
   const startListening = useCallback(async () => {
-    if (!enabled) return;
+    if (!enabled || blockedRef.current) return;
 
     const module = getNativeSpeechRecognition();
     if (!module) {
@@ -118,7 +125,7 @@ export function useVoiceInput({
       const permission = await module.requestPermissionsAsync();
       if (!permission.granted) {
         setError('Microphone permission denied');
-        Alert.alert(strings.voiceInputTitle, 'Microphone permission is required for voice chat.');
+        Alert.alert(strings.voiceInputTitle, getUserErrorMessage('MIC_PERMISSION_DENIED', language));
         return;
       }
 
@@ -139,7 +146,7 @@ export function useVoiceInput({
     } catch {
       showDevBuildAlert();
     }
-  }, [enabled, speechRecognition, showDevBuildAlert, strings.voiceInputTitle]);
+  }, [enabled, speechRecognition, showDevBuildAlert, strings.voiceInputTitle, language]);
 
   const stopListening = useCallback(() => {
     const module = getNativeSpeechRecognition();

@@ -5,7 +5,56 @@ import type { LanguageCode } from '@/constants/languages';
 import { getLocaleConfig } from '@/constants/i18n/localeConfig';
 
 let isSpeaking = false;
+let speakQueue: string[] = [];
+let speakDoneCallback: (() => void) | undefined;
 const voiceCache = new Map<LanguageCode, string | undefined>();
+
+function splitForTts(text: string, maxLen = 320): string[] {
+  if (text.length <= maxLen) return [text];
+
+  const parts: string[] = [];
+  let rest = text;
+
+  while (rest.length > maxLen) {
+    const slice = rest.slice(0, maxLen);
+    const breakAt = Math.max(slice.lastIndexOf('. '), slice.lastIndexOf('। '), slice.lastIndexOf(' '));
+    const cut = breakAt > 40 ? breakAt + 1 : maxLen;
+    parts.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+
+  if (rest) parts.push(rest);
+  return parts.filter(Boolean);
+}
+
+function finishSpeakQueue(): void {
+  isSpeaking = false;
+  speakQueue = [];
+  const done = speakDoneCallback;
+  speakDoneCallback = undefined;
+  done?.();
+}
+
+function speakNextChunk(language: LanguageCode): void {
+  const chunk = speakQueue.shift();
+  if (!chunk) {
+    finishSpeakQueue();
+    return;
+  }
+
+  const { speech, speechRate, speechPitch } = getLocaleConfig(language);
+  const voice = voiceCache.get(language);
+
+  Speech.speak(chunk, {
+    language: speech,
+    ...(voice ? { voice } : {}),
+    pitch: speechPitch,
+    rate: speechRate,
+    onDone: () => speakNextChunk(language),
+    onStopped: () => finishSpeakQueue(),
+    onError: () => finishSpeakQueue(),
+  });
+}
 
 function stripMarkdown(text: string): string {
   return text
@@ -55,34 +104,23 @@ export async function warmUpSpeechVoice(language: LanguageCode): Promise<void> {
 
 export function speak(text: string, language: LanguageCode = 'en', onDone?: () => void): void {
   const cleaned = prepareTextForSpeech(text, language);
-  if (!cleaned) return;
+  if (!cleaned) {
+    onDone?.();
+    return;
+  }
 
   stopSpeaking();
 
-  const { speech, speechRate, speechPitch } = getLocaleConfig(language);
-  const voice = voiceCache.get(language);
-
+  speakQueue = splitForTts(cleaned);
+  speakDoneCallback = onDone;
   isSpeaking = true;
-  Speech.speak(cleaned, {
-    language: speech,
-    ...(voice ? { voice } : {}),
-    pitch: speechPitch,
-    rate: speechRate,
-    onDone: () => {
-      isSpeaking = false;
-      onDone?.();
-    },
-    onStopped: () => {
-      isSpeaking = false;
-    },
-    onError: () => {
-      isSpeaking = false;
-    },
-  });
+  speakNextChunk(language);
 }
 
 export function stopSpeaking(): void {
   Speech.stop();
+  speakQueue = [];
+  speakDoneCallback = undefined;
   isSpeaking = false;
 }
 

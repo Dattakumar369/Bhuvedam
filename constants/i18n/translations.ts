@@ -87,12 +87,12 @@ const en: Translations = {
   voiceBarThinking: 'Bhuvedam AI is thinking...',
   voiceBarSpeaking: 'Speaking...',
   typingIndicator: 'Bhuvedam AI is thinking...',
-  voiceInputTitle: 'Voice input requires dev build',
+  voiceInputTitle: 'Voice typing not available',
   voiceInputMessage:
-    'Microphone speech recognition is not available in Expo Go.\n\n• Type your question in the chat box\n• AI will still speak replies aloud\n\nFor full voice input, run:\nnpx expo run:android',
+    'Please type your question in the chat box.\n\nWhen voice mode is on, Bhuvedam AI will still read answers aloud for you.',
   voiceInputOk: 'OK',
-  voiceInputLearnMore: 'Learn more',
-  aiError: 'Failed to get AI response',
+  voiceInputLearnMore: 'OK',
+  aiError: 'Bhuvedam AI could not reply. Please try again.',
   messageEdit: 'Edit',
   messageDelete: 'Delete',
   messageActionsTitle: 'Message',
@@ -104,7 +104,7 @@ const en: Translations = {
   chatAttachImage: 'Upload photo',
   chatImageDefaultPrompt:
     'Analyze this farm photo — identify the crop, any disease/pest/nutrient problem visible, and suggest practical solutions.',
-  chatImageSessionNote: 'Photos stay in this session only — not saved to server.',
+  chatImageSessionNote: 'Photos stay in this chat only — not saved online.',
   mockResponses: {
     default:
       'Based on current agricultural best practices, I recommend monitoring soil moisture levels regularly and adjusting irrigation based on crop growth stage. Would you like specific advice for a particular crop?',
@@ -153,11 +153,11 @@ const hi: Translations = {
   voiceBarThinking: 'Bhuvedam AI सोच रहा है...',
   voiceBarSpeaking: 'बोल रहा है...',
   typingIndicator: 'Bhuvedam AI सोच रहा है...',
-  voiceInputTitle: 'वॉइस इनपुट के लिए dev build चाहिए',
+  voiceInputTitle: 'वॉइस टाइपिंग उपलब्ध नहीं',
   voiceInputMessage:
-    'Expo Go में माइक्रोफोन पहचान उपलब्ध नहीं है।\n\n• चैट बॉक्स में अपना प्रश्न टाइप करें\n• AI अभी भी जवाब बोलकर देगा\n\nपूर्ण वॉइस इनपुट के लिए:\nnpx expo run:android',
+    'कृपया चैट बॉक्स में अपना प्रश्न टाइप करें।\n\nवॉइस मोड चालू होने पर Bhuvedam AI जवाब बोलकर भी सुनाएगा।',
   voiceInputOk: 'ठीक है',
-  voiceInputLearnMore: 'और जानें',
+  voiceInputLearnMore: 'ठीक है',
   aiError: 'AI जवाब प्राप्त करने में विफल',
   messageEdit: 'संपादित करें',
   messageDelete: 'हटाएं',
@@ -219,11 +219,11 @@ const mr: Translations = {
   voiceBarThinking: 'Bhuvedam AI विचार करत आहे...',
   voiceBarSpeaking: 'बोलत आहे...',
   typingIndicator: 'Bhuvedam AI विचार करत आहे...',
-  voiceInputTitle: 'व्हॉइस इनपुटसाठी dev build आवश्यक',
+  voiceInputTitle: 'व्हॉइस टाइपिंग उपलब्ध नाही',
   voiceInputMessage:
-    'Expo Go मध्ये मायक्रोफोन ओळख उपलब्ध नाही.\n\n• चॅट बॉक्समध्ये प्रश्न टाइप करा\n• AI अद्याप उत्तरे मोठ्याने सांगेल\n\nपूर्ण व्हॉइस इनपुटसाठी:\nnpx expo run:android',
+    'कृपया चॅट बॉक्समध्ये प्रश्न टाइप करा.\n\nव्हॉइस मोड चालू असताना Bhuvedam AI उत्तरे वाचूनही सांगेल.',
   voiceInputOk: 'ठीक आहे',
-  voiceInputLearnMore: 'अधिक जाणून घ्या',
+  voiceInputLearnMore: 'ठीक आहे',
   aiError: 'AI उत्तर मिळवण्यात अयशस्वी',
   messageEdit: 'संपादित करा',
   messageDelete: 'हटवा',
@@ -285,11 +285,11 @@ const ta: Translations = {
   voiceBarThinking: 'Bhuvedam AI யோசிக்கிறது...',
   voiceBarSpeaking: 'பேசுகிறது...',
   typingIndicator: 'Bhuvedam AI யோசிக்கிறது...',
-  voiceInputTitle: 'குரல் உள்ளீட்டிற்கு dev build தேவை',
+  voiceInputTitle: 'குரல் உள்ளீடு கிடைக்கவில்லை',
   voiceInputMessage:
-    'Expo Go-ல் மைக்ரோஃபோன் அங்கீகாரம் கிடைக்காது.\n\n• அரட்டை பெட்டியில் கேள்வியை தட்டச்சு செய்யுங்கள்\n• AI பதில்களை பேசும்\n\nமுழு குரல் உள்ளீட்டிற்கு:\nnpx expo run:android',
+    'அரட்டை பெட்டியில் கேள்வியை தட்டச்சு செய்யுங்கள்.\n\nகுரல் முறை இயக்கத்தில் Bhuvedam AI பதில்களை பேசியும் கூறும்.',
   voiceInputOk: 'சரி',
-  voiceInputLearnMore: 'மேலும் அறிய',
+  voiceInputLearnMore: 'சரி',
   aiError: 'AI பதில் பெற முடியவில்லை',
   messageEdit: 'திருத்து',
   messageDelete: 'அழி',
@@ -302,7 +302,7 @@ const ta: Translations = {
   chatAttachImage: 'புகைப்படம்',
   chatImageDefaultPrompt:
     'Analyze this farm photo — identify crop, disease/pest/nutrient issue, and suggest practical solutions.',
-  chatImageSessionNote: 'Photos stay in this session only — not saved to server.',
+  chatImageSessionNote: 'Photos stay in this chat only — not saved online.',
   mockResponses: {
     default:
       'தற்போதைய விவசாய சிறந்த நடைமுறைகளின் அடிப்படையில், மண் ஈரப்பதத்தை தொடர்ந்து கண்காணித்து, பயிர் வளர்ச்சிக்கு ஏற்ப பாசனத்தை சரிசெய்ய பரிந்துரைக்கிறேன். குறிப்பிட்ட பயிருக்கு ஆலோசனை வேண்டுமா?',
@@ -351,11 +351,11 @@ const te: Translations = {
   voiceBarThinking: 'ఆలోచిస్తున్నాను...',
   voiceBarSpeaking: 'మీకు చెప్పుతున్నాను...',
   typingIndicator: 'Bhuvedam AI ఆలోచిస్తోంది...',
-  voiceInputTitle: 'వాయిస్ ఇన్‌పుట్‌కు dev build అవసరం',
+  voiceInputTitle: 'వాయిస్ టైపింగ్ అందుబాటులో లేదు',
   voiceInputMessage:
-    'Expo Go లో మైక్రోఫోన్ గుర్తింపు అందుబాటులో లేదు.\n\n• చాట్ బాక్స్‌లో మీ ప్రశ్న టైప్ చేయండి\n• AI ఇప్పటికీ సమాధానాలు మాట్లాడుతుంది\n\nపూర్తి వాయిస్ ఇన్‌పుట్ కోసం:\nnpx expo run:android',
+    'దయచేసి చాట్ బాక్స్‌లో మీ ప్రశ్న టైప్ చేయండి.\n\nవాయిస్ మోడ్ ఆన్ ఉంటే Bhuvedam AI సమాధానాలు మాట్లాడి చెప్తుంది.',
   voiceInputOk: 'సరే',
-  voiceInputLearnMore: 'మరింత తెలుసుకోండి',
+  voiceInputLearnMore: 'సరే',
   aiError: 'AI సమాధానం పొందడంలో విఫలమైంది',
   messageEdit: 'మార్చు',
   messageDelete: 'తొలగించు',
@@ -417,11 +417,11 @@ const kn: Translations = {
   voiceBarThinking: 'Bhuvedam AI ಯೋಚಿಸುತ್ತಿದೆ...',
   voiceBarSpeaking: 'ಮಾತನಾಡುತ್ತಿದೆ...',
   typingIndicator: 'Bhuvedam AI ಯೋಚಿಸುತ್ತಿದೆ...',
-  voiceInputTitle: 'ವಾಯ್ಸ್ ಇನ್‌ಪುಟ್‌ಗೆ dev build ಅಗತ್ಯ',
+  voiceInputTitle: 'ವಾಯ್ಸ್ ಟೈಪಿಂಗ್ ಲಭ್ಯವಿಲ್ಲ',
   voiceInputMessage:
-    'Expo Go ನಲ್ಲಿ ಮೈಕ್ರೋಫೋನ್ ಗುರುತಿಸುವಿಕೆ ಲಭ್ಯವಿಲ್ಲ.\n\n• ಚಾಟ್ ಬಾಕ್ಸ್‌ನಲ್ಲಿ ಪ್ರಶ್ನೆ ಟೈಪ್ ಮಾಡಿ\n• AI ಇನ್ನೂ ಉತ್ತರಗಳನ್ನು ಮಾತನಾಡುತ್ತದೆ\n\nಪೂರ್ಣ ವಾಯ್ಸ್ ಇನ್‌ಪುಟ್‌ಗೆ:\nnpx expo run:android',
+    'ದಯವಿಟ್ಟು ಚಾಟ್ ಬಾಕ್ಸ್‌ನಲ್ಲಿ ಪ್ರಶ್ನೆ ಟೈಪ್ ಮಾಡಿ.\n\nವಾಯ್ಸ್ ಮೋಡ್ ಆನ್ ಇದ್ದಾಗ Bhuvedam AI ಉತ್ತರಗಳನ್ನು ಮಾತನಾಡಿ ಹೇಳುತ್ತದೆ.',
   voiceInputOk: 'ಸರಿ',
-  voiceInputLearnMore: 'ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ',
+  voiceInputLearnMore: 'ಸರಿ',
   aiError: 'AI ಉತ್ತರ ಪಡೆಯಲು ವಿಫಲವಾಗಿದೆ',
   messageEdit: 'ಸಂಪಾದಿಸಿ',
   messageDelete: 'ಅಳಿಸಿ',
@@ -434,7 +434,7 @@ const kn: Translations = {
   chatAttachImage: 'ಫೋಟೋ ಅಪ್‌ಲೋಡ್',
   chatImageDefaultPrompt:
     'Analyze this farm photo — identify crop, disease/pest/nutrient issue, and suggest practical solutions.',
-  chatImageSessionNote: 'Photos stay in this session only — not saved to server.',
+  chatImageSessionNote: 'Photos stay in this chat only — not saved online.',
   mockResponses: {
     default:
       'ಪ್ರಸ್ತುತ ಕೃಷಿ ಉತ್ತಮ ಪದ್ಧತಿಗಳ ಆಧಾರದ ಮೇಲೆ, ಮಣ್ಣಿನ ತೇವಾಂಶವನ್ನು ನಿಯಮಿತವಾಗಿ ಗಮನಿಸಿ ಮತ್ತು ಬೆಳೆ ಬೆಳವಣಿಗೆಯ ಹಂತಕ್ಕೆ ಅನುಗುಣವಾಗಿ ನೀರಾವರಿ ಹೊಂದಿಸಿ. ನಿರ್ದಿಷ್ಟ ಬೆಳೆಗೆ ಸಲಹೆ ಬೇಕೇ?',

@@ -33,7 +33,7 @@ export async function fetchKnowledgeContext(
     );
     return response.data.context ?? '';
   } catch {
-    return 'Status: Knowledge backend unreachable — set EXPO_PUBLIC_API_URL to your PC WiFi IP (not localhost on phone).';
+    return 'Farming library could not be loaded. Check internet and answer from your expertise.';
   }
 }
 
@@ -68,5 +68,40 @@ export async function searchKnowledge(query: string): Promise<KnowledgeHit[]> {
     return response.data.data ?? [];
   } catch {
     return [];
+  }
+}
+
+/** True when DB had no useful match — AI answer should be cached for reuse. */
+export function isThinDbContext(context: string): boolean {
+  const t = context.trim();
+  if (!t) return true;
+  if (/no knowledge db hits/i.test(t)) return true;
+  if (/no library match/i.test(t)) return true;
+  if (/farming library could not be loaded/i.test(t)) return true;
+  if (/library not loaded/i.test(t)) return true;
+  return t.length < 120;
+}
+
+/** When DB had no answer, save AI reply for other farmers (fire-and-forget). */
+export async function cacheAiKnowledgeAnswer(
+  query: string,
+  answer: string,
+  opts: { cropIds?: string[]; dbContext?: string } = {},
+): Promise<void> {
+  if (!API_CONFIG.useBackendData || !query.trim() || !answer.trim()) return;
+
+  try {
+    await apiClient.post(
+      ENDPOINTS.knowledge.cache,
+      {
+        query: query.slice(0, 500),
+        answer: answer.slice(0, 8000),
+        cropIds: opts.cropIds?.slice(0, 5),
+        dbContext: opts.dbContext?.slice(0, 4000),
+      },
+      { timeout: 8000 },
+    );
+  } catch {
+    /* non-blocking — chat already succeeded */
   }
 }

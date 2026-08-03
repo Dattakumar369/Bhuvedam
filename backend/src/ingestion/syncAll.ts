@@ -51,6 +51,82 @@ export async function runFullSync(): Promise<SyncResult[]> {
   return results;
 }
 
+/** Every source — live APIs + Indian static catalogs + bulk products + AP/Telangana crops. */
+export async function runCompleteSync(): Promise<SyncResult[]> {
+  await ensureDataSources();
+  const results: SyncResult[] = [];
+
+  type Job = {
+    label: string;
+    sourceId: string;
+    run: () => Promise<{ fetched: number; upserted: number } | Record<string, number>>;
+  };
+
+  const jobs: Job[] = [
+    { label: 'FAO crops', sourceId: 'fao', run: () => syncFaoCrops(2000) },
+    {
+      label: 'Bhuvedam AP/Telangana crops',
+      sourceId: 'bhuvedam',
+      run: async () => {
+        const upserted = await seedBhuvedamCrops();
+        return { fetched: upserted, upserted };
+      },
+    },
+    { label: 'FAO fertilizers', sourceId: 'fao', run: () => syncFaoFertilizers(300) },
+    {
+      label: 'Indian fertilizer catalog',
+      sourceId: 'indian_fertilizers',
+      run: () => syncIndianFertilizerCatalog(),
+    },
+    {
+      label: 'Indian ag catalog (diseases, ICAR, advisories)',
+      sourceId: 'indian_fertilizers',
+      run: async () => {
+        const parts = await syncIndianAgCatalog();
+        let fetched = 0;
+        let upserted = 0;
+        for (const part of Object.values(parts)) {
+          fetched += part.fetched;
+          upserted += part.upserted;
+        }
+        return { fetched, upserted };
+      },
+    },
+    { label: 'Agmarknet mandi prices', sourceId: 'agmarknet', run: () => syncAgmarknetMandi() },
+    {
+      label: 'Bulk pesticides/fungicides/diseases',
+      sourceId: 'bulk_catalog',
+      run: async () => {
+        const counts = await syncBulkAgCatalog();
+        const upserted = Object.values(counts).reduce((sum, n) => sum + n, 0);
+        return { fetched: upserted, upserted };
+      },
+    },
+    { label: 'Research & books (OpenAlex/Open Library)', sourceId: 'openalex', run: () => syncAllKnowledge() },
+    { label: 'Weather forecasts', sourceId: 'open_meteo', run: () => syncGlobalWeather() },
+    { label: 'SoilGrids sample', sourceId: 'soilgrids', run: () => syncGlobalSoilGrid({ maxPoints: 1 }) },
+  ];
+
+  for (const { label, sourceId, run } of jobs) {
+    const jobId = await startSyncJob(sourceId);
+    try {
+      const out = await run();
+      const fetched = 'fetched' in out ? out.fetched : 0;
+      const upserted = 'upserted' in out ? out.upserted : 0;
+      await finishSyncJob(jobId, sourceId, 'success', { fetched, upserted });
+      results.push({ sourceId, fetched, upserted, errors: [] });
+      console.log(`✓ ${label}: fetched ${fetched}, stored ${upserted}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      await finishSyncJob(jobId, sourceId, 'failed', { error: msg });
+      results.push({ sourceId, fetched: 0, upserted: 0, errors: [msg] });
+      console.error(`✗ ${label}: ${msg}`);
+    }
+  }
+
+  return results;
+}
+
 const target = process.argv[2] ?? 'all';
 
 async function main() {
@@ -58,6 +134,8 @@ async function main() {
 
   if (target === 'all') {
     await runFullSync();
+  } else if (target === 'complete') {
+    await runCompleteSync();
   } else if (target === 'crops') {
     await ensureDataSources();
     const fao = await syncFaoCrops(2000);
@@ -96,7 +174,7 @@ async function main() {
     console.log('Knowledge (research, books, pests):', r);
   } else {
     console.log(
-      'Usage: tsx src/ingestion/syncAll.ts [all|crops|mandi|soil|weather|fertilizers|fertilizer-catalog|ag-catalog|knowledge]',
+      'Usage: tsx src/ingestion/syncAll.ts [all|complete|crops|mandi|soil|weather|fertilizers|fertilizer-catalog|ag-catalog|bulk-catalog|knowledge]',
     );
   }
 

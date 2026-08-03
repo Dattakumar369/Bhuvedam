@@ -93,5 +93,6 @@ export const ENDPOINTS = {
     search: '/api/knowledge/search',
     ask: '/api/knowledge/ask',
     catalog: '/api/knowledge/catalog',
+    cache: '/api/knowledge/cache',
   },
 } as const;

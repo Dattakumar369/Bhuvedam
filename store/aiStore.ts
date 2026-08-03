@@ -11,6 +11,7 @@ import {
 } from '@/services/ai/contextBuilder';
 import { streamAIResponse } from '@/services/ai/aiStreamService';
 import { getEarlySpeakSnippet } from '@/services/ai/voiceEarlySpeak';
+import { cacheAiKnowledgeAnswer, isThinDbContext } from '@/services/agData/knowledgeService';
 import { createMockConversation } from '@/services/mock/aiMock';
 import { useFarmerContextStore } from '@/store/farmerContextStore';
 import { useLanguageStore } from '@/store/languageStore';
@@ -295,16 +296,14 @@ export const useAIStore = create<AIState>((set, get) => ({
       const voiceMode = get().voiceModeEnabled;
       let spokeEarly = false;
 
-      const [, baseSystemPrompt] = await Promise.all([
-        prepareContextBeforeChat(messageText),
-        buildFullSystemPromptAsync(
-          language,
-          get().conversations,
-          conversationId,
-          voiceMode,
-          messageText,
-        ),
-      ]);
+      await prepareContextBeforeChat(messageText);
+      const { prompt: baseSystemPrompt, dbContext, cropIds } = await buildFullSystemPromptAsync(
+        language,
+        get().conversations,
+        conversationId,
+        voiceMode,
+        messageText,
+      );
 
       const systemPrompt = visionMode
         ? `${baseSystemPrompt}\n\n${VISION_SYSTEM_ADDON}`
@@ -317,7 +316,8 @@ export const useAIStore = create<AIState>((set, get) => ({
         voiceMode,
         signal: abortController.signal,
         onChunk: (chunk) => {
-          if (voiceMode && !spokeEarly) {
+          // Early TTS while streaming conflicts with voice mode (cuts off full answer, mic hears echo).
+          if (!voiceMode && !spokeEarly) {
             const snippet = getEarlySpeakSnippet(chunk);
             if (snippet) {
               spokeEarly = true;
@@ -356,6 +356,11 @@ export const useAIStore = create<AIState>((set, get) => ({
       }));
 
       void persistConversations(get().conversations);
+
+      if (isThinDbContext(dbContext) && fullResponse.trim().length >= 80) {
+        void cacheAiKnowledgeAnswer(messageText, fullResponse, { cropIds, dbContext });
+      }
+
       onComplete?.(fullResponse);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;

@@ -9,6 +9,7 @@ import { buildOpenAIMessageContent } from '@/services/ai/visionMessages';
 import { apiClient, getAuthToken, setAuthToken } from '@/services/api/client';
 import { ENDPOINTS } from '@/services/api/endpoints';
 import type { ChatMessage } from '@/types/ai';
+import { userApiError } from '@/utils/apiUserError';
 import { secureStorage } from '@/utils/storage';
 
 const AI_REQUEST_TIMEOUT_MS = 58000;
@@ -222,12 +223,10 @@ export async function streamAIResponse(options: StreamOptions): Promise<string> 
   }
 
   if (!hasRealAIProvider()) {
-    throw new Error(
-      'AI is not configured. Add EXPO_PUBLIC_OLLAMA_API_KEY to your .env file and restart the app.',
-    );
+    throw userApiError('AI_NOT_CONFIGURED');
   }
 
-  throw new Error('No AI provider available');
+  throw userApiError('AI_UNAVAILABLE');
 }
 
 export { setAuthToken };

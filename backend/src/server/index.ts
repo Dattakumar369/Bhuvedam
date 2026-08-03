@@ -59,6 +59,7 @@ import {
   parseLocalizeMode,
 } from '../services/cropLocalization';
 import { formatKnowledgeForAI, searchKnowledge, buildKnowledgeContextForAI } from '../services/knowledgeSearch';
+import { cacheAiKnowledgeAnswer } from '../services/aiKnowledgeCache';
 import {
   getFertilizerProductById,
   searchFertilizerProducts,
@@ -868,6 +869,33 @@ app.get('/api/knowledge/catalog', async (c) => {
   const { buildAgCatalogContextForAI } = await import('../services/agCatalogSearch');
   const context = await buildAgCatalogContextForAI(q || 'fertilizer pesticide disease', cropIds);
   return c.json({ context, cropIds });
+});
+
+/** Save AI answer when DB had no match — reused for other farmers asking the same question */
+app.post('/api/knowledge/cache', farmerAuthMiddleware, async (c) => {
+  const body = (await c.req.json()) as {
+    query?: string;
+    answer?: string;
+    cropIds?: string[];
+    dbContext?: string;
+  };
+
+  const query = body.query?.trim() ?? '';
+  const answer = body.answer?.trim() ?? '';
+  if (!query || !answer) return appError(c, 'SEARCH_REQUIRED');
+
+  let dbContext = body.dbContext ?? '';
+  if (!dbContext) {
+    dbContext = await buildKnowledgeContextForAI(query, body.cropIds ?? []);
+  }
+
+  const result = await cacheAiKnowledgeAnswer(query, answer, {
+    cropIds: body.cropIds,
+    provider: getAiProvider(),
+    dbContext,
+  });
+
+  return c.json({ success: true, stored: result.stored, id: result.id });
 });
 
 /** Trigger full sync from all live sources */

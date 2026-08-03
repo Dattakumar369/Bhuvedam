@@ -47,59 +47,77 @@ export default function ChatScreen() {
   const aiError = useAIStore((s) => s.error);
   const { isSpeaking, speakText, stopSpeakingNow } = useVoiceOutput();
   const startListeningRef = useRef<() => Promise<void>>(async () => {});
-  const spokeEarlyRef = useRef(false);
+  const stopListeningRef = useRef<() => void>(() => {});
+  const resumeListenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearResumeListenTimer = useCallback(() => {
+    if (resumeListenTimerRef.current) {
+      clearTimeout(resumeListenTimerRef.current);
+      resumeListenTimerRef.current = null;
+    }
+  }, []);
+
+  const resumeListeningAfterSpeech = useCallback(() => {
+    if (!voiceModeEnabled) return;
+    clearResumeListenTimer();
+    // Brief pause so speaker echo is not picked up as a new question.
+    resumeListenTimerRef.current = setTimeout(() => {
+      resumeListenTimerRef.current = null;
+      if (voiceModeEnabled) void startListeningRef.current();
+    }, 800);
+  }, [voiceModeEnabled, clearResumeListenTimer]);
 
   const handleVoiceComplete = useCallback(
     (response: string) => {
       if (!voiceModeEnabled) return;
-      if (spokeEarlyRef.current) {
-        spokeEarlyRef.current = false;
-        void startListeningRef.current();
-        return;
-      }
+      stopListeningRef.current();
+      stopSpeakingNow();
       speakText(response, () => {
-        if (voiceModeEnabled) void startListeningRef.current();
+        resumeListeningAfterSpeech();
       });
     },
-    [speakText, voiceModeEnabled],
-  );
-
-  const handleEarlySpeak = useCallback(
-    (snippet: string) => {
-      if (!voiceModeEnabled) return;
-      spokeEarlyRef.current = true;
-      speakText(snippet);
-    },
-    [speakText, voiceModeEnabled],
+    [speakText, voiceModeEnabled, stopSpeakingNow, resumeListeningAfterSpeech],
   );
 
   const handleVoiceResult = useCallback(
     (transcript: string) => {
       const text = transcript.trim();
-      if (!text || !id) return;
+      if (!text || !id || isTyping || isSpeaking) return;
+      clearResumeListenTimer();
+      stopListeningRef.current();
       stopSpeakingNow();
-      spokeEarlyRef.current = false;
       setInput('');
-      void send(text, handleVoiceComplete, handleEarlySpeak);
+      void send(text, handleVoiceComplete);
     },
-    [id, send, handleVoiceComplete, handleEarlySpeak, stopSpeakingNow],
+    [
+      id,
+      send,
+      handleVoiceComplete,
+      stopSpeakingNow,
+      isTyping,
+      isSpeaking,
+      clearResumeListenTimer,
+    ],
   );
 
   const { isListening, transcript, toggleListening, startListening, stopListening } = useVoiceInput({
     onResult: handleVoiceResult,
     onPartialResult: setInput,
+    blocked: isSpeaking || isTyping,
   });
 
   startListeningRef.current = startListening;
+  stopListeningRef.current = stopListening;
 
   useEffect(() => {
     if (id) setActiveConversation(id);
     return () => {
       setActiveConversation(null);
       clearError();
+      clearResumeListenTimer();
       stopSpeaking();
     };
-  }, [id, setActiveConversation, clearError]);
+  }, [id, setActiveConversation, clearError, clearResumeListenTimer]);
 
   const scrollToEnd = useCallback(() => {
     if (conversation?.messages.length) {
@@ -120,7 +138,7 @@ export default function ChatScreen() {
     if ((!text && !(FEATURES.chatImageUploadEnabled && pendingImage)) || !id || isTyping) return;
     stopSpeakingNow();
     stopListening();
-    spokeEarlyRef.current = false;
+    clearResumeListenTimer();
     const editId = editingMessageId;
     const image = FEATURES.chatImageUploadEnabled ? pendingImage : null;
     setInput('');
@@ -129,7 +147,7 @@ export default function ChatScreen() {
     await send(
       text,
       handleVoiceComplete,
-      handleEarlySpeak,
+      undefined,
       {
         editMessageId: editId ?? undefined,
         image: image ?? undefined,
@@ -238,7 +256,10 @@ export default function ChatScreen() {
         voiceModeEnabled={voiceModeEnabled}
         transcript={transcript}
         onToggleVoiceMode={toggleVoiceMode}
-        onStopSpeaking={stopSpeakingNow}
+        onStopSpeaking={() => {
+          clearResumeListenTimer();
+          stopSpeakingNow();
+        }}
       />
 
       <View style={styles.listContainer}>
@@ -283,6 +304,7 @@ export default function ChatScreen() {
         onChangeText={setInput}
         onSend={() => void handleSend()}
         onVoicePress={() => {
+          clearResumeListenTimer();
           if (isTyping) {
             stop();
             return;

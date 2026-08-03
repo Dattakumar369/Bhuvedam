@@ -38,6 +38,7 @@ export async function searchKnowledge(query: string, limit = 20): Promise<Knowle
       or(
         ilike(agKnowledge.title, pattern),
         ilike(agKnowledge.summary, pattern),
+        ilike(agKnowledge.content, pattern),
         sql`${agKnowledge.tags}::text ilike ${pattern}`,
         ...words.map((w) => ilike(agKnowledge.title, `%${w}%`)),
       ),
@@ -112,7 +113,7 @@ export function formatKnowledgeForAI(hits: KnowledgeHit[], query: string, catalo
   }
 
   if (!hits.length && !catalogContext.trim()) {
-    return `No knowledge DB hits for "${query}" — use live data + general expertise.`;
+    return `No matching entries in Bhuvedam farming library for "${query}". Answer from your full agriculture expertise. Save a clear answer for future farmers.`;
   }
 
   if (hits.length) {

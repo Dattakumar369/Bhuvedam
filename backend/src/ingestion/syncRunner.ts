@@ -64,6 +64,22 @@ export async function ensureDataSources() {
       description: 'Indian fertilizer product catalog — NPK, bio, micronutrients',
       regionScope: 'India',
     },
+    {
+      id: 'bhuvedam',
+      name: 'Bhuvedam AP/Telangana Crop Catalog',
+      type: 'manual' as const,
+      baseUrl: 'https://bhuvedam.com',
+      description: 'Curated regional crops with Telugu details',
+      regionScope: 'India — AP & Telangana',
+    },
+    {
+      id: 'bulk_catalog',
+      name: 'Bhuvedam Bulk Ag Catalog',
+      type: 'manual' as const,
+      baseUrl: 'https://bhuvedam.com',
+      description: 'Generated pesticides, fungicides, fertilizers, diseases per crop',
+      regionScope: 'India',
+    },
   ];
 
   for (const s of sources) {
