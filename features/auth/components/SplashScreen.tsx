@@ -1,38 +1,63 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 
+import { AnimatedAppLogo } from '@/components/brand/AnimatedAppLogo';
 import { APP } from '@/constants/app';
-import { Body, Display, Subtitle } from '@/components/ui/Typography';
+import { Display, Subtitle } from '@/components/ui/Typography';
 import { colors, spacing } from '@/theme';
+
+/** Minimum time the animated splash stays visible (ms). */
+export const SPLASH_MIN_DURATION_MS = 2600;
 
 export function SplashScreen() {
   return (
     <LinearGradient colors={[...colors.gradient.header]} style={styles.container}>
-      <Animated.View entering={FadeIn.duration(800)} style={styles.content}>
-        <View style={styles.logoCircle}>
-          <Body style={styles.logoEmoji}>🌾</Body>
-        </View>
-        <Display style={styles.title}>{APP.name}</Display>
-        <Subtitle style={styles.tagline}>{APP.tagline}</Subtitle>
-      </Animated.View>
+      <View style={styles.content}>
+        <AnimatedAppLogo size={120} style={styles.logo} />
+
+        <Animated.View entering={FadeInUp.delay(650).duration(700).springify()} style={styles.textBlock}>
+          <Display style={styles.title}>{APP.name}</Display>
+        </Animated.View>
+
+        <Animated.View entering={FadeInUp.delay(900).duration(700).springify()}>
+          <Subtitle style={styles.tagline}>{APP.tagline}</Subtitle>
+        </Animated.View>
+
+        <Animated.View entering={FadeIn.delay(1400).duration(600)} style={styles.loader}>
+          <View style={styles.loaderDot} />
+          <View style={[styles.loaderDot, styles.loaderDotMid]} />
+          <View style={[styles.loaderDot, styles.loaderDotLate]} />
+        </Animated.View>
+      </View>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  content: { alignItems: 'center' },
-  logoCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+  content: { alignItems: 'center', width: '100%' },
+  logo: { marginBottom: spacing.lg },
+  textBlock: { marginBottom: spacing.xs },
+  title: { color: colors.white, textAlign: 'center' },
+  tagline: { color: 'rgba(255,255,255,0.85)', textAlign: 'center' },
+  loader: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.xxxl,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xl,
   },
-  logoEmoji: { fontSize: 48 },
-  title: { color: colors.white, marginBottom: spacing.xs },
-  tagline: { color: 'rgba(255,255,255,0.85)' },
+  loaderDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.35)',
+  },
+  loaderDotMid: {
+    opacity: 0.65,
+    transform: [{ scale: 1.15 }],
+  },
+  loaderDotLate: {
+    opacity: 0.45,
+  },
 });

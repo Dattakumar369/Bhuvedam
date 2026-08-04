@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
 import { Button, Display, KeyboardSafeView, PhoneInput, PrimaryInput, Subtitle, sanitizePhoneInput } from '@/components/ui';
+import { AppLogo } from '@/components/brand';
 import { APP } from '@/constants/app';
 import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -135,8 +136,8 @@ export default function LoginScreen() {
           colors={[...colors.gradient.header]}
           style={[styles.header, { paddingTop: insets.top + spacing.xxxl }]}
         >
-          <Animated.View entering={FadeInDown.springify()}>
-            <Display style={styles.logo}>🌾</Display>
+          <Animated.View entering={FadeInDown.springify()} style={styles.headerBrand}>
+            <AppLogo size={104} withPlate style={styles.logo} />
             <Display style={styles.title}>{APP.name}</Display>
             <Subtitle style={styles.tagline}>{APP.tagline}</Subtitle>
           </Animated.View>
@@ -298,7 +299,8 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.xxl,
     alignItems: 'center',
   },
-  logo: { fontSize: 56, textAlign: 'center', color: colors.white, marginBottom: spacing.sm },
+  headerBrand: { alignItems: 'center' },
+  logo: { marginBottom: spacing.md },
   title: { color: colors.white, textAlign: 'center' },
   tagline: { color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginTop: spacing.xs },
   form: {

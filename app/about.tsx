@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppLogo } from '@/components/brand';
 import { Card, Header } from '@/components/ui';
 import { Body, Headline, Subtitle } from '@/components/ui/Typography';
 import { APP } from '@/constants/app';
@@ -21,7 +22,7 @@ export default function AboutScreen() {
         ]}
       >
         <View style={styles.hero}>
-          <Headline style={styles.emoji}>🌾</Headline>
+          <AppLogo size={88} style={styles.logo} />
           <Headline>{APP.name}</Headline>
           <Subtitle>{APP.tagline}</Subtitle>
           <Subtitle style={styles.version}>Version {APP.version}</Subtitle>
@@ -55,7 +56,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: layout.screenPadding, gap: spacing.lg },
   hero: { alignItems: 'center', paddingVertical: spacing.xl, gap: spacing.xs },
-  emoji: { fontSize: 56 },
+  logo: { marginBottom: spacing.sm },
   version: { color: colors.textTertiary, marginTop: spacing.sm },
   paragraph: { lineHeight: 24, color: colors.textSecondary, marginBottom: spacing.md },
   mission: { padding: spacing.lg },
