@@ -24,6 +24,7 @@ import {
 } from './webResearchService';
 import {
   humanFallbackWhenNoSynthesis,
+  polishConversationalReply,
   synthesizeFarmerAnswer,
 } from './synthesizeFarmerAnswer';
 
@@ -159,6 +160,50 @@ function cacheAnswerAsync(
   }).catch(() => undefined);
 }
 
+function extractRecentTurns(messages: ProxyChatMessage[]): string {
+  return messages
+    .filter((m) => m.role === 'user' || m.role === 'assistant')
+    .slice(-6)
+    .map((m) => {
+      const label = m.role === 'user' ? 'Farmer' : 'You';
+      return `${label}: ${messageText(m.content).slice(0, 200)}`;
+    })
+    .join('\n');
+}
+
+function looksConversationalEnough(text: string, query: string): boolean {
+  if (text.length > 850) return false;
+  const bulletCount = (text.match(/^[\s]*[-•*]/gm) ?? []).length;
+  if (bulletCount >= 4) return false;
+  const doseSpam = (text.match(/\d+\s*ml\s*\/\s*acre/gi) ?? []).length;
+  if (doseSpam >= 2 && !/mandu|spray|dose|purugu|rogam|pest|fertil/i.test(query)) return false;
+  return text.length < 380 && bulletCount <= 1;
+}
+
+async function finalizeAnswer(
+  draft: string,
+  query: string,
+  messages: ProxyChatMessage[],
+  opts: AiChatOptions,
+  research: WebResearchResult,
+  provider: string,
+): Promise<{ answer: string; provider: string; research: WebResearchResult }> {
+  if (opts.agentId === 'time' || looksConversationalEnough(draft, query)) {
+    cacheAnswerAsync(query, draft, research, opts, provider);
+    return { answer: draft, provider, research };
+  }
+
+  const polished = await polishConversationalReply(draft, query, {
+    voiceMode: opts.voiceMode,
+    recentTurns: extractRecentTurns(messages),
+  });
+
+  const answer =
+    polished && !isUncertainLlmAnswer(polished) && polished.length >= 15 ? polished : draft;
+  cacheAnswerAsync(query, answer, research, opts, provider);
+  return { answer, provider, research };
+}
+
 async function loadWebResearch(
   query: string,
   opts: AiChatOptions,
@@ -215,8 +260,14 @@ async function completeWithResearchFallback(
   if (research.snippets.length > 0 && dbEmpty) {
     const llmWithWeb = await tryAllLlmProviders(workingMessages, chatOpts);
     if (llmWithWeb && !isUncertainLlmAnswer(llmWithWeb)) {
-      cacheAnswerAsync(query, llmWithWeb, research, opts, getAiProvider());
-      return { answer: llmWithWeb, provider: getAiProvider(), research };
+      return finalizeAnswer(
+        llmWithWeb,
+        query,
+        messages,
+        opts,
+        research,
+        getAiProvider(),
+      );
     }
     return answerFromResearch(
       query,
@@ -237,8 +288,7 @@ async function completeWithResearchFallback(
     if (research.snippets.length > 0) {
       const retry = await tryAllLlmProviders(workingMessages, chatOpts);
       if (retry && !isUncertainLlmAnswer(retry)) {
-        cacheAnswerAsync(query, retry, research, opts, getAiProvider());
-        return { answer: retry, provider: getAiProvider(), research };
+        return finalizeAnswer(retry, query, messages, opts, research, getAiProvider());
       }
       return answerFromResearch(
         query,
@@ -250,8 +300,10 @@ async function completeWithResearchFallback(
   }
 
   if (answer && !isUncertainLlmAnswer(answer)) {
-    if (correction) cacheAnswerAsync(query, answer, research, opts, 'correction');
-    return { answer, provider: getAiProvider(), research };
+    if (correction) {
+      return finalizeAnswer(answer, query, messages, opts, research, 'correction');
+    }
+    return finalizeAnswer(answer, query, messages, opts, research, getAiProvider());
   }
 
   // STEP 4: LLM failed — final web search + direct web answer.
@@ -263,8 +315,7 @@ async function completeWithResearchFallback(
   if (research.snippets.length > 0) {
     const llmLast = await tryAllLlmProviders(workingMessages, chatOpts);
     if (llmLast && !isUncertainLlmAnswer(llmLast)) {
-      cacheAnswerAsync(query, llmLast, research, opts, getAiProvider());
-      return { answer: llmLast, provider: getAiProvider(), research };
+      return finalizeAnswer(llmLast, query, messages, opts, research, getAiProvider());
     }
     return answerFromResearch(
       query,

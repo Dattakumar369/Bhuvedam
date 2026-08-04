@@ -77,6 +77,64 @@ Your reply to the farmer:`;
   return null;
 }
 
+/** Rewrite a successful LLM draft into a warmer, ChatGPT-like farmer reply — keeps facts. */
+export async function polishConversationalReply(
+  draft: string,
+  query: string,
+  opts: { voiceMode?: boolean; recentTurns?: string } = {},
+): Promise<string | null> {
+  const trimmed = draft.trim();
+  if (trimmed.length < 15) return null;
+
+  const instruction = opts.voiceMode
+    ? `Keep 2-4 spoken sentences. No markdown. Warm Telugu like talking at the field.`
+    : `Keep 1-3 short paragraphs. Simple Telugu or match the farmer's language. Minimal markdown.`;
+
+  const prompt = `You polish AI drafts into natural farmer-friendly replies — like a helpful local advisor, not a catalog.
+
+FARMER ASKED:
+"${query.slice(0, 400)}"
+${opts.recentTurns ? `\nRECENT CHAT:\n${opts.recentTurns.slice(0, 700)}\n` : ''}
+DRAFT (keep all correct facts — fix tone only):
+"""
+${trimmed.slice(0, 2800)}
+"""
+
+RULES:
+- Talk like a real person — warm, simple, conversational.
+- Answer ONLY what they asked. Remove product/spray/dose lists unless they asked about those.
+- Keep numbers, product names, and doses from the draft if they belong to the question.
+- Do NOT invent new facts. Do NOT mention being AI.
+- ${instruction}
+
+Polished reply:`;
+
+  const messages: ProxyChatMessage[] = [{ role: 'user', content: prompt }];
+  const chatOpts = { voiceMode: opts.voiceMode, temperature: 0.32 };
+
+  if (isGeminiConfigured()) {
+    try {
+      const text = (
+        await withTimeout(completeGeminiChat(messages, chatOpts), SYNTHESIS_TIMEOUT_MS)
+      ).trim();
+      if (text.length >= 15) return text;
+    } catch {
+      /* fall through */
+    }
+  }
+
+  if (isOllamaConfigured()) {
+    try {
+      const text = (await completeOllamaChat(messages, chatOpts)).trim();
+      if (text.length >= 15) return text;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return null;
+}
+
 export function humanFallbackWhenNoSynthesis(query: string, voiceMode = false): string {
   return voiceMode
     ? `${query.slice(0, 60)} gurinchi inka details collect chestunnanu. Crop peru tho malli adagandi — meeku sariga cheptanu.`

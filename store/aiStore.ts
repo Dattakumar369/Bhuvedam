@@ -26,7 +26,7 @@ import { secureStorage } from '@/utils/storage';
 
 const MAX_STORED_CONVERSATIONS = 15;
 const MAX_MESSAGES_PER_CONVERSATION = 60;
-const MAX_MODEL_HISTORY = 6;
+const MAX_MODEL_HISTORY = 15;
 
 async function persistConversations(conversations: Conversation[]): Promise<void> {
   const trimmed = conversations.slice(0, MAX_STORED_CONVERSATIONS).map((conv) => ({

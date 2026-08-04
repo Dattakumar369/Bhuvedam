@@ -1,12 +1,13 @@
 import type { ChatMessage } from '@/types/ai';
 
-const OMITTED_ASSISTANT = '[Previous AI reply omitted — use LIVE DATA in system message, not old chat.]';
+const OMITTED_ASSISTANT =
+  '[Earlier reply omitted — use LIVE DATA in the system message for current facts; keep conversational flow from recent turns.]';
 
 /**
- * Old assistant replies often contain wrong facts (time, rates, names).
- * Keep user messages for context but drop stale assistant content.
+ * Old assistant replies may contain stale facts (time, rates).
+ * Keep user messages + the last two assistant replies for follow-ups like "that crop".
  */
-export function trimMessagesForModel(messages: ChatMessage[], maxMessages = 6): ChatMessage[] {
+export function trimMessagesForModel(messages: ChatMessage[], maxMessages = 15): ChatMessage[] {
   const cleaned = messages
     .filter(
       (m) =>
@@ -18,13 +19,14 @@ export function trimMessagesForModel(messages: ChatMessage[], maxMessages = 6): 
 
   if (cleaned.length <= 2) return cleaned;
 
-  const lastIdx = cleaned.length - 1;
+  const assistantIndices = cleaned
+    .map((m, i) => (m.role === 'assistant' ? i : -1))
+    .filter((i) => i >= 0);
+  const keepAssistants = new Set(assistantIndices.slice(-2));
+
   return cleaned.map((m, idx) => {
     if (m.role !== 'assistant') return m;
-    // Keep only the most recent assistant message verbatim
-    if (idx === lastIdx || (idx === lastIdx - 1 && cleaned[lastIdx]?.role === 'assistant')) {
-      return m;
-    }
+    if (keepAssistants.has(idx)) return m;
     return { ...m, content: OMITTED_ASSISTANT };
   });
 }

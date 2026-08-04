@@ -159,10 +159,24 @@ function findPriorUserQuestion(conversations: Conversation[], activeConversation
   return '';
 }
 
+function formatRecentChat(conversations: Conversation[], activeConversationId: string, limit = 6): string {
+  const conv = conversations.find((c) => c.id === activeConversationId);
+  if (!conv) return '';
+
+  return conv.messages
+    .filter((m) => !m.isStreaming && m.content.trim() && m.role !== 'system')
+    .slice(-limit)
+    .map((m) => {
+      const label = m.role === 'user' ? 'Farmer' : 'You';
+      return `${label}: ${m.content.trim().slice(0, 220)}`;
+    })
+    .join('\n');
+}
+
 export function buildFullSystemPrompt(
   language: LanguageCode,
-  _conversations: Conversation[],
-  _activeConversationId: string,
+  conversations: Conversation[],
+  activeConversationId: string,
   voiceMode = false,
   userQuery = '',
   dbReferenceContext = '',
@@ -220,18 +234,23 @@ export function buildFullSystemPrompt(
         sections.push(
           '',
           pestOrCropHealth
-            ? '--- FARMING LIBRARY (MANDATORY for rogam/purugu/mandu — exact product name + dose) ---'
-            : '--- FARMING LIBRARY (products & doses) ---',
+            ? '--- FARMING LIBRARY (use silently — exact product + dose only when they asked about rogam/purugu/mandu) ---'
+            : '--- FARMING LIBRARY (reference only — do not list products unless asked) ---',
           dbReferenceContext.trim(),
         );
-      } else {
+      } else if (!API_CONFIG.useBackendData) {
         sections.push(
           '',
           '--- FARMING LIBRARY ---',
-          'No library match — use ONLINE AGRICULTURE SOURCES below if present. Give the best farming answer you can from those sources.',
+          'No library match — answer from general farming knowledge naturally.',
         );
       }
     }
+  }
+
+  const recentChat = formatRecentChat(conversations, activeConversationId);
+  if (recentChat) {
+    sections.push('', '--- RECENT CHAT (follow-ups like "that crop" refer here) ---', recentChat);
   }
 
   sections.push(
@@ -240,6 +259,7 @@ export function buildFullSystemPrompt(
     `"${userQuery.trim().slice(0, 300)}"`,
     '',
     '=== HOW TO REPLY ===',
+    '- Ongoing conversation — use RECENT CHAT for "same field", "that mandu", etc.',
     '- Talk like a real person at the field — warm, simple, human.',
     '- Answer ONLY what they asked. No spray/mandu/dose/acre unless the question is about that.',
     `- ${AI_CONTEXT_PRIVACY_NOTE}`,
@@ -288,10 +308,11 @@ export async function buildFullSystemPromptAsync(
   const priorQuery = correction ? findPriorUserQuestion(conversations, activeConversationId) : '';
   const researchQuery = correction && priorQuery ? priorQuery : userQuery;
   const libraryEmpty = shouldFetchWebResearch(dbReferenceContext, userQuery);
+  const backendHandlesWeb = API_CONFIG.useBackendData && Boolean(API_CONFIG.baseUrl);
 
-  // No DB answer → search web FIRST before LLM sees the question.
+  // Backend enriches chat with web + library — avoid duplicate client web fetch (slimmer prompt).
   const needsWebResearch =
-    API_CONFIG.useBackendData &&
+    !backendHandlesWeb &&
     (correction ||
       wantsWebSearch(userQuery) ||
       libraryEmpty ||
@@ -314,7 +335,7 @@ export async function buildFullSystemPromptAsync(
     activeConversationId,
     voiceMode,
     userQuery,
-    dbReferenceContext.slice(0, voiceMode ? 1500 : 3500),
+    dbReferenceContext.slice(0, voiceMode ? 800 : 1800),
     effectiveLanguage,
     agent,
   );
