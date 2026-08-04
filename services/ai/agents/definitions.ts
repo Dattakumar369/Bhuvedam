@@ -84,7 +84,7 @@ export const AGENTS: Record<AgentDefinition['id'], AgentDefinition> = {
   fertilizer: {
     id: 'fertilizer',
     roleLabel: 'Soil & fertilizer specialist',
-    primaryTopics: ['fertilizer'], chat
+    primaryTopics: ['fertilizer'],
     context: {
       farmerProfile: true,
       weather: false,
