@@ -46,8 +46,8 @@ export const LOCALE_CONFIG: Record<LanguageCode, LocaleConfig> = {
     speech: 'te-IN',
     speechRecognition: 'te-IN',
     aiLanguage: 'Telugu',
-    speechRate: 0.94,
-    speechPitch: 1.02,
+    speechRate: 0.88,
+    speechPitch: 1.0,
   },
   kn: {
     speech: 'kn-IN',

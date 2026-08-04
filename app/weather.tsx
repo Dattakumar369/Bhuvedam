@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -20,6 +20,11 @@ import {
 import { WeatherMetricsGrid } from '@/features/weather/components/WeatherMetricsGrid';
 import { useWeather } from '@/hooks/useWeather';
 import { formatPercentage, formatWindSpeed } from '@/utils/format';
+import {
+  getHourlyForDate,
+  getTodayDateKey,
+  hourlySectionTitle,
+} from '@/utils/weatherForecast';
 import { colors, layout, spacing } from '@/theme';
 import { router } from 'expo-router';
 
@@ -28,16 +33,30 @@ export default function WeatherScreen() {
   const { data, location, isLoading, error, lastFetched, load, refresh, retryWithLocation } =
     useWeather();
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (data?.daily[0]?.date) {
+      setSelectedDate(data.daily[0].date);
+    }
+  }, [data?.daily[0]?.date]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
   };
+
+  const activeDate = selectedDate ?? (data ? getTodayDateKey(data) : '');
+  const selectedHourly = useMemo(
+    () => (data ? getHourlyForDate(data, activeDate) : []),
+    [data, activeDate],
+  );
+  const isTodaySelected = data ? activeDate === getTodayDateKey(data) : false;
 
   if (error && !data) {
     return (
@@ -90,16 +109,26 @@ export default function WeatherScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.section}>
-            <SectionTitle title="Hourly Forecast" />
+            <SectionTitle
+              title={data ? hourlySectionTitle(data, activeDate) : 'Hourly Forecast'}
+              subtitle="Swipe to see full day →"
+            />
             <Card variant="elevated">
-              <HourlyForecastCard data={data.hourly} />
+              <HourlyForecastCard
+                data={selectedHourly}
+                scrollToCurrentHour={isTodaySelected}
+              />
             </Card>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.section}>
-            <SectionTitle title="7-Day Forecast" />
+            <SectionTitle title="7-Day Forecast" subtitle="Tap a day for hourly details" />
             <Card variant="elevated">
-              <DailyForecastCard data={data.daily} />
+              <DailyForecastCard
+                data={data.daily}
+                selectedDate={activeDate}
+                onSelectDay={setSelectedDate}
+              />
             </Card>
           </Animated.View>
 

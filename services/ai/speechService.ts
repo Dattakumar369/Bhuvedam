@@ -80,6 +80,26 @@ export function prepareTextForSpeech(text: string, language: LanguageCode): stri
       .replace(/km\/h/g, ' కిలోమీటర్లు గంటకు')
       .replace(/:\s*/g, ', ')
       .replace(/\s{2,}/g, ' ');
+
+    const romanToTe: [RegExp, string][] = [
+      [/\bmeeku\b/gi, 'మీకు'],
+      [/\bmeku\b/gi, 'మీకు'],
+      [/\bcheppali\b/gi, 'చెప్పాలి'],
+      [/\bmandu\b/gi, 'మందు'],
+      [/\brogam\b/gi, 'రోగం'],
+      [/\bpurugu\b/gi, 'పురుగు'],
+      [/\braithu\b/gi, 'రైతు'],
+      [/\bgaru\b/gi, ''],
+      [/\bledu\b/gi, 'లేదు'],
+      [/\bcheyali\b/gi, 'చేయandi'],
+      [/\beppudu\b/gi, 'ఎప్పudu'],
+      [/\bcheppandi\b/gi, 'చెప్పandi'],
+      [/\bacre\b/gi, 'ఎకరం'],
+      [/\bml\b/gi, 'మిలీ'],
+    ];
+    for (const [pattern, replacement] of romanToTe) {
+      cleaned = cleaned.replace(pattern, replacement);
+    }
   }
 
   return cleaned.replace(/\s+/g, ' ').trim();

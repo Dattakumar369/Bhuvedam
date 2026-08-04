@@ -28,8 +28,8 @@ export async function synthesizeFarmerAnswer(
   const dbHint = research.dbContext.trim().slice(0, 800);
 
   const instruction = opts.voiceMode
-    ? `Reply in 2-4 spoken sentences. No markdown. Warm Telugu like talking at the field.`
-    : `Reply in 1-3 short paragraphs. Simple Telugu or match the farmer's language. Minimal markdown.`;
+    ? `Reply in 2-4 spoken sentences. Pure Telugu script only — NO Roman/English words. No markdown. Village speech like talking at the field.`
+    : `Reply in 1-3 short paragraphs. Pure Telugu script. Simple village Telugu — not textbook style. Minimal markdown.`;
 
   const prompt = `You are a friendly local agriculture advisor — talk like a REAL person, not a robot or product catalog.
 
@@ -102,6 +102,7 @@ ${trimmed.slice(0, 2800)}
 
 RULES:
 - Talk like a real person — warm, simple, conversational.
+- Telugu reply MUST be pure Telugu script (తెలుగు) — no Roman words (meeku, mandu, raithu).
 - Answer ONLY what they asked. Remove product/spray/dose lists unless they asked about those.
 - Keep numbers, product names, and doses from the draft if they belong to the question.
 - Do NOT invent new facts. Do NOT mention being AI.

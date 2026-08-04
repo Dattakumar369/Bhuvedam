@@ -28,6 +28,9 @@ export interface Translations {
   voiceBarListening: string;
   voiceBarStopHint: string;
   voiceStopListening: string;
+  voiceCancelListening: string;
+  voiceConfirmListening: string;
+  voiceListeningHint: string;
   voiceBarThinking: string;
   voiceBarSpeaking: string;
   typingIndicator: string;
@@ -86,8 +89,11 @@ const en: Translations = {
   voiceModeOn: 'Voice mode on — type or tap mic',
   voiceModeOff: 'Voice mode off',
   voiceBarListening: 'Listening... speak now',
-  voiceBarStopHint: 'Tap Stop when you finish speaking',
-  voiceStopListening: 'Stop',
+  voiceBarStopHint: 'Done sends your message · Cancel discards',
+  voiceStopListening: 'Done',
+  voiceCancelListening: 'Cancel',
+  voiceConfirmListening: 'Send',
+  voiceListeningHint: 'Tap Done when finished, or Cancel to discard',
   voiceBarThinking: 'Bhuvedam AI is thinking...',
   voiceBarSpeaking: 'Speaking...',
   typingIndicator: 'Bhuvedam AI is thinking...',
@@ -154,8 +160,11 @@ const hi: Translations = {
   voiceModeOn: 'वॉइस मोड चालू — टाइप करें या माइक दबाएं',
   voiceModeOff: 'वॉइस मोड बंद',
   voiceBarListening: 'सुन रहा है... अब बोलें',
-  voiceBarStopHint: 'बोलना खत्म हो तो Stop दबाएं',
-  voiceStopListening: 'Stop',
+  voiceBarStopHint: 'Done sends · Cancel discards',
+  voiceStopListening: 'Done',
+  voiceCancelListening: 'Cancel',
+  voiceConfirmListening: 'Send',
+  voiceListeningHint: 'Done dabayein ya Cancel se hata dein',
   voiceBarThinking: 'Bhuvedam AI सोच रहा है...',
   voiceBarSpeaking: 'बोल रहा है...',
   typingIndicator: 'Bhuvedam AI सोच रहा है...',
@@ -222,8 +231,11 @@ const mr: Translations = {
   voiceModeOn: 'व्हॉइस मोड चालू — टाइप करा किंवा माइक दाबा',
   voiceModeOff: 'व्हॉइस मोड बंद',
   voiceBarListening: 'ऐकत आहे... आता बोला',
-  voiceBarStopHint: 'बोलून झाल्यावर Stop दाबा',
-  voiceStopListening: 'Stop',
+  voiceBarStopHint: 'Done पाठवते · Cancel रद्द',
+  voiceStopListening: 'Done',
+  voiceCancelListening: 'Cancel',
+  voiceConfirmListening: 'Send',
+  voiceListeningHint: 'Done दाबा किंवा Cancel ने रद्द करा',
   voiceBarThinking: 'Bhuvedam AI विचार करत आहे...',
   voiceBarSpeaking: 'बोलत आहे...',
   typingIndicator: 'Bhuvedam AI विचार करत आहे...',
@@ -290,8 +302,11 @@ const ta: Translations = {
   voiceModeOn: 'குரல் பயன்முறை இயக்கம் — தட்டச்சு அல்லது மைக்',
   voiceModeOff: 'குரல் பயன்முறை முடக்கம்',
   voiceBarListening: 'கேட்கிறது... இப்போது பேசுங்கள்',
-  voiceBarStopHint: 'முடிந்ததும் Stop அழுத்துங்கள்',
-  voiceStopListening: 'Stop',
+  voiceBarStopHint: 'Done அனுப்பும் · Cancel ரத்து',
+  voiceStopListening: 'Done',
+  voiceCancelListening: 'Cancel',
+  voiceConfirmListening: 'Send',
+  voiceListeningHint: 'Done அழுத்தவும் அல்லது Cancel',
   voiceBarThinking: 'Bhuvedam AI யோசிக்கிறது...',
   voiceBarSpeaking: 'பேசுகிறது...',
   typingIndicator: 'Bhuvedam AI யோசிக்கிறது...',
@@ -426,8 +441,11 @@ const kn: Translations = {
   voiceModeOn: 'ವಾಯ್ಸ್ ಮೋಡ್ ಆನ್ — ಟೈಪ್ ಮಾಡಿ ಅಥವಾ ಮೈಕ್ ಒತ್ತಿ',
   voiceModeOff: 'ವಾಯ್ಸ್ ಮೋಡ್ ಆಫ್',
   voiceBarListening: 'ಕೇಳುತ್ತಿದೆ... ಈಗ ಮಾತನಾಡಿ',
-  voiceBarStopHint: 'ಮಾತು ಮುಗಿದ ನಂತರ Stop ಒತ್ತಿ',
-  voiceStopListening: 'Stop',
+  voiceBarStopHint: 'Done ಕಳುಹಿಸು · Cancel ರದ್ದು',
+  voiceStopListening: 'Done',
+  voiceCancelListening: 'Cancel',
+  voiceConfirmListening: 'Send',
+  voiceListeningHint: 'Done ಒತ್ತಿ ಅಥವಾ Cancel',
   voiceBarThinking: 'Bhuvedam AI ಯೋಚಿಸುತ್ತಿದೆ...',
   voiceBarSpeaking: 'ಮಾತನಾಡುತ್ತಿದೆ...',
   typingIndicator: 'Bhuvedam AI ಯೋಚಿಸುತ್ತಿದೆ...',
@@ -482,5 +500,8 @@ export function getTranslations(language: LanguageCode = DEFAULT_LANGUAGE): Tran
     aiTopicCategories: base.aiTopicCategories ?? EN_TOPIC_CATEGORIES,
     voiceBarStopHint: base.voiceBarStopHint ?? translations.en.voiceBarStopHint,
     voiceStopListening: base.voiceStopListening ?? translations.en.voiceStopListening,
+    voiceCancelListening: base.voiceCancelListening ?? translations.en.voiceCancelListening,
+    voiceConfirmListening: base.voiceConfirmListening ?? translations.en.voiceConfirmListening,
+    voiceListeningHint: base.voiceListeningHint ?? translations.en.voiceListeningHint,
   };
 }

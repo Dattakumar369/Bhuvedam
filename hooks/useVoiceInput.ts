@@ -48,6 +48,7 @@ export function useVoiceInput({
   const isListeningRef = useRef(false);
   const blockedRef = useRef(blocked);
   const userStopRequestedRef = useRef(false);
+  const discardSessionRef = useRef(false);
   const finalTranscriptRef = useRef('');
   const interimTranscriptRef = useRef('');
   const speechLangRef = useRef(speechRecognition);
@@ -119,6 +120,11 @@ export function useVoiceInput({
         if (userStopped) {
           isListeningRef.current = false;
           setIsListening(false);
+          if (discardSessionRef.current) {
+            discardSessionRef.current = false;
+            resetSessionTranscript();
+            return;
+          }
           finalizeListening();
           return;
         }
@@ -161,6 +167,10 @@ export function useVoiceInput({
         if (payload.error === 'aborted') {
           isListeningRef.current = false;
           setIsListening(false);
+          if (discardSessionRef.current) {
+            discardSessionRef.current = false;
+            resetSessionTranscript();
+          }
           return;
         }
 
@@ -231,20 +241,34 @@ export function useVoiceInput({
     strings.voiceInputTitle,
   ]);
 
-  const stopListening = useCallback(() => {
+  const confirmListening = useCallback(() => {
     const module = getNativeSpeechRecognition();
     if (!module || !isListeningRef.current) return;
+    discardSessionRef.current = false;
     userStopRequestedRef.current = true;
     module.stop();
   }, []);
 
+  const cancelListening = useCallback(() => {
+    const module = getNativeSpeechRecognition();
+    if (!module) return;
+    discardSessionRef.current = true;
+    userStopRequestedRef.current = false;
+    if (isListeningRef.current) {
+      module.abort();
+    }
+    isListeningRef.current = false;
+    setIsListening(false);
+    resetSessionTranscript();
+  }, [resetSessionTranscript]);
+
   const toggleListening = useCallback(async () => {
     if (isListeningRef.current) {
-      stopListening();
+      confirmListening();
       return;
     }
     await startListening();
-  }, [startListening, stopListening]);
+  }, [startListening, confirmListening]);
 
   return {
     isListening,
@@ -252,7 +276,10 @@ export function useVoiceInput({
     error,
     speechAvailable,
     startListening,
-    stopListening,
+    confirmListening,
+    cancelListening,
+    /** @deprecated Use confirmListening */
+    stopListening: confirmListening,
     toggleListening,
   };
 }

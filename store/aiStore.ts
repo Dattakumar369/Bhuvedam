@@ -292,8 +292,11 @@ export const useAIStore = create<AIState>((set, get) => ({
 
     try {
       const language = useLanguageStore.getState().language;
-      const replyLanguage = detectQueryLanguage(messageText, language);
       const voiceMode = get().voiceModeEnabled;
+      const replyLanguage =
+        voiceMode && language === 'te'
+          ? 'te'
+          : detectQueryLanguage(messageText, language);
       let spokeEarly = false;
 
       await prepareContextBeforeChat(messageText);

@@ -21,7 +21,12 @@ interface VoiceAssistantBarProps {
   transcript?: string;
   onToggleVoiceMode: () => void;
   onStopSpeaking: () => void;
+  onConfirmListening?: () => void;
+  onCancelListening?: () => void;
+  /** @deprecated Use onConfirmListening */
   onStopListening?: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
 }
 
 export function VoiceAssistantBar({
@@ -32,7 +37,11 @@ export function VoiceAssistantBar({
   transcript,
   onToggleVoiceMode,
   onStopSpeaking,
+  onConfirmListening,
+  onCancelListening,
   onStopListening,
+  confirmLabel = 'Done',
+  cancelLabel = 'Cancel',
 }: VoiceAssistantBarProps) {
   const { t } = useTranslation();
   const pulse = useSharedValue(1);
@@ -107,14 +116,27 @@ export function VoiceAssistantBar({
           <Pressable onPress={onStopSpeaking} style={styles.stopBtn} accessibilityLabel="Stop speaking">
             <MaterialCommunityIcons name="stop-circle" size={28} color={colors.error} />
           </Pressable>
-        ) : isListening && onStopListening ? (
-          <Pressable
-            onPress={onStopListening}
-            style={styles.stopBtn}
-            accessibilityLabel={t.voiceStopListening}
-          >
-            <MaterialCommunityIcons name="stop-circle" size={28} color={colors.error} />
-          </Pressable>
+        ) : isListening ? (
+          <View style={styles.listenActions}>
+            {onCancelListening ? (
+              <Pressable
+                onPress={onCancelListening}
+                style={styles.cancelBtn}
+                accessibilityLabel={cancelLabel}
+              >
+                <Caption style={styles.cancelBtnText}>{cancelLabel}</Caption>
+              </Pressable>
+            ) : null}
+            {(onConfirmListening ?? onStopListening) ? (
+              <Pressable
+                onPress={onConfirmListening ?? onStopListening}
+                style={styles.stopBtn}
+                accessibilityLabel={confirmLabel}
+              >
+                <MaterialCommunityIcons name="check-circle" size={28} color={colors.primary} />
+              </Pressable>
+            ) : null}
+          </View>
         ) : (
           <View style={styles.stopBtn} />
         )}
@@ -162,4 +184,7 @@ const styles = StyleSheet.create({
   status: { fontFamily: 'Poppins_500Medium', color: colors.textSecondary, fontSize: 11 },
   transcript: { color: colors.textPrimary, fontSize: 12, marginTop: 2, fontStyle: 'italic' },
   stopBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  listenActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  cancelBtn: { paddingHorizontal: spacing.xs, paddingVertical: 4 },
+  cancelBtnText: { color: colors.error, fontFamily: 'Poppins_600SemiBold', fontSize: 11 },
 });

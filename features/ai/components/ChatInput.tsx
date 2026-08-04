@@ -21,6 +21,9 @@ interface ChatInputProps {
   onChangeText: (text: string) => void;
   onSend: () => void;
   onVoicePress?: () => void;
+  onConfirmListening?: () => void;
+  onCancelListening?: () => void;
+  /** @deprecated Use onConfirmListening */
   onStopListening?: () => void;
   isListening?: boolean;
   disabled?: boolean;
@@ -34,6 +37,9 @@ interface ChatInputProps {
   onAttachImage?: () => void;
   onRemoveImage?: () => void;
   attachImageLabel?: string;
+  listeningHint?: string;
+  cancelListeningLabel?: string;
+  confirmListeningLabel?: string;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -43,6 +49,8 @@ export function ChatInput({
   onChangeText,
   onSend,
   onVoicePress,
+  onConfirmListening,
+  onCancelListening,
   onStopListening,
   isListening = false,
   disabled = false,
@@ -56,6 +64,9 @@ export function ChatInput({
   onAttachImage,
   onRemoveImage,
   attachImageLabel = 'Upload photo',
+  listeningHint = 'Tap Done when finished, or Cancel to discard',
+  cancelListeningLabel = 'Cancel',
+  confirmListeningLabel = 'Done',
 }: ChatInputProps) {
   const insets = useSafeAreaInsets();
   const keyboardHeight = useKeyboardHeight();
@@ -119,6 +130,18 @@ export function ChatInput({
         </View>
       ) : null}
 
+      {isListening ? (
+        <View style={styles.listeningBanner}>
+          <MaterialCommunityIcons name="microphone" size={16} color={colors.error} />
+          <Caption style={styles.listeningBannerText}>{listeningHint}</Caption>
+          {onCancelListening ? (
+            <Pressable onPress={onCancelListening} hitSlop={8}>
+              <Caption style={styles.cancelListening}>{cancelListeningLabel}</Caption>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+
       <View style={styles.inputRow}>
         {onAttachImage ? (
           <Pressable
@@ -136,13 +159,13 @@ export function ChatInput({
         ) : null}
 
         {onVoicePress ? (
-          isListening && onStopListening ? (
+          isListening && (onConfirmListening ?? onStopListening) ? (
             <AnimatedPressable
-              onPress={onStopListening}
+              onPress={onConfirmListening ?? onStopListening}
               style={[styles.micButton, styles.micActive, styles.stopMicButton, micStyle]}
-              accessibilityLabel="Stop listening"
+              accessibilityLabel={confirmListeningLabel}
             >
-              <MaterialCommunityIcons name="stop" size={22} color={colors.white} />
+              <MaterialCommunityIcons name="check" size={24} color={colors.white} />
             </AnimatedPressable>
           ) : (
             <AnimatedPressable
@@ -222,6 +245,18 @@ const styles = StyleSheet.create({
   },
   editBannerText: { flex: 1, color: colors.primary, fontFamily: 'Poppins_600SemiBold' },
   cancelEdit: { color: colors.error, fontFamily: 'Poppins_600SemiBold' },
+  listeningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+    backgroundColor: `${colors.error}10`,
+  },
+  listeningBannerText: { flex: 1, color: colors.textSecondary, fontSize: 11 },
+  cancelListening: { color: colors.error, fontFamily: 'Poppins_600SemiBold', fontSize: 12 },
   imagePreviewWrap: {
     marginBottom: spacing.sm,
     alignSelf: 'flex-start',

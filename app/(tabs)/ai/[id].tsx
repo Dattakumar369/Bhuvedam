@@ -100,14 +100,21 @@ export default function ChatScreen() {
     ],
   );
 
-  const { isListening, transcript, startListening, stopListening } = useVoiceInput({
+  const { isListening, transcript, startListening, confirmListening, cancelListening } =
+    useVoiceInput({
     onResult: handleVoiceResult,
     onPartialResult: setInput,
     blocked: isSpeaking || isTyping,
   });
 
   startListeningRef.current = startListening;
-  stopListeningRef.current = stopListening;
+  stopListeningRef.current = confirmListening;
+
+  const handleCancelListening = useCallback(() => {
+    clearResumeListenTimer();
+    cancelListening();
+    setInput('');
+  }, [cancelListening, clearResumeListenTimer]);
 
   useEffect(() => {
     if (id) setActiveConversation(id);
@@ -137,7 +144,7 @@ export default function ChatScreen() {
     const text = input.trim();
     if ((!text && !(FEATURES.chatImageUploadEnabled && pendingImage)) || !id || isTyping) return;
     stopSpeakingNow();
-    stopListening();
+    confirmListening();
     clearResumeListenTimer();
     const editId = editingMessageId;
     const image = FEATURES.chatImageUploadEnabled ? pendingImage : null;
@@ -256,7 +263,10 @@ export default function ChatScreen() {
         voiceModeEnabled={voiceModeEnabled}
         transcript={transcript}
         onToggleVoiceMode={toggleVoiceMode}
-        onStopListening={stopListening}
+        onConfirmListening={confirmListening}
+        onCancelListening={handleCancelListening}
+        confirmLabel={t.voiceConfirmListening}
+        cancelLabel={t.voiceCancelListening}
         onStopSpeaking={() => {
           clearResumeListenTimer();
           stopSpeakingNow();
@@ -315,7 +325,11 @@ export default function ChatScreen() {
           }
           void startListening();
         }}
-        onStopListening={stopListening}
+        onConfirmListening={confirmListening}
+        onCancelListening={handleCancelListening}
+        confirmListeningLabel={t.voiceConfirmListening}
+        cancelListeningLabel={t.voiceCancelListening}
+        listeningHint={t.voiceListeningHint}
         isListening={isListening}
         disabled={isTyping}
         placeholder={t.chatPlaceholder}

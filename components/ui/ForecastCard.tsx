@@ -1,6 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInRight } from 'react-native-reanimated';
+import { useEffect, useRef } from 'react';
 
 import { Caption, Label, Subtitle } from '@/components/ui/Typography';
 import { WEATHER_CONDITIONS } from '@/constants/weather';
@@ -8,19 +9,52 @@ import type { DailyForecast, HourlyForecast } from '@/types/weather';
 import { formatTemperature } from '@/utils/format';
 import { colors, radius, spacing } from '@/theme';
 
+const HOURLY_ITEM_WIDTH = 72;
+
 interface HourlyForecastCardProps {
   data: HourlyForecast[];
+  scrollToCurrentHour?: boolean;
 }
 
-export function HourlyForecastCard({ data }: HourlyForecastCardProps) {
+export function HourlyForecastCard({ data, scrollToCurrentHour = false }: HourlyForecastCardProps) {
+  const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    if (!scrollToCurrentHour || !data.length) return;
+
+    const nowHour = new Date().getHours();
+    const idx = data.findIndex(
+      (item) => item.isoTime && new Date(item.isoTime).getHours() === nowHour,
+    );
+    if (idx <= 0) return;
+
+    const timer = setTimeout(() => {
+      scrollRef.current?.scrollTo({ x: idx * HOURLY_ITEM_WIDTH, animated: true });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [data, scrollToCurrentHour]);
+
+  if (!data.length) {
+    return (
+      <Caption style={styles.emptyHint}>Hourly forecast not available for this day.</Caption>
+    );
+  }
+
   return (
-    <View style={styles.hourlyContainer}>
+    <ScrollView
+      ref={scrollRef}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.hourlyScrollContent}
+      decelerationRate="fast"
+    >
       {data.map((item, index) => {
         const condition = WEATHER_CONDITIONS[item.condition];
+        const key = item.isoTime ?? `${item.time}-${index}`;
         return (
           <Animated.View
-            key={item.time}
-            entering={FadeInRight.delay(index * 80).springify()}
+            key={key}
+            entering={FadeInRight.delay(Math.min(index, 8) * 40).springify()}
             style={styles.hourlyItem}
           >
             <Caption>{item.time}</Caption>
@@ -34,37 +68,60 @@ export function HourlyForecastCard({ data }: HourlyForecastCardProps) {
           </Animated.View>
         );
       })}
-    </View>
+    </ScrollView>
   );
 }
 
 interface DailyForecastCardProps {
   data: DailyForecast[];
+  selectedDate?: string;
+  onSelectDay?: (date: string) => void;
 }
 
-export function DailyForecastCard({ data }: DailyForecastCardProps) {
+export function DailyForecastCard({ data, selectedDate, onSelectDay }: DailyForecastCardProps) {
+  const todayKey = data[0]?.date;
+
   return (
     <View style={styles.dailyContainer}>
-      {data.map((item, index) => {
+      {data.map((item) => {
         const condition = WEATHER_CONDITIONS[item.condition];
+        const isSelected = selectedDate === item.date;
+        const isToday = item.date === todayKey;
+
         return (
-          <Animated.View
+          <Pressable
             key={item.date}
-            entering={FadeInRight.delay(index * 60).springify()}
-            style={styles.dailyRow}
+            onPress={() => onSelectDay?.(item.date)}
+            style={({ pressed }) => [
+              styles.dailyRow,
+              isSelected && styles.dailyRowSelected,
+              pressed && styles.dailyRowPressed,
+            ]}
           >
-            <Label style={styles.dayLabel}>{item.day}</Label>
+            <View style={styles.dayCol}>
+              <Label style={[styles.dayLabel, isSelected && styles.dayLabelSelected]}>
+                {isToday ? 'Today' : item.day}
+              </Label>
+              <Caption style={styles.dateLabel}>{item.dateLabel}</Caption>
+            </View>
             <MaterialCommunityIcons
               name={(condition?.icon ?? 'weather-partly-cloudy') as never}
               size={24}
-              color={colors.textSecondary}
+              color={isSelected ? colors.primary : colors.textSecondary}
             />
             <Caption style={styles.precipSmall}>{item.precipitation}%</Caption>
             <View style={styles.tempRange}>
               <Subtitle>{formatTemperature(item.high)}</Subtitle>
               <Caption style={styles.lowTemp}>{formatTemperature(item.low)}</Caption>
             </View>
-          </Animated.View>
+            {onSelectDay ? (
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={18}
+                color={isSelected ? colors.primary : colors.textTertiary}
+              />
+            ) : null}
+          </Pressable>
         );
       })}
     </View>
@@ -72,30 +129,46 @@ export function DailyForecastCard({ data }: DailyForecastCardProps) {
 }
 
 const styles = StyleSheet.create({
-  hourlyContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  hourlyScrollContent: {
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+    paddingRight: spacing.sm,
   },
   hourlyItem: {
     alignItems: 'center',
     gap: spacing.xs,
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: spacing.sm,
     backgroundColor: colors.surfaceVariant,
     borderRadius: radius.md,
-    minWidth: 64,
+    width: HOURLY_ITEM_WIDTH,
+  },
+  emptyHint: {
+    color: colors.textTertiary,
+    textAlign: 'center',
+    paddingVertical: spacing.md,
   },
   precip: { color: colors.info, fontSize: 10 },
-  dailyContainer: { gap: spacing.sm },
+  dailyContainer: { gap: spacing.xs },
   dailyRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     gap: spacing.md,
   },
-  dayLabel: { width: 40 },
+  dailyRowSelected: {
+    backgroundColor: colors.primary + '12',
+    borderBottomColor: colors.primary + '30',
+  },
+  dailyRowPressed: { opacity: 0.85 },
+  dayCol: { width: 56 },
+  dayLabel: { fontWeight: '600' },
+  dayLabelSelected: { color: colors.primary },
+  dateLabel: { color: colors.textTertiary, fontSize: 11, marginTop: 2 },
   precipSmall: { width: 32, color: colors.info },
   tempRange: { flexDirection: 'row', gap: spacing.sm, marginLeft: 'auto' },
   lowTemp: { color: colors.textTertiary },

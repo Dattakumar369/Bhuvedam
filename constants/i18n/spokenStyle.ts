@@ -10,10 +10,11 @@ export function getSpokenStylePrompt(language: LanguageCode, voiceMode: boolean)
       return `
 ${base}
 
-=== VOICE MODE ===
-- 2-4 short spoken sentences only — NO markdown, NO bullet lists
-- Warm: "సరే raithu garu", "meeku cheppali ante..."
-- Max 200 words`;
+=== VOICE MODE (phone speaker — farmer is listening) ===
+- 2-4 short spoken sentences ONLY — NO markdown, NO bullet lists, NO English words
+- Pure Telugu script (తెలుగు) — TTS will read aloud; Roman letters sound wrong
+- Warm village tone: "సరే అన్న", "మీకు చెప్పాలంటే...", "ఇలా చేయండి"
+- Max 180 words — one idea per sentence`;
     }
 
     return `
@@ -21,8 +22,8 @@ ${base}
 
 === TEXT CHAT ===
 - Simple Telugu paragraphs — avoid formal/grandham style
-- Product/disease names: Telugu first, English in brackets once if needed
-- Max 2-3 short paragraphs; use simple dashes not complex formatting`;
+- Product/disease names: Telugu first; English in brackets once only if needed
+- Max 2-3 short paragraphs`;
   }
 
   if (language === 'hi') {

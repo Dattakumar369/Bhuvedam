@@ -1,4 +1,5 @@
-import type { WeatherCondition, WeatherData } from '@/types/weather';
+import type { HourlyForecast, WeatherCondition, WeatherData } from '@/types/weather';
+import { formatCalendarDate } from '@/utils/weatherForecast';
 
 /** WMO Weather interpretation codes → app condition */
 export function mapWeatherCode(code: number): WeatherCondition {
@@ -73,6 +74,31 @@ function formatDayLabel(isoTime: string): string {
   return new Date(isoTime).toLocaleDateString('en-IN', { weekday: 'short' });
 }
 
+function dateKeyFromIso(isoTime: string): string {
+  return isoTime.slice(0, 10);
+}
+
+function mapHourlyEntries(hourly: OpenMeteoResponse['hourly']): HourlyForecast[] {
+  return hourly.time.map((time, index) => ({
+    isoTime: time,
+    time: formatHourLabel(time),
+    temperature: Math.round(hourly.temperature_2m[index] ?? 0),
+    condition: mapWeatherCode(hourly.weather_code[index] ?? 0),
+    precipitation: Math.round(hourly.precipitation_probability[index] ?? 0),
+  }));
+}
+
+function groupHourlyByDate(entries: HourlyForecast[]): Record<string, HourlyForecast[]> {
+  const grouped: Record<string, HourlyForecast[]> = {};
+  for (const entry of entries) {
+    if (!entry.isoTime) continue;
+    const key = dateKeyFromIso(entry.isoTime);
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(entry);
+  }
+  return grouped;
+}
+
 export async function fetchOpenMeteoWeather(
   latitude: number,
   longitude: number,
@@ -108,18 +134,16 @@ export async function fetchOpenMeteoWeather(
   const json = (await response.json()) as OpenMeteoResponse;
   const { current, hourly, daily } = json;
 
+  const allHourly = mapHourlyEntries(hourly);
+  const hourlyByDate = groupHourlyByDate(allHourly);
+  const todayKey = daily.time[0] ?? dateKeyFromIso(new Date().toISOString());
+  const todayFull = hourlyByDate[todayKey] ?? [];
+
   const now = new Date();
   const currentHour = now.getHours();
-  const hourlySlice = hourly.time
-    .map((time, index) => ({
-      time,
-      hour: new Date(time).getHours(),
-      temperature: hourly.temperature_2m[index] ?? 0,
-      precipitation: hourly.precipitation_probability[index] ?? 0,
-      weatherCode: hourly.weather_code[index] ?? 0,
-    }))
-    .filter((item) => item.hour >= currentHour)
-    .slice(0, 6);
+  const hourlyToday = todayFull.filter(
+    (item) => item.isoTime && new Date(item.isoTime).getHours() >= currentHour,
+  );
 
   const weatherData: WeatherData = {
     location: locationLabel,
@@ -134,15 +158,12 @@ export async function fetchOpenMeteoWeather(
       uvIndex: Math.round(current.uv_index),
       precipitation: Math.round(current.precipitation_probability),
     },
-    hourly: hourlySlice.map((item) => ({
-      time: formatHourLabel(item.time),
-      temperature: Math.round(item.temperature),
-      condition: mapWeatherCode(item.weatherCode),
-      precipitation: Math.round(item.precipitation),
-    })),
+    hourly: hourlyToday.length ? hourlyToday : todayFull,
+    hourlyByDate,
     daily: daily.time.map((date, index) => ({
       date,
       day: formatDayLabel(date),
+      dateLabel: formatCalendarDate(date),
       high: Math.round(daily.temperature_2m_max[index] ?? 0),
       low: Math.round(daily.temperature_2m_min[index] ?? 0),
       condition: mapWeatherCode(daily.weather_code[index] ?? 0),
