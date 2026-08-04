@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "745938807426",
+    "project_id": "bhuvedam",
+    "storage_bucket": "bhuvedam.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:745938807426:android:82ffb9ce60da43369ce29b",
+        "android_client_info": {
+          "package_name": "com.bhuvedam.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7STiFEYI2L9PSRwJyEbwwT_Iwd8xAqMM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
