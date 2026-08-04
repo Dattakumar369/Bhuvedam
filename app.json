@@ -28,6 +28,7 @@
     },
     "android": {
       "package": "com.bhuvedam.app",
+      "googleServicesFile": "./google-services.json",
       "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
