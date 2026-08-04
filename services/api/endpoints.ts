@@ -21,6 +21,7 @@ export const ENDPOINTS = {
     notifications: '/api/farmers/me/notifications',
     pushToken: '/api/farmers/me/push-token',
     pushAlert: '/api/farmers/me/notifications/push',
+    alertsCheck: '/api/farmers/me/alerts/check',
     notificationRead: (id: string) => `/api/farmers/me/notifications/${id}/read`,
     notificationsReadAll: '/api/farmers/me/notifications/read-all',
   },

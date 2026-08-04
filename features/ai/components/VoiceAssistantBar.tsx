@@ -21,6 +21,7 @@ interface VoiceAssistantBarProps {
   transcript?: string;
   onToggleVoiceMode: () => void;
   onStopSpeaking: () => void;
+  onStopListening?: () => void;
 }
 
 export function VoiceAssistantBar({
@@ -31,6 +32,7 @@ export function VoiceAssistantBar({
   transcript,
   onToggleVoiceMode,
   onStopSpeaking,
+  onStopListening,
 }: VoiceAssistantBarProps) {
   const { t } = useTranslation();
   const pulse = useSharedValue(1);
@@ -52,7 +54,7 @@ export function VoiceAssistantBar({
   }));
 
   const statusText = isListening
-    ? t.voiceBarListening
+    ? t.voiceBarStopHint
     : isTyping
       ? t.voiceBarThinking
       : isSpeaking
@@ -103,6 +105,14 @@ export function VoiceAssistantBar({
 
         {isSpeaking ? (
           <Pressable onPress={onStopSpeaking} style={styles.stopBtn} accessibilityLabel="Stop speaking">
+            <MaterialCommunityIcons name="stop-circle" size={28} color={colors.error} />
+          </Pressable>
+        ) : isListening && onStopListening ? (
+          <Pressable
+            onPress={onStopListening}
+            style={styles.stopBtn}
+            accessibilityLabel={t.voiceStopListening}
+          >
             <MaterialCommunityIcons name="stop-circle" size={28} color={colors.error} />
           </Pressable>
         ) : (

@@ -85,7 +85,10 @@ export function AppProvider({ children }: AppProviderProps) {
       if (location && !refreshedFarmer.soilProfile) {
         void fetchSoilFromLocation(location.latitude, location.longitude);
       }
-      void fetchMandiRates().then(() => refreshAlerts({ force: true }));
+      void fetchMandiRates().then(() => {
+        const notify = useAlertStore.getState().notificationsEnabled;
+        void refreshAlerts({ force: true, notify });
+      });
     });
   }, [
     hydrateUser,

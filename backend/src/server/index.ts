@@ -81,6 +81,10 @@ import {
   removePushToken,
 } from '../services/notificationInboxService';
 import {
+  dispatchRealtimeAlertsForAll,
+  dispatchRealtimeAlertsForFarmer,
+} from '../services/farmAlertPushService';
+import {
   consumeOtpSession,
   getFarmerByPhone,
   hasVerifiedOtpSession,
@@ -1014,29 +1018,45 @@ app.post('/api/farmers/me/notifications/push', farmerAuthMiddleware, async (c) =
   return c.json({ success: true, ...result });
 });
 
+/** Farmer device — check weather/mandi alerts and push if needed (app open/background). */
+app.post('/api/farmers/me/alerts/check', farmerAuthMiddleware, async (c) => {
+  const result = await dispatchRealtimeAlertsForFarmer(c.get('farmerId'));
+  return c.json({ ok: true, ...result });
+});
+
 /** Low-cost cron — cron-job.org (POST) or Vercel Cron (GET + Bearer CRON_SECRET) */
-async function runDailyNotificationCron(c: Context) {
+function authorizeCron(c: Context): boolean {
   const secret = process.env.CRON_SECRET?.trim();
   if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      return appError(c, 'FORBIDDEN');
-    }
-  } else {
-    const bearer = c.req.header('authorization');
-    const headerSecret = c.req.header('x-cron-secret');
-    const authorized =
-      headerSecret === secret || bearer === `Bearer ${secret}`;
-    if (!authorized) {
-      return appError(c, 'FORBIDDEN');
-    }
+    return process.env.NODE_ENV !== 'production';
+  }
+  const bearer = c.req.header('authorization');
+  const headerSecret = c.req.header('x-cron-secret');
+  return headerSecret === secret || bearer === `Bearer ${secret}`;
+}
+
+async function runDailyNotificationCron(c: Context) {
+  if (!authorizeCron(c)) {
+    return appError(c, 'FORBIDDEN');
   }
 
   const result = await dispatchDailyFarmReminders();
   return c.json({ ok: true, ...result });
 }
 
+async function runRealtimeNotificationCron(c: Context) {
+  if (!authorizeCron(c)) {
+    return appError(c, 'FORBIDDEN');
+  }
+
+  const result = await dispatchRealtimeAlertsForAll();
+  return c.json({ ok: true, ...result });
+}
+
 app.get('/api/notifications/cron/daily', runDailyNotificationCron);
 app.post('/api/notifications/cron/daily', runDailyNotificationCron);
+app.get('/api/notifications/cron/realtime', runRealtimeNotificationCron);
+app.post('/api/notifications/cron/realtime', runRealtimeNotificationCron);
 
 /** AI chat (non-stream) — reliable on React Native APK */
 app.post('/api/ai/chat', farmerAuthMiddleware, async (c) => {

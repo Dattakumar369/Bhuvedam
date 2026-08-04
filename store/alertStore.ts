@@ -227,9 +227,11 @@ export const useAlertStore = create<AlertState>((set, get) => ({
 
     persistAlerts(merged);
 
-    if (notify && get().notificationsEnabled && notificationsSupported) {
+    if (get().notificationsEnabled && newUnread.length) {
       for (const alert of newUnread.slice(0, 2)) {
-        await showLocalFarmAlert(alert);
+        if (notify && notificationsSupported) {
+          await showLocalFarmAlert(alert);
+        }
         void pushAlertToServer(alert);
       }
     }

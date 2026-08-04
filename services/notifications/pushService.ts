@@ -88,10 +88,25 @@ export async function pushAlertToServer(alert: FarmAlert): Promise<void> {
       type: alert.type,
       title: alert.title,
       body: alert.body,
-      data: { alertId: alert.id, severity: alert.severity, ...alert.data },
+      data: {
+        alertId: alert.id,
+        severity: alert.severity,
+        alertKey: `${alert.type}-${alert.title}`,
+        ...alert.data,
+      },
     });
   } catch {
     /* fallback: local notification already shown */
+  }
+}
+
+/** Ask server to evaluate weather/mandi alerts and push (works when app backgrounded). */
+export async function triggerServerAlertCheck(): Promise<void> {
+  try {
+    await apiClient.post(ENDPOINTS.farmers.alertsCheck, {}, { timeout: 15000 });
+    logger.app.info('Server alert check completed');
+  } catch (error) {
+    logger.app.warn('Server alert check failed', { error });
   }
 }
 

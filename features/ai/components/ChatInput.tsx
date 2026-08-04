@@ -21,6 +21,7 @@ interface ChatInputProps {
   onChangeText: (text: string) => void;
   onSend: () => void;
   onVoicePress?: () => void;
+  onStopListening?: () => void;
   isListening?: boolean;
   disabled?: boolean;
   placeholder?: string;
@@ -42,6 +43,7 @@ export function ChatInput({
   onChangeText,
   onSend,
   onVoicePress,
+  onStopListening,
   isListening = false,
   disabled = false,
   placeholder = 'Ask about farming, crops, weather...',
@@ -134,18 +136,24 @@ export function ChatInput({
         ) : null}
 
         {onVoicePress ? (
-          <AnimatedPressable
-            onPress={onVoicePress}
-            disabled={disabled && !isListening}
-            style={[styles.micButton, isListening && styles.micActive, micStyle]}
-            accessibilityLabel={isListening ? 'Stop listening' : 'Start voice input'}
-          >
-            <MaterialCommunityIcons
-              name={isListening ? 'microphone' : 'microphone-outline'}
-              size={22}
-              color={isListening ? colors.white : colors.primary}
-            />
-          </AnimatedPressable>
+          isListening && onStopListening ? (
+            <AnimatedPressable
+              onPress={onStopListening}
+              style={[styles.micButton, styles.micActive, styles.stopMicButton, micStyle]}
+              accessibilityLabel="Stop listening"
+            >
+              <MaterialCommunityIcons name="stop" size={22} color={colors.white} />
+            </AnimatedPressable>
+          ) : (
+            <AnimatedPressable
+              onPress={onVoicePress}
+              disabled={disabled}
+              style={[styles.micButton, micStyle]}
+              accessibilityLabel="Start voice input"
+            >
+              <MaterialCommunityIcons name="microphone-outline" size={22} color={colors.primary} />
+            </AnimatedPressable>
+          )
         ) : null}
 
         <TextInput
@@ -261,6 +269,9 @@ const styles = StyleSheet.create({
     backgroundColor: `${colors.primary}12`,
   },
   micActive: {
+    backgroundColor: colors.error,
+  },
+  stopMicButton: {
     backgroundColor: colors.error,
   },
   input: {

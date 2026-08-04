@@ -100,7 +100,7 @@ export default function ChatScreen() {
     ],
   );
 
-  const { isListening, transcript, toggleListening, startListening, stopListening } = useVoiceInput({
+  const { isListening, transcript, startListening, stopListening } = useVoiceInput({
     onResult: handleVoiceResult,
     onPartialResult: setInput,
     blocked: isSpeaking || isTyping,
@@ -256,6 +256,7 @@ export default function ChatScreen() {
         voiceModeEnabled={voiceModeEnabled}
         transcript={transcript}
         onToggleVoiceMode={toggleVoiceMode}
+        onStopListening={stopListening}
         onStopSpeaking={() => {
           clearResumeListenTimer();
           stopSpeakingNow();
@@ -312,8 +313,9 @@ export default function ChatScreen() {
           if (isSpeaking) {
             stopSpeakingNow();
           }
-          void toggleListening();
+          void startListening();
         }}
+        onStopListening={stopListening}
         isListening={isListening}
         disabled={isTyping}
         placeholder={t.chatPlaceholder}

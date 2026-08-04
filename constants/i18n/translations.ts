@@ -26,6 +26,8 @@ export interface Translations {
   voiceModeOn: string;
   voiceModeOff: string;
   voiceBarListening: string;
+  voiceBarStopHint: string;
+  voiceStopListening: string;
   voiceBarThinking: string;
   voiceBarSpeaking: string;
   typingIndicator: string;
@@ -84,6 +86,8 @@ const en: Translations = {
   voiceModeOn: 'Voice mode on — type or tap mic',
   voiceModeOff: 'Voice mode off',
   voiceBarListening: 'Listening... speak now',
+  voiceBarStopHint: 'Tap Stop when you finish speaking',
+  voiceStopListening: 'Stop',
   voiceBarThinking: 'Bhuvedam AI is thinking...',
   voiceBarSpeaking: 'Speaking...',
   typingIndicator: 'Bhuvedam AI is thinking...',
@@ -150,6 +154,8 @@ const hi: Translations = {
   voiceModeOn: 'वॉइस मोड चालू — टाइप करें या माइक दबाएं',
   voiceModeOff: 'वॉइस मोड बंद',
   voiceBarListening: 'सुन रहा है... अब बोलें',
+  voiceBarStopHint: 'बोलना खत्म हो तो Stop दबाएं',
+  voiceStopListening: 'Stop',
   voiceBarThinking: 'Bhuvedam AI सोच रहा है...',
   voiceBarSpeaking: 'बोल रहा है...',
   typingIndicator: 'Bhuvedam AI सोच रहा है...',
@@ -216,6 +222,8 @@ const mr: Translations = {
   voiceModeOn: 'व्हॉइस मोड चालू — टाइप करा किंवा माइक दाबा',
   voiceModeOff: 'व्हॉइस मोड बंद',
   voiceBarListening: 'ऐकत आहे... आता बोला',
+  voiceBarStopHint: 'बोलून झाल्यावर Stop दाबा',
+  voiceStopListening: 'Stop',
   voiceBarThinking: 'Bhuvedam AI विचार करत आहे...',
   voiceBarSpeaking: 'बोलत आहे...',
   typingIndicator: 'Bhuvedam AI विचार करत आहे...',
@@ -282,6 +290,8 @@ const ta: Translations = {
   voiceModeOn: 'குரல் பயன்முறை இயக்கம் — தட்டச்சு அல்லது மைக்',
   voiceModeOff: 'குரல் பயன்முறை முடக்கம்',
   voiceBarListening: 'கேட்கிறது... இப்போது பேசுங்கள்',
+  voiceBarStopHint: 'முடிந்ததும் Stop அழுத்துங்கள்',
+  voiceStopListening: 'Stop',
   voiceBarThinking: 'Bhuvedam AI யோசிக்கிறது...',
   voiceBarSpeaking: 'பேசுகிறது...',
   typingIndicator: 'Bhuvedam AI யோசிக்கிறது...',
@@ -348,6 +358,8 @@ const te: Translations = {
   voiceModeOn: 'వాయిస్ మోడ్ ఆన్ — టైప్ చేయండి లేదా మైక్ నొక్కండి',
   voiceModeOff: 'వాయిస్ మోడ్ ఆఫ్',
   voiceBarListening: 'వింటున్నాను... మీరు మాట్లాడandi',
+  voiceBarStopHint: 'మాట్లాడి పూర్తి అయ్యాక Stop నొక్కండి',
+  voiceStopListening: 'Stop',
   voiceBarThinking: 'ఆలోచిస్తున్నాను...',
   voiceBarSpeaking: 'మీకు చెప్పుతున్నాను...',
   typingIndicator: 'Bhuvedam AI ఆలోచిస్తోంది...',
@@ -414,6 +426,8 @@ const kn: Translations = {
   voiceModeOn: 'ವಾಯ್ಸ್ ಮೋಡ್ ಆನ್ — ಟೈಪ್ ಮಾಡಿ ಅಥವಾ ಮೈಕ್ ಒತ್ತಿ',
   voiceModeOff: 'ವಾಯ್ಸ್ ಮೋಡ್ ಆಫ್',
   voiceBarListening: 'ಕೇಳುತ್ತಿದೆ... ಈಗ ಮಾತನಾಡಿ',
+  voiceBarStopHint: 'ಮಾತು ಮುಗಿದ ನಂತರ Stop ಒತ್ತಿ',
+  voiceStopListening: 'Stop',
   voiceBarThinking: 'Bhuvedam AI ಯೋಚಿಸುತ್ತಿದೆ...',
   voiceBarSpeaking: 'ಮಾತನಾಡುತ್ತಿದೆ...',
   typingIndicator: 'Bhuvedam AI ಯೋಚಿಸುತ್ತಿದೆ...',
@@ -466,6 +480,7 @@ export function getTranslations(language: LanguageCode = DEFAULT_LANGUAGE): Tran
   return {
     ...base,
     aiTopicCategories: base.aiTopicCategories ?? EN_TOPIC_CATEGORIES,
-    topicPickerHint: base.topicPickerHint ?? translations.en.topicPickerHint,
+    voiceBarStopHint: base.voiceBarStopHint ?? translations.en.voiceBarStopHint,
+    voiceStopListening: base.voiceStopListening ?? translations.en.voiceStopListening,
   };
 }

@@ -23,6 +23,10 @@ interface UseVoiceInputOptions {
   blocked?: boolean;
 }
 
+function mergeTranscript(finalParts: string, interim: string): string {
+  return [finalParts, interim].filter(Boolean).join(' ').trim();
+}
+
 export function useVoiceInput({
   onResult,
   onPartialResult,
@@ -43,20 +47,60 @@ export function useVoiceInput({
   const onPartialResultRef = useRef(onPartialResult);
   const isListeningRef = useRef(false);
   const blockedRef = useRef(blocked);
+  const userStopRequestedRef = useRef(false);
+  const finalTranscriptRef = useRef('');
+  const interimTranscriptRef = useRef('');
+  const speechLangRef = useRef(speechRecognition);
 
   onResultRef.current = onResult;
   onPartialResultRef.current = onPartialResult;
   blockedRef.current = blocked;
+  speechLangRef.current = speechRecognition;
+
+  const updateLiveTranscript = useCallback(() => {
+    const live = mergeTranscript(finalTranscriptRef.current, interimTranscriptRef.current);
+    setTranscript(live);
+    onPartialResultRef.current?.(live);
+  }, []);
+
+  const resetSessionTranscript = useCallback(() => {
+    finalTranscriptRef.current = '';
+    interimTranscriptRef.current = '';
+    setTranscript('');
+  }, []);
+
+  const finalizeListening = useCallback(() => {
+    const text = mergeTranscript(finalTranscriptRef.current, interimTranscriptRef.current);
+    resetSessionTranscript();
+    if (text && !blockedRef.current) {
+      onResultRef.current(text);
+    }
+  }, [resetSessionTranscript]);
+
+  const getStartOptions = useCallback(
+    () => ({
+      lang: speechLangRef.current,
+      interimResults: true,
+      continuous: true,
+      maxAlternatives: 1,
+      androidIntentOptions: {
+        EXTRA_LANGUAGE_MODEL: 'free_form',
+      },
+    }),
+    [],
+  );
 
   useEffect(() => {
     if (!blocked) return;
     const module = getNativeSpeechRecognition();
     if (module && isListeningRef.current) {
+      userStopRequestedRef.current = false;
       module.abort();
       isListeningRef.current = false;
       setIsListening(false);
+      resetSessionTranscript();
     }
-  }, [blocked]);
+  }, [blocked, resetSessionTranscript]);
 
   useEffect(() => {
     const module = getNativeSpeechRecognition();
@@ -69,6 +113,27 @@ export function useVoiceInput({
         setError(null);
       }),
       module.addListener('end', () => {
+        const userStopped = userStopRequestedRef.current;
+        userStopRequestedRef.current = false;
+
+        if (userStopped) {
+          isListeningRef.current = false;
+          setIsListening(false);
+          finalizeListening();
+          return;
+        }
+
+        // Platform ended early (silence timeout) — keep mic open until farmer taps Stop.
+        if (isListeningRef.current && !blockedRef.current) {
+          try {
+            module.start(getStartOptions());
+          } catch {
+            isListeningRef.current = false;
+            setIsListening(false);
+          }
+          return;
+        }
+
         isListeningRef.current = false;
         setIsListening(false);
       }),
@@ -76,22 +141,41 @@ export function useVoiceInput({
         if (blockedRef.current) return;
 
         const payload = event as SpeechRecognitionResultEvent;
-        const text = payload.results[0]?.transcript ?? '';
-        setTranscript(text);
-        onPartialResultRef.current?.(text);
+        const segment = payload.results[0]?.transcript ?? '';
 
-        if (payload.isFinal && text.trim()) {
-          onResultRef.current(text.trim());
-          setTranscript('');
+        if (payload.isFinal) {
+          if (segment.trim()) {
+            finalTranscriptRef.current = finalTranscriptRef.current
+              ? `${finalTranscriptRef.current} ${segment.trim()}`
+              : segment.trim();
+          }
+          interimTranscriptRef.current = '';
+        } else {
+          interimTranscriptRef.current = segment;
         }
+
+        updateLiveTranscript();
       }),
       module.addListener('error', (event) => {
         const payload = event as SpeechRecognitionErrorEvent;
-        if (payload.error === 'aborted' || payload.error === 'no-speech') {
+        if (payload.error === 'aborted') {
           isListeningRef.current = false;
           setIsListening(false);
           return;
         }
+
+        // Silence / no-speech — do not end session; farmer may still be thinking.
+        if (payload.error === 'no-speech' || payload.error === 'speech-timeout') {
+          if (isListeningRef.current && !userStopRequestedRef.current && !blockedRef.current) {
+            try {
+              module.start(getStartOptions());
+            } catch {
+              /* ignore */
+            }
+          }
+          return;
+        }
+
         setError(payload.message);
         isListeningRef.current = false;
         setIsListening(false);
@@ -101,10 +185,11 @@ export function useVoiceInput({
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
       if (isListeningRef.current) {
+        userStopRequestedRef.current = false;
         module.abort();
       }
     };
-  }, []);
+  }, [finalizeListening, getStartOptions, updateLiveTranscript]);
 
   const showDevBuildAlert = useCallback(() => {
     Alert.alert(strings.voiceInputTitle, strings.voiceInputMessage, [
@@ -129,28 +214,27 @@ export function useVoiceInput({
         return;
       }
 
-      if (isListeningRef.current) {
-        module.stop();
-        return;
-      }
+      if (isListeningRef.current) return;
 
-      module.start({
-        lang: speechRecognition,
-        interimResults: true,
-        continuous: false,
-        maxAlternatives: 1,
-        androidIntentOptions: {
-          EXTRA_LANGUAGE_MODEL: 'free_form',
-        },
-      });
+      resetSessionTranscript();
+      userStopRequestedRef.current = false;
+      module.start(getStartOptions());
     } catch {
       showDevBuildAlert();
     }
-  }, [enabled, speechRecognition, showDevBuildAlert, strings.voiceInputTitle, language]);
+  }, [
+    enabled,
+    getStartOptions,
+    language,
+    resetSessionTranscript,
+    showDevBuildAlert,
+    strings.voiceInputTitle,
+  ]);
 
   const stopListening = useCallback(() => {
     const module = getNativeSpeechRecognition();
     if (!module || !isListeningRef.current) return;
+    userStopRequestedRef.current = true;
     module.stop();
   }, []);
 

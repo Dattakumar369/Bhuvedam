@@ -75,7 +75,10 @@ export default function MandiRatesScreen() {
   const handleRefresh = async () => {
     setRefreshing(true);
     await refresh();
-    await refreshAlerts({ force: true });
+    await refreshAlerts({
+      force: true,
+      notify: useAlertStore.getState().notificationsEnabled,
+    });
     setRefreshing(false);
   };
 

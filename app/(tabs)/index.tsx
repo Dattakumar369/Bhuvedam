@@ -39,7 +39,7 @@ export default function HomeScreen() {
   useEffect(() => {
     load();
     initializeConversations();
-    void refreshAlerts({ force: true });
+    void refreshAlerts({ force: true, notify: useAlertStore.getState().notificationsEnabled });
   }, [load, initializeConversations, refreshAlerts]);
 
   const firstName = user?.name?.split(' ')[0] ?? app.farmerDefault;
