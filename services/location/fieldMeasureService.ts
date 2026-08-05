@@ -14,8 +14,8 @@ import { useLanguageStore } from '@/store/languageStore';
 import type { Coordinates } from '@/types/location';
 import { GpsKalmanFilter } from '@/utils/gpsKalmanFilter';
 
-/** Level 1 fusion: accelerometer motion gate + Kalman GPS smoothing. */
-export const SENSOR_FUSION_ENABLED = true;
+/** Corner pin only — walk mode uses plain GPS in fieldWalkTracking.ts */
+export const SENSOR_FUSION_ENABLED = false;
 
 /** Target: corners within ~1–3 m in open sky. Phone GPS cannot match survey-grade 1 cm. */
 const CORNER_POLL_MS = 300;
@@ -417,127 +417,4 @@ function sampleToCorner(sample: GpsSample): CapturedCorner {
   };
 }
 
-/**
- * Track GPS while farmer walks around the field perimeter.
- * Points auto-record every ~4 m — no manual pin at each corner.
- */
-export async function startFieldWalkTracking(
-  onPoint: (point: CapturedCorner) => void,
-  onProgress: (progress: WalkTrackProgress) => void,
-  existingPoints: Coordinates[] = [],
-  onLivePosition?: (position: Coordinates) => void,
-): Promise<WalkTrackSession> {
-  const lang = useLanguageStore.getState().language;
-  const msg = getFieldMeasureMessages(lang);
-  const permission = await requestLocationPermission();
-  if (permission !== 'granted') {
-    throw new Error(msg.permissionDenied);
-  }
-
-  const servicesOn = await Location.hasServicesEnabledAsync();
-  if (!servicesOn) {
-    throw new Error(msg.gpsOff);
-  }
-
-  let stopped = false;
-  let distanceWalkedM = 0;
-  const recorded: Coordinates[] = [...existingPoints];
-  const kalman = new GpsKalmanFilter();
-
-  // Walk mode: GPS only — never touch accelerometer (native crash on some APK/OTA combos).
-  const pushProgress = (
-    message: string,
-    pointCount: number,
-    currentAccuracyM: number | null,
-    nearStart: boolean,
-    live?: GpsSample,
-  ) => {
-    onProgress({
-      message,
-      pointCount,
-      distanceWalkedM: Math.round(distanceWalkedM),
-      currentAccuracyM,
-      nearStart,
-      liveLatitude: live?.latitude,
-      liveLongitude: live?.longitude,
-    });
-    if (live) {
-      onLivePosition?.({ latitude: live.latitude, longitude: live.longitude });
-    }
-  };
-
-  pushProgress(msg.walkStartPlain, recorded.length, null, false);
-
-  let subscription: Location.LocationSubscription;
-  try {
-    subscription = await Location.watchPositionAsync(
-    {
-      accuracy: Location.Accuracy.High,
-      distanceInterval: 3,
-      timeInterval: 2000,
-    },
-    (position) => {
-      if (stopped) return;
-
-      const raw: GpsSample = {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy ?? null,
-      };
-      const sample = smoothSample(raw, kalman);
-
-      const acc = sample.accuracy;
-      if (acc != null && acc > WALK_MAX_ACCURACY_M) {
-        pushProgress(msg.gpsWeak(Math.round(acc)), recorded.length, acc, false, sample);
-        return;
-      }
-
-      if (!recorded.length) {
-        const corner = sampleToCorner(sample);
-        recorded.push(corner);
-        onPoint(corner);
-        pushProgress(msg.walkStartRecorded, 1, acc, false, sample);
-        return;
-      }
-
-      const last = recorded[recorded.length - 1]!;
-      const step = distanceMeters(last, sample);
-      const first = recorded[0]!;
-      const nearStart = recorded.length >= 4 && distanceMeters(first, sample) <= WALK_CLOSE_LOOP_M;
-
-      if (step < WALK_MIN_STEP_M) {
-        pushProgress(
-          nearStart ? msg.walkNearStop : msg.walkWalking(Math.round(distanceWalkedM), recorded.length),
-          recorded.length,
-          acc,
-          nearStart,
-          sample,
-        );
-        return;
-      }
-
-      const corner = sampleToCorner(sample);
-      recorded.push(corner);
-      distanceWalkedM += step;
-      onPoint(corner);
-
-      pushProgress(
-        nearStart ? msg.walkNearStop : msg.walkRecording(Math.round(distanceWalkedM), recorded.length),
-        recorded.length,
-        acc,
-        nearStart,
-        sample,
-      );
-    },
-  );
-  } catch {
-    throw new Error(msg.walkStartFailed);
-  }
-
-  return {
-    stop: () => {
-      stopped = true;
-      subscription.remove();
-    },
-  };
-}
+export { startFieldWalkTracking } from '@/services/location/fieldWalkTracking';

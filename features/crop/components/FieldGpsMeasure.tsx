@@ -10,7 +10,6 @@ import {
   formatAccuracyHint,
   isWalkLoopClosed,
   simplifyWalkPoints,
-  startFieldWalkTracking,
   validateCornerPoints,
   walkLoopGapMeters,
   type CaptureProgress,
@@ -18,6 +17,7 @@ import {
   type WalkTrackProgress,
   type WalkTrackSession,
 } from '@/services/location/fieldMeasureService';
+import { startFieldWalkTracking } from '@/services/location/fieldWalkTracking';
 import type { FieldCorner, FieldMeasurement } from '@/types/fieldMeasure';
 import type { Coordinates } from '@/types/location';
 import { formatAreaDisplay, measurePolygon } from '@/utils/geoArea';
@@ -49,7 +49,6 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
   const [walking, setWalking] = useState(false);
   const [captureStep, setCaptureStep] = useState('');
   const [walkProgress, setWalkProgress] = useState<WalkTrackProgress | null>(null);
-  const [livePosition, setLivePosition] = useState<Coordinates | null>(null);
   const [liveAccuracy, setLiveAccuracy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showWalkMap, setShowWalkMap] = useState(false);
@@ -125,9 +124,9 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
 
   const startWalk = async () => {
     setError(null);
-    setShowWalkMap(false);
+    setWalking(true);
     setWalkProgress(null);
-    setLivePosition(null);
+    setShowWalkMap(false);
     setPoints([]);
 
     try {
@@ -141,31 +140,16 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
             sampleCount: corner.sampleCount,
           };
           setPoints((prev) => [...prev, fieldCorner]);
-          setShowWalkMap(true);
         },
         (progress) => {
-          setWalking(true);
           setWalkProgress(progress);
-          if (progress.liveLatitude != null && progress.liveLongitude != null) {
-            setLivePosition({
-              latitude: progress.liveLatitude,
-              longitude: progress.liveLongitude,
-            });
-            setShowWalkMap(true);
-          }
         },
         [],
-        (position) => {
-          setLivePosition(position);
-          setShowWalkMap(true);
-        },
+        language,
       );
       walkSessionRef.current = session;
-      setWalking(true);
     } catch (err) {
       setWalking(false);
-      setShowWalkMap(false);
-      setLivePosition(null);
       setError(err instanceof Error ? err.message : fm.walkStartFailed);
     }
   };
@@ -174,9 +158,8 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     walkSessionRef.current?.stop();
     walkSessionRef.current = null;
     setWalking(false);
-    setShowWalkMap(false);
     setWalkProgress(null);
-    setLivePosition(null);
+    setShowWalkMap(true);
 
     const simplified = simplifyWalkPoints(points as Coordinates[]);
     if (simplified.length < 3) {
@@ -208,7 +191,6 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     setWalking(false);
     setShowWalkMap(false);
     setWalkProgress(null);
-    setLivePosition(null);
     setPoints([]);
     setError(null);
   };
@@ -268,11 +250,11 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
         <Caption style={styles.mapWaiting}>{fm.mapWaiting}</Caption>
       ) : null}
 
-      {(mode !== 'walk' || showWalkMap || points.length > 0) ? (
+      {(mode !== 'walk' || (!walking && (showWalkMap || points.length > 0))) ? (
         <FieldMeasureMap
           points={points}
-          livePosition={livePosition}
-          walking={mode === 'walk' && walking}
+          livePosition={null}
+          walking={false}
         />
       ) : null}
 

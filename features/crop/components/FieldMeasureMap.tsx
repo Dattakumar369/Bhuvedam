@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { InteractionManager, Platform, StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 
 import { Caption } from '@/components/ui/Typography';
@@ -45,6 +45,37 @@ function regionFromPoints(points: Coordinates[], live?: Coordinates | null): Reg
 
 export function FieldMeasureMap({ points, livePosition, walking }: FieldMeasureMapProps) {
   const mapRef = useRef<MapView>(null);
+  const lastCameraUpdateRef = useRef(0);
+
+  const safeFitCamera = (coords: { latitude: number; longitude: number }[]) => {
+    if (!mapRef.current || coords.length < 1) return;
+    const now = Date.now();
+    if (walking && now - lastCameraUpdateRef.current < 2500) return;
+    lastCameraUpdateRef.current = now;
+    InteractionManager.runAfterInteractions(() => {
+      try {
+        if (coords.length === 1) {
+          const c = coords[0]!;
+          mapRef.current?.animateToRegion(
+            {
+              latitude: c.latitude,
+              longitude: c.longitude,
+              latitudeDelta: DEFAULT_DELTA,
+              longitudeDelta: DEFAULT_DELTA,
+            },
+            400,
+          );
+          return;
+        }
+        mapRef.current?.fitToCoordinates(coords, {
+          edgePadding: { top: 48, right: 48, bottom: 48, left: 48 },
+          animated: true,
+        });
+      } catch {
+        // Map native calls can fail during rapid GPS updates — ignore
+      }
+    });
+  };
 
   const startPoint = points[0] ?? null;
   const endPoint = points.length > 1 ? points[points.length - 1] : null;
@@ -75,25 +106,9 @@ export function FieldMeasureMap({ points, livePosition, walking }: FieldMeasureM
   );
 
   useEffect(() => {
-    if (!mapRef.current || pathCoords.length < 1) {
-      if (walking && livePosition && mapRef.current) {
-        mapRef.current.animateToRegion(
-          {
-            latitude: livePosition.latitude,
-            longitude: livePosition.longitude,
-            latitudeDelta: DEFAULT_DELTA,
-            longitudeDelta: DEFAULT_DELTA,
-          },
-          400,
-        );
-      }
-      return;
-    }
-    mapRef.current.fitToCoordinates(pathCoords, {
-      edgePadding: { top: 48, right: 48, bottom: 48, left: 48 },
-      animated: true,
-    });
-  }, [pathCoords, walking, livePosition]);
+    if (!pathCoords.length) return;
+    safeFitCamera(pathCoords);
+  }, [pathCoords, walking]);
 
   const visible = walking || points.length > 0;
 
