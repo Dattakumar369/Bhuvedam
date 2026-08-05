@@ -62,6 +62,14 @@ export interface FieldMeasureMessages {
   measureIntroTitle: string;
   measureIntroBody: string;
   measureIntroNote: string;
+  mapTitle: string;
+  mapLegendStart: string;
+  mapLegendEnd: string;
+  mapLegendArea: string;
+  mapLiveMarker: string;
+  adjustTitle: string;
+  adjustHint: string;
+  btnWalkAgain: string;
 }
 
 const en: FieldMeasureMessages = {
@@ -130,6 +138,14 @@ const en: FieldMeasureMessages = {
   measureIntroBody:
     'Corner pin (★) — tap add at each corner, hold 3–5 sec (auto save). Walk mode — walk border and Stop at start.',
   measureIntroNote: 'GPS ±2–5m error — use tape/patta for exact size. Open sky required.',
+  mapTitle: 'Satellite map — path you walked',
+  mapLegendStart: 'Start point',
+  mapLegendEnd: 'Stop point',
+  mapLegendArea: 'Green = covered land area',
+  mapLiveMarker: 'You are here (live GPS)',
+  adjustTitle: 'Adjust path',
+  adjustHint: 'Undo wrong points or walk again if the border looks wrong on the map.',
+  btnWalkAgain: 'Walk again',
 };
 
 const te: FieldMeasureMessages = {
@@ -191,6 +207,14 @@ const te: FieldMeasureMessages = {
   measureIntroBody:
     'Moolalu pin (★) — prati corner daggar “add” nokki, 3–5 sec nilchondi (stable ayyaka auto save). Walk mode — border tirigi start daggaraki Stop.',
   measureIntroNote: 'GPS ±2–5m error — exact size ki patta/tape measure use cheyandi. Open sky must.',
+  mapTitle: 'Satellite map — mee polam chuttu tirigina path',
+  mapLegendStart: 'Modalupettadam (start)',
+  mapLegendEnd: 'Aapadam (stop)',
+  mapLegendArea: 'Green = cover chesina bhumi',
+  mapLiveMarker: 'Ippudu ikkada (live GPS)',
+  adjustTitle: 'Path adjust cheyandi',
+  adjustHint: 'Map lo border sariga lekapothe last point undo cheyandi leda malli tiragandi.',
+  btnWalkAgain: 'Malli tiragandi',
 };
 
 const hi: FieldMeasureMessages = {
@@ -259,6 +283,14 @@ const hi: FieldMeasureMessages = {
   measureIntroBody:
     'Corner pin (★) — हर corner पर add, 3–5 sec रुकें (auto save). Walk mode — border चलकर start पर Stop।',
   measureIntroNote: 'GPS ±2–5m error — exact size के लिए tape/patta use करें। Open sky जरूरी।',
+  mapTitle: 'Satellite map — aapka chala hua path',
+  mapLegendStart: 'Shuruati point',
+  mapLegendEnd: 'Stop point',
+  mapLegendArea: 'Green = cover ki hui zameen',
+  mapLiveMarker: 'Abhi yahan (live GPS)',
+  adjustTitle: 'Path adjust karein',
+  adjustHint: 'Map par border galat ho to undo karein ya dubara chalen.',
+  btnWalkAgain: 'Dubara chalen',
 };
 
 const mr: FieldMeasureMessages = {

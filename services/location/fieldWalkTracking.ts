@@ -117,7 +117,7 @@ export async function startFieldWalkTracking(
       {
         accuracy: Location.Accuracy.BestForNavigation,
         distanceInterval: 2,
-        timeInterval: 1500,
+        timeInterval: 1000,
       },
       (position) => {
         if (stopped) return;

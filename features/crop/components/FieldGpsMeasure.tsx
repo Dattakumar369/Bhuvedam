@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { InteractionManager, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui';
 import { Body, Caption, Label } from '@/components/ui/Typography';
@@ -49,10 +49,18 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
   const [walking, setWalking] = useState(false);
   const [captureStep, setCaptureStep] = useState('');
   const [walkProgress, setWalkProgress] = useState<WalkTrackProgress | null>(null);
+  const [livePosition, setLivePosition] = useState<Coordinates | null>(null);
+  const [walkReview, setWalkReview] = useState(false);
   const [liveAccuracy, setLiveAccuracy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showWalkMap, setShowWalkMap] = useState(false);
   const walkSessionRef = useRef<WalkTrackSession | null>(null);
+  const lastLiveUpdateRef = useRef(0);
+  const pointsRef = useRef<FieldCorner[]>(initialPoints);
+  const LIVE_MAP_UPDATE_MS = 1000;
+
+  useEffect(() => {
+    pointsRef.current = points;
+  }, [points]);
 
   useEffect(() => {
     return () => {
@@ -125,8 +133,10 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
   const startWalk = async () => {
     setError(null);
     setWalking(true);
+    setWalkReview(false);
     setWalkProgress(null);
-    setShowWalkMap(false);
+    setLivePosition(null);
+    lastLiveUpdateRef.current = 0;
     setPoints([]);
 
     try {
@@ -140,9 +150,24 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
             sampleCount: corner.sampleCount,
           };
           setPoints((prev) => [...prev, fieldCorner]);
+          setLivePosition({
+            latitude: corner.latitude,
+            longitude: corner.longitude,
+          });
+          lastLiveUpdateRef.current = Date.now();
         },
         (progress) => {
           setWalkProgress(progress);
+          if (progress.liveLatitude != null && progress.liveLongitude != null) {
+            const now = Date.now();
+            if (now - lastLiveUpdateRef.current >= LIVE_MAP_UPDATE_MS) {
+              lastLiveUpdateRef.current = now;
+              setLivePosition({
+                latitude: progress.liveLatitude,
+                longitude: progress.liveLongitude,
+              });
+            }
+          }
         },
         [],
         language,
@@ -155,22 +180,34 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
   };
 
   const stopWalk = () => {
-    walkSessionRef.current?.stop();
+    const session = walkSessionRef.current;
     walkSessionRef.current = null;
+    session?.stop();
+
+    // End walk first — defer review UI so GPS teardown + map overlay changes don't race.
     setWalking(false);
     setWalkProgress(null);
-    setShowWalkMap(true);
+    setLivePosition(null);
 
-    const simplified = simplifyWalkPoints(points as Coordinates[]);
-    if (simplified.length < 3) {
-      setError(fm.walkTooFewPoints);
-      return;
-    }
+    InteractionManager.runAfterInteractions(() => {
+      const currentPoints = pointsRef.current;
+      const simplified = simplifyWalkPoints(currentPoints as Coordinates[]);
 
-    const gap = walkLoopGapMeters(simplified);
-    if (gap > 15) {
-      setError(fm.walkLoopGap(Math.round(gap)));
-    }
+      if (simplified.length < 3) {
+        setError(fm.walkTooFewPoints);
+        setWalkReview(false);
+        return;
+      }
+
+      const gap = walkLoopGapMeters(simplified);
+      if (gap > 15) {
+        setError(fm.walkLoopGap(Math.round(gap)));
+      } else {
+        setError(null);
+      }
+
+      setWalkReview(true);
+    });
   };
 
   const switchMode = (next: 'walk' | 'corner') => {
@@ -178,6 +215,8 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     setMode(next);
     setError(null);
     setWalkProgress(null);
+    setWalkReview(false);
+    setLivePosition(null);
   };
 
   const undoCorner = () => {
@@ -189,11 +228,14 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     walkSessionRef.current?.stop();
     walkSessionRef.current = null;
     setWalking(false);
-    setShowWalkMap(false);
+    setWalkReview(false);
     setWalkProgress(null);
+    setLivePosition(null);
     setPoints([]);
     setError(null);
   };
+
+  const showMap = mode === 'walk' ? walking || points.length > 0 : points.length > 0;
 
   const applyMeasurement = () => {
     if (!measurement) return;
@@ -246,15 +288,16 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
         {mode === 'walk' ? fm.helpWalk : fm.helpCorner}
       </Caption>
 
-      {mode === 'walk' && walking && !points.length ? (
+      {mode === 'walk' && walking && !points.length && !livePosition ? (
         <Caption style={styles.mapWaiting}>{fm.mapWaiting}</Caption>
       ) : null}
 
-      {(mode !== 'walk' || (!walking && (showWalkMap || points.length > 0))) ? (
+      {showMap ? (
         <FieldMeasureMap
           points={points}
-          livePosition={null}
-          walking={false}
+          livePosition={livePosition}
+          walking={walking}
+          reviewing={walkReview && !walking}
         />
       ) : null}
 
@@ -366,22 +409,45 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
             size="md"
           />
         )}
-        <View style={styles.secondaryRow}>
-          <Pressable
-            onPress={undoCorner}
-            disabled={!points.length || capturing || walking}
-            style={[styles.secondaryBtn, (!points.length || walking) && styles.secondaryBtnDisabled]}
-          >
-            <Caption style={styles.secondaryText}>{fm.undo}</Caption>
-          </Pressable>
-          <Pressable
-            onPress={clearCorners}
-            disabled={!points.length || capturing || walking}
-            style={[styles.secondaryBtn, (!points.length || walking) && styles.secondaryBtnDisabled]}
-          >
-            <Caption style={styles.secondaryText}>{fm.clear}</Caption>
-          </Pressable>
-        </View>
+        {mode === 'corner' ? (
+          <View style={styles.secondaryRow}>
+            <Pressable
+              onPress={undoCorner}
+              disabled={!points.length || capturing}
+              style={[styles.secondaryBtn, !points.length && styles.secondaryBtnDisabled]}
+            >
+              <Caption style={styles.secondaryText}>{fm.undo}</Caption>
+            </Pressable>
+            <Pressable
+              onPress={clearCorners}
+              disabled={!points.length || capturing}
+              style={[styles.secondaryBtn, !points.length && styles.secondaryBtnDisabled]}
+            >
+              <Caption style={styles.secondaryText}>{fm.clear}</Caption>
+            </Pressable>
+          </View>
+        ) : null}
+        {walkReview && mode === 'walk' && points.length > 0 && !walking ? (
+          <View style={styles.adjustBox}>
+            <Label style={styles.adjustTitle}>{fm.adjustTitle}</Label>
+            <Caption style={styles.adjustHint}>{fm.adjustHint}</Caption>
+            <View style={styles.secondaryRow}>
+              <Pressable
+                onPress={undoCorner}
+                disabled={!points.length}
+                style={[styles.secondaryBtn, !points.length && styles.secondaryBtnDisabled]}
+              >
+                <Caption style={styles.secondaryText}>{fm.undo}</Caption>
+              </Pressable>
+              <Pressable
+                onPress={clearCorners}
+                style={styles.secondaryBtn}
+              >
+                <Caption style={styles.secondaryText}>{fm.btnWalkAgain}</Caption>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
         {measurement ? (
           <Button
             label={fm.btnUseSize}
@@ -468,6 +534,16 @@ const styles = StyleSheet.create({
   hint: { color: colors.textTertiary, fontStyle: 'italic' },
   error: { color: colors.error, lineHeight: 18 },
   actions: { gap: spacing.sm, marginTop: spacing.xs },
+  adjustBox: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    padding: spacing.sm,
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: `${colors.primary}30`,
+  },
+  adjustTitle: { color: colors.primary },
+  adjustHint: { color: colors.textSecondary, lineHeight: 18 },
   secondaryRow: { flexDirection: 'row', gap: spacing.sm },
   secondaryBtn: {
     flex: 1,
