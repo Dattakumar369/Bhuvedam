@@ -68,6 +68,7 @@ export const ENDPOINTS = {
   },
   mandi: {
     prices: '/api/mandi/prices',
+    analytics: '/api/mandi/analytics',
     pricesByCrop: (cropId: string) => `/api/mandi/prices?cropId=${cropId}`,
     forecast: '/mandi/forecast',
   },

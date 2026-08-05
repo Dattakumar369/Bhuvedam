@@ -29,6 +29,13 @@ export interface ScreenTranslations {
   mandiSourceCached: string;
   mandiSourceReference: string;
   mandiFooterNote: string;
+  mandiHistoryTitle: string;
+  mandiHistoryToday: string;
+  mandiHistoryYesterday: string;
+  mandiHistoryLastMonth: string;
+  mandiHistoryLastYear: string;
+  mandiHistoryMissing: string;
+  mandiHistoryNote: string;
   cropProtTitle: string;
   cropProtSubtitle: string;
   cropProtSelectCrop: string;
@@ -98,6 +105,14 @@ const en: ScreenTranslations = {
   mandiSourceReference: 'Reference avg — pull to refresh for live',
   mandiFooterNote:
     'Curated varieties (Full guide) = complete fertilizer & spray data. Other varieties = live Agmarknet rates + general crop advice. Data refreshes from government mandi records daily.',
+  mandiHistoryTitle: 'Rate history (stored daily)',
+  mandiHistoryToday: 'Today',
+  mandiHistoryYesterday: 'Yesterday',
+  mandiHistoryLastMonth: 'Last 30 days avg',
+  mandiHistoryLastYear: 'Last year avg',
+  mandiHistoryMissing: '—',
+  mandiHistoryNote:
+    'Rates are saved each sync day. Last month/year averages appear after enough daily records are stored.',
   cropProtTitle: 'Fertilizer & Spray Guide',
   cropProtSubtitle:
     'Each crop has 100+ varieties. Curated varieties get full guide; others get general advice + live mandi rates. Spray & fertilizer by crop age or disease.',
@@ -175,6 +190,14 @@ const te: ScreenTranslations = {
   mandiSourceReference: 'Reference avg — pull to refresh for live',
   mandiFooterNote:
     'Curated varieties (Full guide) = complete fertilizer & spray data. Other varieties = live Agmarknet rates + general crop advice. Data refreshes from government mandi records daily.',
+  mandiHistoryTitle: 'Dhara charitra (roju roju save avutundi)',
+  mandiHistoryToday: 'Iroju',
+  mandiHistoryYesterday: 'Ninna',
+  mandiHistoryLastMonth: '30 rojula avg',
+  mandiHistoryLastYear: 'Last year avg',
+  mandiHistoryMissing: '—',
+  mandiHistoryNote:
+    'Prati sync roju mandi rates save avutayi. Month/year avg ki konni rojulu data undali.',
   cropProtTitle: 'Fertilizer & Spray Guide',
   cropProtSubtitle:
     'Prati panta ki 100+ rakalu untayi. Curated varieties ki full guide; migata varieties ki general crop advice + live mandi rates. Panta vayasu leda rogam batti spray & eruvu cheppistam.',

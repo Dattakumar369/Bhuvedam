@@ -15,6 +15,7 @@ import { Body, Caption } from '@/components/ui/Typography';
 import { MANDI_CROPS } from '@/constants/mandiCommodities';
 import { MandiRateCard } from '@/features/mandi/components/MandiRateCard';
 import { PriceForecastCard } from '@/features/mandi/components/PriceForecastCard';
+import { PriceHistoryStats } from '@/features/mandi/components/PriceHistoryStats';
 import { PriceTrendChart } from '@/features/mandi/components/PriceTrendChart';
 import { VarietyDetailCard } from '@/features/mandi/components/VarietyDetailCard';
 import { VarietyPicker } from '@/features/mandi/components/VarietyPicker';
@@ -177,6 +178,7 @@ export default function MandiRatesScreen() {
                     cropName={selectedCrop.name}
                     cropColor={selectedCrop.color}
                   />
+                  <PriceHistoryStats analytics={selectedAnalytics} />
                   {curated ? <VarietyDetailCard variety={curated} /> : null}
 
                   {selectedForecast && selectedAnalytics ? (

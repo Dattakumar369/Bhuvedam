@@ -1,11 +1,14 @@
 import { API_CONFIG } from '@/constants/app';
 import type { VarietyEntry } from '@/constants/cropVarieties';
+import { buildVarietyList } from '@/constants/cropVarieties';
+import { DEFAULT_MANDI_STATE } from '@/constants/mandiCommodities';
 import { agDataRepository } from '@/services/api/agDataRepository';
 import {
   analyticsKey,
   buildForecastForAnalytics,
   fetchMandiRatesBundle,
 } from '@/services/mandi/mandiService';
+import { buildAnalyticsFromRateHistory, normalizeMandiRates } from '@/services/mandi/mandiHistoryAnalytics';
 import type { MandiAnalytics, MandiRateRecord, MandiRatesBundle } from '@/types/mandi';
 
 export function isBackendDataEnabled(): boolean {
@@ -28,37 +31,6 @@ export async function fetchLiveSoil(lat: number, lon: number) {
   return agDataRepository.getSoil(lat, lon);
 }
 
-function ratesToAnalytics(rates: MandiRateRecord[]): MandiAnalytics[] {
-  return rates.map((rate) => ({
-    cropId: rate.cropId,
-    varietyId: rate.varietyId,
-    varietyName: rate.varietyName ?? rate.variety,
-    commodity: rate.commodity,
-    currentModal: rate.modalPrice,
-    previousModal: rate.modalPrice,
-    changeAmount: 0,
-    changePercent: 0,
-    trend: 'stable' as const,
-    avg7d: rate.modalPrice,
-    avg30d: rate.modalPrice,
-    high30d: rate.maxPrice,
-    low30d: rate.minPrice,
-    dailySeries: [
-      {
-        date: rate.date,
-        modalPrice: rate.modalPrice,
-        minPrice: rate.minPrice,
-        maxPrice: rate.maxPrice,
-      },
-    ],
-    unit: rate.unit,
-    market: rate.market,
-    state: rate.state,
-    updatedAt: new Date().toISOString(),
-    isLive: true,
-  }));
-}
-
 /** Pull mandi + varieties from Neon (synced from Agmarknet) */
 export async function fetchMandiBundleFromBackend(cropIds: string[]): Promise<{
   rates: MandiRateRecord[];
@@ -67,16 +39,36 @@ export async function fetchMandiBundleFromBackend(cropIds: string[]): Promise<{
   source: MandiRatesBundle['source'];
   fetchedAt: string;
 }> {
-  const rates = await agDataRepository.getMandiPrices();
-  const analytics = ratesToAnalytics(rates);
-  const varietyLists: Record<string, VarietyEntry[]> = {};
+  let analytics: MandiAnalytics[] = [];
+  let rates: MandiRateRecord[] = [];
 
-  const uniqueCropIds = [...new Set([...cropIds, ...rates.map((r) => r.cropId)])];
-  for (const cropId of uniqueCropIds) {
+  try {
+    analytics = await agDataRepository.getMandiAnalytics(DEFAULT_MANDI_STATE);
+  } catch {
+    analytics = [];
+  }
+
+  if (!analytics.length) {
+    rates = normalizeMandiRates(await agDataRepository.getMandiPrices(undefined, DEFAULT_MANDI_STATE));
+    analytics = buildAnalyticsFromRateHistory(rates);
+  } else {
+    rates = normalizeMandiRates(await agDataRepository.getMandiPrices(undefined, DEFAULT_MANDI_STATE));
+  }
+
+  const varietyLists: Record<string, VarietyEntry[]> = {};
+  for (const cropId of cropIds) {
+    const discovered = analytics
+      .filter((item) => item.cropId === cropId)
+      .map((item) => item.varietyName)
+      .filter((name): name is string => Boolean(name?.trim()));
     try {
-      varietyLists[cropId] = await fetchLiveVarieties(cropId);
+      const apiVarieties = await fetchLiveVarieties(cropId);
+      varietyLists[cropId] = buildVarietyList(cropId, [
+        ...discovered,
+        ...apiVarieties.map((v) => v.name),
+      ]);
     } catch {
-      varietyLists[cropId] = [];
+      varietyLists[cropId] = buildVarietyList(cropId, discovered);
     }
   }
 
@@ -84,7 +76,7 @@ export async function fetchMandiBundleFromBackend(cropIds: string[]): Promise<{
     rates,
     analytics,
     varietyLists,
-    source: rates.length ? 'live' : 'cached',
+    source: analytics.length ? 'live' : 'cached',
     fetchedAt: new Date().toISOString(),
   };
 }
@@ -97,7 +89,7 @@ export async function fetchAgDataBundle(cropIds: string[]) {
 
   try {
     const backend = await fetchMandiBundleFromBackend(cropIds);
-    if (backend.rates.length) return backend;
+    if (backend.analytics.length) return backend;
   } catch {
     // Backend down or localhost unreachable on device — use Agmarknet directly
   }

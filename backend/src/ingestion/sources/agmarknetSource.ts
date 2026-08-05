@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import { getDataGovApiKey } from '../../config/env';
 import { db } from '../../db';
 import { cropVarieties, crops, mandiPrices } from '../../db/schema';
+import { commodityToCropId } from '../../services/mandiCropMapping';
 import { fetchJson, parseAgmarknetDate, slugId, sleep } from '../utils';
 
 const DATA_GOV_RESOURCE = '35985678-0d79-46b4-9ed6-6f13308a1d24';
@@ -27,7 +28,8 @@ function parsePrice(v?: string): number {
 
 async function resolveCropId(commodity: string): Promise<string> {
   const name = commodity.trim();
-  const id = slugId(name.split('(')[0] ?? name, 'ag');
+  const canonical = commodityToCropId(name);
+  const id = canonical ?? slugId(name.split('(')[0] ?? name, 'ag');
   await db
     .insert(crops)
     .values({

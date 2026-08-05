@@ -1,6 +1,7 @@
 import type { ApiResponse } from '@/types/api';
-import type { MandiRateRecord } from '@/types/mandi';
+import type { MandiAnalytics, MandiRateRecord } from '@/types/mandi';
 
+import { normalizeMandiCropId } from '@/constants/mandiCommodities';
 import { apiClient } from './client';
 import { ENDPOINTS } from './endpoints';
 
@@ -55,7 +56,7 @@ function mapMandiRow(row: Record<string, unknown>): MandiRateRecord {
   return {
     id: String(row.id),
     commodity: String(row.commodity),
-    cropId: String(row.cropId),
+    cropId: normalizeMandiCropId(String(row.cropId), String(row.commodity)),
     varietyId: row.varietyId ? String(row.varietyId) : undefined,
     varietyName: row.varietyName ? String(row.varietyName) : undefined,
     market: String(row.market),
@@ -67,6 +68,34 @@ function mapMandiRow(row: Record<string, unknown>): MandiRateRecord {
     modalPrice: Number(row.modalPrice),
     unit: String(row.unit ?? 'Quintal'),
     isLive: Boolean(row.isLive ?? true),
+  };
+}
+
+function mapMandiAnalyticsRow(row: Record<string, unknown>): MandiAnalytics {
+  return {
+    cropId: String(row.cropId),
+    varietyId: row.varietyId ? String(row.varietyId) : undefined,
+    varietyName: row.varietyName ? String(row.varietyName) : undefined,
+    commodity: String(row.commodity),
+    currentModal: Number(row.currentModal),
+    previousModal: Number(row.previousModal),
+    changeAmount: Number(row.changeAmount),
+    changePercent: Number(row.changePercent),
+    trend: (row.trend as MandiAnalytics['trend']) ?? 'stable',
+    avg7d: Number(row.avg7d),
+    avg30d: Number(row.avg30d),
+    high30d: Number(row.high30d),
+    low30d: Number(row.low30d),
+    dailySeries: Array.isArray(row.dailySeries) ? (row.dailySeries as MandiAnalytics['dailySeries']) : [],
+    unit: String(row.unit ?? 'Quintal'),
+    market: String(row.market),
+    state: String(row.state),
+    updatedAt: String(row.updatedAt ?? new Date().toISOString()),
+    isLive: Boolean(row.isLive ?? true),
+    priceToday: row.priceToday != null ? Number(row.priceToday) : null,
+    priceYesterday: row.priceYesterday != null ? Number(row.priceYesterday) : null,
+    priceLastMonth: row.priceLastMonth != null ? Number(row.priceLastMonth) : null,
+    priceLastYear: row.priceLastYear != null ? Number(row.priceLastYear) : null,
   };
 }
 
@@ -86,9 +115,16 @@ export const agDataRepository = {
 
   async getMandiPrices(cropId?: string, state?: string): Promise<MandiRateRecord[]> {
     const response = await apiClient.get(ENDPOINTS.mandi.prices, {
-      params: { cropId, state, limit: 500 },
+      params: { cropId, state, limit: 2000 },
     });
     return unwrap<Record<string, unknown>[]>(response.data).map(mapMandiRow);
+  },
+
+  async getMandiAnalytics(state?: string, cropId?: string): Promise<MandiAnalytics[]> {
+    const response = await apiClient.get(ENDPOINTS.mandi.analytics, {
+      params: { state, cropId, historyDays: 400 },
+    });
+    return unwrap<Record<string, unknown>[]>(response.data).map(mapMandiAnalyticsRow);
   },
 
   async getFertilizers(cropId?: string): Promise<DbAgrochemical[]> {

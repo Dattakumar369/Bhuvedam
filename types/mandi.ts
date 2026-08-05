@@ -45,6 +45,10 @@ export interface MandiAnalytics {
   updatedAt: string;
   isLive: boolean;
   priceNote?: string;
+  priceToday?: number | null;
+  priceYesterday?: number | null;
+  priceLastMonth?: number | null;
+  priceLastYear?: number | null;
 }
 
 export interface PriceForecast {

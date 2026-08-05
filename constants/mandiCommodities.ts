@@ -43,3 +43,40 @@ export const SEASONAL_PRICE_INDEX: Record<string, number[]> = {
 export const MANDI_CROPS = CROPS.filter((c) => CROP_TO_MANDI_COMMODITY[c.id]);
 
 export const DEFAULT_MANDI_STATE = 'Andhra Pradesh';
+
+/** Map Agmarknet commodity text → app crop id (rice, wheat, …) */
+export function commodityToCropId(commodity: string): string | null {
+  const text = commodity.toLowerCase().trim();
+  if (!text) return null;
+
+  for (const [cropId, terms] of Object.entries(CROP_MANDI_SEARCH_TERMS)) {
+    for (const term of terms) {
+      const t = term.toLowerCase();
+      const head = t.split('(')[0]?.trim() ?? t;
+      if (text.includes(head) || head.includes(text.split('(')[0]?.trim() ?? text)) {
+        return cropId;
+      }
+    }
+  }
+
+  if (/paddy|dhan|\brice\b/.test(text)) return 'rice';
+  if (/wheat/.test(text)) return 'wheat';
+  if (/cotton/.test(text)) return 'cotton';
+  if (/soy/.test(text)) return 'soybean';
+  if (/tomato/.test(text)) return 'tomato';
+  if (/sugarcane|ganna/.test(text)) return 'sugarcane';
+  if (/maize|\bcorn\b/.test(text)) return 'maize';
+  if (/gram|chickpea|bengal/.test(text)) return 'chickpea';
+  return null;
+}
+
+/** Normalize backend ag_* crop ids to app crop ids using commodity name. */
+export function normalizeMandiCropId(cropId: string, commodity: string): string {
+  const fromCommodity = commodityToCropId(commodity);
+  if (fromCommodity) return fromCommodity;
+  if (cropId.startsWith('ag_')) {
+    const fromSlug = commodityToCropId(cropId.replace(/^ag_/, '').replace(/_/g, ' '));
+    if (fromSlug) return fromSlug;
+  }
+  return cropId;
+}

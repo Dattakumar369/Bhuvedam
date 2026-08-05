@@ -102,6 +102,10 @@ function buildAnalytics(rate: MandiRateRecord, series: DailyPricePoint[]): Mandi
     updatedAt: new Date().toISOString(),
     isLive: rate.isLive ?? false,
     priceNote: curated?.priceNoteTe ?? curated?.priceNote,
+    priceToday: current,
+    priceYesterday: previous !== current ? previous : null,
+    priceLastMonth: Math.round(avg30d),
+    priceLastYear: null,
   };
 }
 

@@ -1,109 +1,111 @@
-import { config } from 'dotenv';
-import path from 'node:path';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
+import { config } from 'dotenv';
 import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
-import { Hono } from 'hono';
 import type { Context } from 'hono';
+import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import path from 'node:path';
 
 config({ path: '.env' });
 
-import { appError, appErrorFromThrown, parseOtpWaitSeconds } from '../errors/appError';
 import { db } from '../db';
-import { log, maskPhone } from '../logging/logger';
 import {
-  agAdvisories,
-  icarGuidelines,
-  plantDiseases,
-  soilHealthRecommendations,
+    agrochemicals,
+    crops,
+    cropVarieties,
+    dataSources,
+    mandiPrices,
+    soils,
+    syncJobs,
+    weather,
+} from '../db/schema';
+import {
+    agAdvisories,
+    icarGuidelines,
+    plantDiseases,
+    soilHealthRecommendations,
 } from '../db/schema/agCatalog';
 import { agProducts, cropDiseaseCatalog } from '../db/schema/agProducts';
-import {
-  agrochemicals,
-  crops,
-  cropVarieties,
-  dataSources,
-  mandiPrices,
-  soils,
-  syncJobs,
-  weather,
-} from '../db/schema';
-import { runFullSync } from '../ingestion/syncAll';
-import { syncIndianAgCatalog, syncIndianFertilizerCatalog } from '../ingestion/sources/indianAgCatalogSource';
+import { appError, parseOtpWaitSeconds } from '../errors/appError';
 import { syncBulkAgCatalog } from '../ingestion/sources/bulkAgCatalogSource';
+import { syncIndianAgCatalog, syncIndianFertilizerCatalog } from '../ingestion/sources/indianAgCatalogSource';
 import { syncSoilAtPoint } from '../ingestion/sources/soilGridsSource';
+import { runFullSync } from '../ingestion/syncAll';
 import { geoKey } from '../ingestion/utils';
-import { farmerAuthMiddleware, type FarmerAuthVariables } from '../middleware/farmerAuth';
+import { log, maskPhone } from '../logging/logger';
 import { adminAuthMiddleware } from '../middleware/adminAuth';
 import { apiLoggerMiddleware, registerGlobalErrorHandler } from '../middleware/apiLogger';
+import { farmerAuthMiddleware, type FarmerAuthVariables } from '../middleware/farmerAuth';
 import {
-  createFarmerToken,
-  formatFarmerUser,
-  farmerLoginKey,
-  formatPhone,
-  phoneForDisplay,
-} from '../services/farmerAuth';
-import {
-  formatFarmerProfileForApp,
-  getFarmerProfile,
-  syncFarmerProfile,
-  upsertFarmerByPhone,
-  type FarmerSyncInput,
-} from '../services/farmerSync';
-import { getCropByIdDb, searchCropsDb, countCropsDb } from '../services/cropSearch';
-import {
-  localizeCropRow,
-  localizeCropsForFarmer,
-  parseFarmerLanguage,
-  parseLocalizeMode,
-} from '../services/cropLocalization';
-import { formatKnowledgeForAI, searchKnowledge, buildKnowledgeContextForAI } from '../services/knowledgeSearch';
+    completeAiChat,
+    getAiProvider,
+    isAiConfigured,
+    streamAiChat,
+    type ProxyChatMessage,
+} from '../services/aiChatService';
 import { cacheAiKnowledgeAnswer } from '../services/aiKnowledgeCache';
-import { researchAgricultureOnline } from '../services/webResearchService';
+import {
+    canonicalAgStats,
+    getCanonicalAgProductById,
+    searchCanonicalAgProducts,
+} from '../services/canonicalAgCatalog';
 import { isCorrectionMessage } from '../services/correctionDetect';
 import {
-  getFertilizerProductById,
-  searchFertilizerProducts,
-} from '../services/fertilizerProductSearch';
+    localizeCropRow,
+    localizeCropsForFarmer,
+    parseFarmerLanguage,
+    parseLocalizeMode,
+} from '../services/cropLocalization';
+import { countCropsDb, getCropByIdDb, searchCropsDb } from '../services/cropSearch';
 import {
-  canonicalAgStats,
-  getCanonicalAgProductById,
-  searchCanonicalAgProducts,
-} from '../services/canonicalAgCatalog';
-import {
-  createAndPushNotification,
-  dispatchDailyFarmReminders,
-  listFarmerNotifications,
-  markAllNotificationsRead,
-  markNotificationRead,
-  registerPushToken,
-  removePushToken,
-} from '../services/notificationInboxService';
-import {
-  dispatchRealtimeAlertsForAll,
-  dispatchRealtimeAlertsForFarmer,
+    dispatchRealtimeAlertsForAll,
+    dispatchRealtimeAlertsForFarmer,
 } from '../services/farmAlertPushService';
 import {
-  consumeOtpSession,
-  getFarmerByPhone,
-  hasVerifiedOtpSession,
-  sendPhoneOtp,
-  verifyPhoneOtp,
+    createFarmerToken,
+    farmerLoginKey,
+    formatFarmerUser,
+    formatPhone,
+    phoneForDisplay,
+} from '../services/farmerAuth';
+import {
+    formatFarmerProfileForApp,
+    getFarmerProfile,
+    syncFarmerProfile,
+    upsertFarmerByPhone,
+    type FarmerSyncInput,
+} from '../services/farmerSync';
+import {
+    getFertilizerProductById,
+    searchFertilizerProducts,
+} from '../services/fertilizerProductSearch';
+import { buildKnowledgeContextForAI, formatKnowledgeForAI, searchKnowledge } from '../services/knowledgeSearch';
+import {
+    createAndPushNotification,
+    dispatchDailyFarmReminders,
+    listFarmerNotifications,
+    markAllNotificationsRead,
+    markNotificationRead,
+    registerPushToken,
+    removePushToken,
+} from '../services/notificationInboxService';
+import {
+    consumeOtpSession,
+    getFarmerByPhone,
+    hasVerifiedOtpSession,
+    sendPhoneOtp,
+    verifyPhoneOtp,
 } from '../services/otpService';
 import {
-  changeFarmerPassword,
-  loginFarmerWithPassword,
-  registerFarmerWithPassword,
-  resetPasswordWithPhoneOtp,
+    changeFarmerPassword,
+    loginFarmerWithPassword,
+    registerFarmerWithPassword,
+    resetPasswordWithPhoneOtp,
 } from '../services/passwordAuth';
-import {
-  completeAiChat,
-  isAiConfigured,
-  getAiProvider,
-  streamAiChat,
-  type ProxyChatMessage,
-} from '../services/aiChatService';
+import { researchAgricultureOnline } from '../services/webResearchService';
+import { fetchMandiAnalyticsFromDb } from '../services/mandiAnalyticsService';
+import { normalizeMandiCropId } from '../services/mandiCropMapping';
 
 const app = new Hono<{ Variables: FarmerAuthVariables }>();
 
@@ -571,7 +573,21 @@ app.get('/api/mandi/prices', async (c) => {
     : await db.select().from(mandiPrices).orderBy(desc(mandiPrices.fetchedAt)).limit(limit);
 
   const filtered = state ? rows.filter((r) => r.state === state) : rows;
-  return c.json({ data: filtered, source: 'agmarknet' });
+  const data = filtered.map((row) => ({
+    ...row,
+    cropId: normalizeMandiCropId(row.cropId, row.commodity),
+  }));
+  return c.json({ data, source: 'agmarknet' });
+});
+
+/** Mandi analytics with stored history — today / yesterday / month / year stats */
+app.get('/api/mandi/analytics', async (c) => {
+  const cropId = c.req.query('cropId') ?? undefined;
+  const state = c.req.query('state') ?? 'Andhra Pradesh';
+  const historyDays = Number(c.req.query('historyDays') ?? 400);
+
+  const analytics = await fetchMandiAnalyticsFromDb({ cropId, state, historyDays });
+  return c.json({ data: analytics, source: 'agmarknet' });
 });
 
 /** Fertilizers & agrochemicals */
