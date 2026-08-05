@@ -14,6 +14,7 @@ import { useMandiStore } from '@/store/mandiStore';
 import { useUserStore } from '@/store/userStore';
 import { STORAGE_KEYS } from '@/constants/app';
 import { secureStorage } from '@/utils/storage';
+import { getUserScoped, setUserScoped } from '@/utils/userScopedStorage';
 import { formatAreaLabel } from '@/utils/geoArea';
 import {
   extractFarmerKnowledge,
@@ -88,6 +89,7 @@ interface FarmerContextState extends FarmerContext {
   needsSetup: () => boolean;
   clearSyncError: () => void;
   reset: () => Promise<void>;
+  clearMemory: () => Promise<void>;
   applyFromServer: (profile: FarmerServerProfile) => Promise<void>;
 }
 
@@ -115,7 +117,7 @@ async function persist(state: FarmerContext): Promise<boolean> {
     return false;
   }
 
-  await secureStorage.set(STORAGE_KEYS.farmerContext, JSON.stringify(state));
+  await setUserScoped(userId, STORAGE_KEYS.farmerContext, JSON.stringify(state));
   const synced = await syncFarmerProfileToDatabase().catch(() => false);
   if (!synced && shouldSyncFarmerToDatabase()) {
     useFarmerContextStore.setState({ syncError: 'sync_failed' });
@@ -151,17 +153,17 @@ export const useFarmerContextStore = create<FarmerContextState>((set, get) => ({
     const userId = useUserStore.getState().user?.id;
     const isAuthenticated = useUserStore.getState().isAuthenticated;
     if (!isAuthenticated || !userId) {
-      await get().reset();
+      await get().clearMemory();
       return;
     }
 
     const lastUserId = await secureStorage.get(STORAGE_KEYS.lastUserId);
-    if (!lastUserId || lastUserId !== userId) {
-      await get().reset();
+    if (lastUserId && lastUserId !== userId) {
+      await get().clearMemory();
       return;
     }
 
-    const raw = await secureStorage.get(STORAGE_KEYS.farmerContext);
+    const raw = await getUserScoped(userId, STORAGE_KEYS.farmerContext);
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw) as Partial<FarmerContext>;
@@ -446,10 +448,12 @@ export const useFarmerContextStore = create<FarmerContextState>((set, get) => ({
 
   clearSyncError: () => set({ syncError: null }),
 
+  clearMemory: async () => {
+    set(defaultContext());
+  },
+
   reset: async () => {
-    const next = defaultContext();
-    set(next);
-    await secureStorage.remove(STORAGE_KEYS.farmerContext);
+    await get().clearMemory();
   },
 
   applyFromServer: async (profile) => {
@@ -470,6 +474,9 @@ export const useFarmerContextStore = create<FarmerContextState>((set, get) => ({
       syncError: null,
     };
     set(next);
-    await secureStorage.set(STORAGE_KEYS.farmerContext, JSON.stringify(next));
+    const userId = useUserStore.getState().user?.id;
+    if (userId) {
+      await setUserScoped(userId, STORAGE_KEYS.farmerContext, JSON.stringify(next));
+    }
   },
 }));

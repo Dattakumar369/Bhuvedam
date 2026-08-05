@@ -10,38 +10,22 @@ import { useUserStore } from '@/store/userStore';
 import type { User } from '@/types/user';
 import { logger } from '@/utils/logger';
 import { appCache, secureStorage } from '@/utils/storage';
+import { migrateLegacyStorageForUser } from '@/utils/userScopedStorage';
 
-/** Wipe per-user cached data so a new login does not inherit the previous account. */
-export async function resetUserScopedData(): Promise<void> {
-  await Promise.all([
-    secureStorage.remove(STORAGE_KEYS.farmerContext),
-    secureStorage.remove(STORAGE_KEYS.conversations),
-    secureStorage.remove(STORAGE_KEYS.farmAlerts),
-    secureStorage.remove(STORAGE_KEYS.mandiSnapshot),
-    secureStorage.remove(STORAGE_KEYS.lastUserId),
-    secureStorage.remove(STORAGE_KEYS.pushToken),
-  ]);
-  appCache.remove(STORAGE_KEYS.farmAlerts);
-  appCache.remove(STORAGE_KEYS.mandiSnapshot);
-  imageSessionCache.clear();
-
-  await useFarmerContextStore.getState().reset();
-  await useAIStore.getState().reset();
-  await useAlertStore.getState().reset();
-}
-
-/** Clear in-memory stores when logged out — do not show another user's data on login screen. */
+/** Clear in-memory stores only — each account's data stays on disk under scoped keys. */
 export async function clearLocalSessionStores(): Promise<void> {
-  await useFarmerContextStore.getState().reset();
-  await useAIStore.getState().reset();
-  await useAlertStore.getState().reset();
+  imageSessionCache.clear();
+  appCache.clear();
+  await useFarmerContextStore.getState().clearMemory();
+  await useAIStore.getState().clearMemory();
+  await useAlertStore.getState().clearMemory();
 }
 
 /** Load this user's farm profile from the server into local stores. */
 export async function loadFarmerProfileForUser(user: User): Promise<void> {
   const profile = await fetchFarmerProfileFromDatabase();
   if (!profile) {
-    await useFarmerContextStore.getState().reset();
+    await useFarmerContextStore.getState().clearMemory();
     return;
   }
 
@@ -58,57 +42,53 @@ export async function loadFarmerProfileForUser(user: User): Promise<void> {
   await secureStorage.set(STORAGE_KEYS.user, JSON.stringify(nextUser));
 }
 
-/** Reload chats/alerts from disk for this user. */
+/** Reload chats/alerts/farm from disk for this user only. */
 export async function hydrateUserScopedStores(userId: string): Promise<void> {
-  const lastUserId = await secureStorage.get(STORAGE_KEYS.lastUserId);
-  if (lastUserId && lastUserId !== userId) return;
-  if (!lastUserId) {
-    await secureStorage.set(STORAGE_KEYS.lastUserId, userId);
-  }
+  await migrateLegacyStorageForUser(userId);
+  await secureStorage.set(STORAGE_KEYS.lastUserId, userId);
+  await useFarmerContextStore.getState().hydrate();
   await useAIStore.getState().hydrate();
   await useAlertStore.getState().hydrate();
 }
 
-/** Call after auth token is set — clears stale cache when account changes, then pulls server data. */
+/** After login — switch in-memory state to this account; never delete other accounts' saved data. */
 export async function activateUserSession(user: User): Promise<void> {
   const storedUserId = await secureStorage.get(STORAGE_KEYS.lastUserId);
   const accountChanged = Boolean(storedUserId && storedUserId !== user.id);
 
   if (accountChanged) {
-    logger.auth.info('Account switch — clearing local cache', {
-      previousUserId: storedUserId ?? 'none',
+    logger.auth.info('Account switch — loading new account (keeping saved data per user)', {
+      previousUserId: storedUserId,
       userId: user.id,
     });
-    await resetUserScopedData();
+    await clearLocalSessionStores();
   }
 
   await secureStorage.set(STORAGE_KEYS.lastUserId, user.id);
+  await migrateLegacyStorageForUser(user.id);
   await loadFarmerProfileForUser(user);
-
-  if (!accountChanged) {
-    await hydrateUserScopedStores(user.id);
-  }
+  await hydrateUserScopedStores(user.id);
 }
 
-/** On cold start — discard local farm/chat cache only when it belongs to another user. */
+/** On cold start — if another account was active in memory, clear RAM only. */
 export async function ensureStorageMatchesUser(userId: string | undefined): Promise<void> {
   if (!userId) return;
 
   const storedUserId = await secureStorage.get(STORAGE_KEYS.lastUserId);
 
   if (storedUserId && storedUserId !== userId) {
-    logger.auth.warn('Storage user mismatch — clearing scoped cache', {
+    logger.auth.warn('Active account changed — clearing in-memory cache only', {
       storedUserId,
       userId,
     });
-    await resetUserScopedData();
+    await clearLocalSessionStores();
   }
 
-  // Adopt legacy data (chats/farm saved before lastUserId existed) — do not wipe.
   await secureStorage.set(STORAGE_KEYS.lastUserId, userId);
+  await migrateLegacyStorageForUser(userId);
 }
 
-/** Startup for logged-in user: server profile first, then local chats/alerts for same user. */
+/** Startup for logged-in user: server profile + this user's local chats/alerts/farm. */
 export async function bootstrapAuthenticatedSession(user: User): Promise<void> {
   await ensureStorageMatchesUser(user.id);
   await loadFarmerProfileForUser(user);

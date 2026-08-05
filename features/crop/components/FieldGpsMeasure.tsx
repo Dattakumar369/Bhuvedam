@@ -52,6 +52,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
   const [livePosition, setLivePosition] = useState<Coordinates | null>(null);
   const [liveAccuracy, setLiveAccuracy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showWalkMap, setShowWalkMap] = useState(false);
   const walkSessionRef = useRef<WalkTrackSession | null>(null);
 
   useEffect(() => {
@@ -124,7 +125,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
 
   const startWalk = async () => {
     setError(null);
-    setWalking(true);
+    setShowWalkMap(false);
     setWalkProgress(null);
     setLivePosition(null);
     setPoints([]);
@@ -140,22 +141,30 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
             sampleCount: corner.sampleCount,
           };
           setPoints((prev) => [...prev, fieldCorner]);
+          setShowWalkMap(true);
         },
         (progress) => {
+          setWalking(true);
           setWalkProgress(progress);
           if (progress.liveLatitude != null && progress.liveLongitude != null) {
             setLivePosition({
               latitude: progress.liveLatitude,
               longitude: progress.liveLongitude,
             });
+            setShowWalkMap(true);
           }
         },
         [],
-        (position) => setLivePosition(position),
+        (position) => {
+          setLivePosition(position);
+          setShowWalkMap(true);
+        },
       );
       walkSessionRef.current = session;
+      setWalking(true);
     } catch (err) {
       setWalking(false);
+      setShowWalkMap(false);
       setLivePosition(null);
       setError(err instanceof Error ? err.message : fm.walkStartFailed);
     }
@@ -165,6 +174,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     walkSessionRef.current?.stop();
     walkSessionRef.current = null;
     setWalking(false);
+    setShowWalkMap(false);
     setWalkProgress(null);
     setLivePosition(null);
 
@@ -196,6 +206,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     walkSessionRef.current?.stop();
     walkSessionRef.current = null;
     setWalking(false);
+    setShowWalkMap(false);
     setWalkProgress(null);
     setLivePosition(null);
     setPoints([]);
@@ -257,11 +268,13 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
         <Caption style={styles.mapWaiting}>{fm.mapWaiting}</Caption>
       ) : null}
 
-      <FieldMeasureMap
-        points={points}
-        livePosition={livePosition}
-        walking={mode === 'walk' && walking}
-      />
+      {(mode !== 'walk' || showWalkMap || points.length > 0) ? (
+        <FieldMeasureMap
+          points={points}
+          livePosition={livePosition}
+          walking={mode === 'walk' && walking}
+        />
+      ) : null}
 
       {walking && walkProgress ? (
         <View style={[styles.captureBox, walkProgress.nearStart && styles.captureBoxNearStart]}>

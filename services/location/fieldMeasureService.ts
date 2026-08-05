@@ -444,8 +444,7 @@ export async function startFieldWalkTracking(
   const recorded: Coordinates[] = [...existingPoints];
   const kalman = new GpsKalmanFilter();
 
-  if (SENSOR_FUSION_ENABLED) await startMotionSensor();
-
+  // Walk mode: GPS only — never touch accelerometer (native crash on some APK/OTA combos).
   const pushProgress = (
     message: string,
     pointCount: number,
@@ -467,20 +466,15 @@ export async function startFieldWalkTracking(
     }
   };
 
-  pushProgress(
-    SENSOR_FUSION_ENABLED && isMotionSensorReady() ? msg.walkStartFusion : msg.walkStartPlain,
-    recorded.length,
-    null,
-    false,
-  );
+  pushProgress(msg.walkStartPlain, recorded.length, null, false);
 
   let subscription: Location.LocationSubscription;
   try {
     subscription = await Location.watchPositionAsync(
     {
-      accuracy: Location.Accuracy.BestForNavigation,
-      distanceInterval: 2,
-      timeInterval: 1500,
+      accuracy: Location.Accuracy.High,
+      distanceInterval: 3,
+      timeInterval: 2000,
     },
     (position) => {
       if (stopped) return;
@@ -511,11 +505,6 @@ export async function startFieldWalkTracking(
       const first = recorded[0]!;
       const nearStart = recorded.length >= 4 && distanceMeters(first, sample) <= WALK_CLOSE_LOOP_M;
 
-      if (SENSOR_FUSION_ENABLED && isMotionSensorReady() && !isDeviceMoving() && step >= WALK_MIN_STEP_M) {
-        pushProgress(msg.walkJitterIgnore, recorded.length, acc, nearStart, sample);
-        return;
-      }
-
       if (step < WALK_MIN_STEP_M) {
         pushProgress(
           nearStart ? msg.walkNearStop : msg.walkWalking(Math.round(distanceWalkedM), recorded.length),
@@ -542,7 +531,6 @@ export async function startFieldWalkTracking(
     },
   );
   } catch {
-    if (SENSOR_FUSION_ENABLED) stopMotionSensor();
     throw new Error(msg.walkStartFailed);
   }
 
@@ -550,7 +538,6 @@ export async function startFieldWalkTracking(
     stop: () => {
       stopped = true;
       subscription.remove();
-      if (SENSOR_FUSION_ENABLED) stopMotionSensor();
     },
   };
 }

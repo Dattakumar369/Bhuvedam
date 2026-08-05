@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import { STORAGE_KEYS } from '@/constants/app';
-import { activateUserSession, ensureStorageMatchesUser, resetUserScopedData } from '@/services/auth/userSession';
+import { activateUserSession, clearLocalSessionStores, ensureStorageMatchesUser } from '@/services/auth/userSession';
 import { setAuthToken } from '@/services/api/client';
 import { userRepository } from '@/services/api/repositories';
 import type { User } from '@/types/user';
@@ -69,7 +69,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     } catch {
       // Clear local session even if server call fails
     }
-    await resetUserScopedData();
+    await clearLocalSessionStores();
     await secureStorage.remove(STORAGE_KEYS.authToken);
     await secureStorage.remove(STORAGE_KEYS.user);
     setAuthToken(null);

@@ -23,12 +23,16 @@ import { imageSessionCache } from '@/services/media/imageSessionCache';
 import { generateId } from '@/utils/format';
 import { detectQueryLanguage } from '@/utils/detectQueryLanguage';
 import { secureStorage } from '@/utils/storage';
+import { getUserScoped, setUserScoped } from '@/utils/userScopedStorage';
 
 const MAX_STORED_CONVERSATIONS = 15;
 const MAX_MESSAGES_PER_CONVERSATION = 60;
 const MAX_MODEL_HISTORY = 15;
 
 async function persistConversations(conversations: Conversation[]): Promise<void> {
+  const userId = useUserStore.getState().user?.id;
+  if (!userId) return;
+
   const trimmed = conversations.slice(0, MAX_STORED_CONVERSATIONS).map((conv) => ({
     ...conv,
     messages: conv.messages
@@ -36,7 +40,7 @@ async function persistConversations(conversations: Conversation[]): Promise<void
       .slice(-MAX_MESSAGES_PER_CONVERSATION)
       .map(({ imageUri: _imageUri, ...m }) => m),
   }));
-  await secureStorage.set(STORAGE_KEYS.conversations, JSON.stringify(trimmed));
+  await setUserScoped(userId, STORAGE_KEYS.conversations, JSON.stringify(trimmed));
 }
 
 interface PendingChatImage {
@@ -76,6 +80,7 @@ interface AIState {
   setVoiceModeEnabled: (enabled: boolean) => void;
   toggleVoiceMode: () => void;
   clearError: () => void;
+  clearMemory: () => Promise<void>;
   reset: () => Promise<void>;
 }
 
@@ -111,17 +116,17 @@ export const useAIStore = create<AIState>((set, get) => ({
     const userId = useUserStore.getState().user?.id;
     const isAuthenticated = useUserStore.getState().isAuthenticated;
     if (!isAuthenticated || !userId) {
-      await get().reset();
+      await get().clearMemory();
       return;
     }
 
     const lastUserId = await secureStorage.get(STORAGE_KEYS.lastUserId);
     if (lastUserId && lastUserId !== userId) {
-      await get().reset();
+      await get().clearMemory();
       return;
     }
 
-    const raw = await secureStorage.get(STORAGE_KEYS.conversations);
+    const raw = await getUserScoped(userId, STORAGE_KEYS.conversations);
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw) as Conversation[];
@@ -131,7 +136,7 @@ export const useAIStore = create<AIState>((set, get) => ({
     }
   },
 
-  reset: async () => {
+  clearMemory: async () => {
     set({
       conversations: [],
       activeConversationId: null,
@@ -140,7 +145,10 @@ export const useAIStore = create<AIState>((set, get) => ({
       error: null,
       abortController: null,
     });
-    await secureStorage.remove(STORAGE_KEYS.conversations);
+  },
+
+  reset: async () => {
+    await get().clearMemory();
   },
 
   initializeConversations: () => {

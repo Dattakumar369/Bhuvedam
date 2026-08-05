@@ -22,9 +22,14 @@ import { useUserStore } from '@/store/userStore';
 import { useWeatherStore } from '@/store/weatherStore';
 import type { FarmAlert, MandiPriceSnapshot, SyncStatusSummary } from '@/types/alerts';
 import { appCache, secureStorage } from '@/utils/storage';
+import { getUserScoped, setUserScoped, userCacheKey } from '@/utils/userScopedStorage';
 
 const MAX_STORED_ALERTS = 20;
 const MAX_MANDI_SNAPSHOT = 80;
+
+function activeUserId(): string | null {
+  return useUserStore.getState().user?.id ?? null;
+}
 
 interface AlertState {
   alerts: FarmAlert[];
@@ -37,6 +42,7 @@ interface AlertState {
   markAllRead: () => void;
   setNotificationsEnabled: (enabled: boolean) => Promise<void>;
   hydrate: () => Promise<void>;
+  clearMemory: () => Promise<void>;
   reset: () => Promise<void>;
 }
 
@@ -48,18 +54,26 @@ function compactAlerts(alerts: FarmAlert[]): FarmAlert[] {
 }
 
 function persistAlerts(alerts: FarmAlert[]): void {
-  appCache.set(STORAGE_KEYS.farmAlerts, compactAlerts(alerts));
+  const userId = activeUserId();
+  if (!userId) return;
+  const compact = compactAlerts(alerts);
+  appCache.set(userCacheKey(STORAGE_KEYS.farmAlerts, userId), compact);
+  void setUserScoped(userId, STORAGE_KEYS.farmAlerts, JSON.stringify(compact));
 }
 
 async function loadMandiSnapshot(): Promise<MandiPriceSnapshot[]> {
-  const cached = appCache.get<MandiPriceSnapshot[]>(STORAGE_KEYS.mandiSnapshot);
+  const userId = activeUserId();
+  if (!userId) return [];
+
+  const cacheKey = userCacheKey(STORAGE_KEYS.mandiSnapshot, userId);
+  const cached = appCache.get<MandiPriceSnapshot[]>(cacheKey);
   if (cached?.length) return cached;
 
-  const raw = await secureStorage.get(STORAGE_KEYS.mandiSnapshot);
+  const raw = await getUserScoped(userId, STORAGE_KEYS.mandiSnapshot);
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw) as MandiPriceSnapshot[];
-    appCache.set(STORAGE_KEYS.mandiSnapshot, parsed);
+    appCache.set(cacheKey, parsed);
     return parsed;
   } catch {
     return [];
@@ -67,8 +81,11 @@ async function loadMandiSnapshot(): Promise<MandiPriceSnapshot[]> {
 }
 
 function saveMandiSnapshot(snapshot: MandiPriceSnapshot[]): void {
+  const userId = activeUserId();
+  if (!userId) return;
   const trimmed = snapshot.slice(0, MAX_MANDI_SNAPSHOT);
-  appCache.set(STORAGE_KEYS.mandiSnapshot, trimmed);
+  appCache.set(userCacheKey(STORAGE_KEYS.mandiSnapshot, userId), trimmed);
+  void setUserScoped(userId, STORAGE_KEYS.mandiSnapshot, JSON.stringify(trimmed));
 }
 
 function mergeAlerts(existing: FarmAlert[], incoming: FarmAlert[]): FarmAlert[] {
@@ -96,17 +113,29 @@ export const useAlertStore = create<AlertState>((set, get) => ({
     const userId = useUserStore.getState().user?.id;
     const isAuthenticated = useUserStore.getState().isAuthenticated;
     if (!isAuthenticated || !userId) {
-      await get().reset();
+      await get().clearMemory();
       return;
     }
 
     const lastUserId = await secureStorage.get(STORAGE_KEYS.lastUserId);
-    if (!lastUserId || lastUserId !== userId) {
-      await get().reset();
+    if (lastUserId && lastUserId !== userId) {
+      await get().clearMemory();
       return;
     }
 
-    const alerts = appCache.get<FarmAlert[]>(STORAGE_KEYS.farmAlerts);
+    const cacheKey = userCacheKey(STORAGE_KEYS.farmAlerts, userId);
+    let alerts = appCache.get<FarmAlert[]>(cacheKey);
+    if (!alerts?.length) {
+      const raw = await getUserScoped(userId, STORAGE_KEYS.farmAlerts);
+      if (raw) {
+        try {
+          alerts = JSON.parse(raw) as FarmAlert[];
+          if (alerts.length) appCache.set(cacheKey, alerts);
+        } catch {
+          /* ignore */
+        }
+      }
+    }
     if (alerts?.length) set({ alerts });
 
     const prefsRaw = await secureStorage.get(STORAGE_KEYS.alertPrefs);
@@ -125,17 +154,17 @@ export const useAlertStore = create<AlertState>((set, get) => ({
     }
   },
 
-  reset: async () => {
-    appCache.remove(STORAGE_KEYS.farmAlerts);
-    appCache.remove(STORAGE_KEYS.mandiSnapshot);
-    await secureStorage.remove(STORAGE_KEYS.farmAlerts);
-    await secureStorage.remove(STORAGE_KEYS.mandiSnapshot);
+  clearMemory: async () => {
     set({
       alerts: [],
       syncStatus: null,
       lastChecked: null,
       loading: false,
     });
+  },
+
+  reset: async () => {
+    await get().clearMemory();
   },
 
   setNotificationsEnabled: async (enabled) => {
