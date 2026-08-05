@@ -18,6 +18,7 @@ import {
   LocationBanner,
 } from '@/features/weather/components/LocationBanner';
 import { WeatherMetricsGrid } from '@/features/weather/components/WeatherMetricsGrid';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useWeather } from '@/hooks/useWeather';
 import { formatPercentage, formatWindSpeed } from '@/utils/format';
 import {
@@ -30,6 +31,7 @@ import { router } from 'expo-router';
 
 export default function WeatherScreen() {
   const insets = useSafeAreaInsets();
+  const { screens } = useTranslation();
   const { data, location, isLoading, error, lastFetched, load, refresh, retryWithLocation } =
     useWeather();
   const [refreshing, setRefreshing] = useState(false);
@@ -61,7 +63,7 @@ export default function WeatherScreen() {
   if (error && !data) {
     return (
       <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
-        <Header title="Weather" showBack onBack={() => router.back()} />
+        <Header title={screens.weather} showBack onBack={() => router.back()} />
         <LocationBanner error={error} onRetry={retryWithLocation} />
       </View>
     );
@@ -69,18 +71,18 @@ export default function WeatherScreen() {
 
   const metrics = data
     ? [
-        { icon: 'water-percent' as const, label: 'Humidity', value: formatPercentage(data.current.humidity) },
-        { icon: 'weather-windy' as const, label: 'Wind Speed', value: formatWindSpeed(data.current.windSpeed) },
-        { icon: 'gauge' as const, label: 'Pressure', value: `${data.current.pressure} hPa` },
-        { icon: 'eye-outline' as const, label: 'Visibility', value: `${data.current.visibility} km` },
-        { icon: 'white-balance-sunny' as const, label: 'UV Index', value: String(data.current.uvIndex) },
-        { icon: 'weather-rainy' as const, label: 'Rain Chance', value: formatPercentage(data.current.precipitation) },
+        { icon: 'water-percent' as const, label: screens.humidity, value: formatPercentage(data.current.humidity) },
+        { icon: 'weather-windy' as const, label: screens.windSpeed, value: formatWindSpeed(data.current.windSpeed) },
+        { icon: 'gauge' as const, label: screens.pressure, value: `${data.current.pressure} hPa` },
+        { icon: 'eye-outline' as const, label: screens.visibility, value: `${data.current.visibility} km` },
+        { icon: 'white-balance-sunny' as const, label: screens.uvIndex, value: String(data.current.uvIndex) },
+        { icon: 'weather-rainy' as const, label: screens.rainChance, value: formatPercentage(data.current.precipitation) },
       ]
     : [];
 
   return (
     <View style={styles.container}>
-      <Header title="Weather" showBack onBack={() => router.back()} />
+      <Header title={screens.weather} showBack onBack={() => router.back()} />
       {isLoading && !data ? (
         <WeatherSkeleton />
       ) : data ? (
@@ -110,7 +112,7 @@ export default function WeatherScreen() {
 
           <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.section}>
             <SectionTitle
-              title={data ? hourlySectionTitle(data, activeDate) : 'Hourly Forecast'}
+              title={data ? hourlySectionTitle(data, activeDate) : screens.hourlyForecast}
               subtitle="Swipe to see full day →"
             />
             <Card variant="elevated">
@@ -122,7 +124,7 @@ export default function WeatherScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.section}>
-            <SectionTitle title="7-Day Forecast" subtitle="Tap a day for hourly details" />
+            <SectionTitle title={screens.forecast7Day} subtitle="Tap a day for hourly details" />
             <Card variant="elevated">
               <DailyForecastCard
                 data={data.daily}

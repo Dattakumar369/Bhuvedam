@@ -14,6 +14,7 @@ import { Chip, Header, ListSkeleton, SearchInput } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
 import { AGRO_BRAND_FILTERS } from '@/constants/agCatalogFilters';
 import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
+import { catalogTitle, filterLabel, getScreenTranslations } from '@/constants/i18n/screenTranslations';
 import { useLanguageStore } from '@/store/languageStore';
 import { CROPS } from '@/constants/crops';
 import { AgProductCard } from '@/features/catalog/components/AgProductCard';
@@ -49,7 +50,10 @@ interface AgProductBrowseScreenProps {
 
 export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
   const insets = useSafeAreaInsets();
+  const language = useLanguageStore((s) => s.language);
+  const screens = getScreenTranslations(language);
   const farmerCrops = useFarmerContextStore((s) => s.crops);
+  const pageTitle = catalogTitle(language, config.titleTe, config.titleEn);
 
   const [search, setSearch] = useState('');
   const [brand, setBrand] = useState('all');
@@ -99,17 +103,21 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
   const cropChips = useMemo(() => {
     const ids = farmerCrops.length ? farmerCrops.slice(0, 4) : ['rice', 'cotton', 'chilli', 'tomato'];
     return [
-      { id: 'all', label: 'All crops' },
+      { id: 'all', label: screens.allCrops },
       ...ids.map((id) => {
         const cropInfo = CROPS.find((c) => c.id === id);
-        return { id, label: cropInfo?.nameTe ?? cropInfo?.name ?? id };
+        const label =
+          language === 'te'
+            ? cropInfo?.nameTe ?? cropInfo?.name ?? id
+            : cropInfo?.name ?? id;
+        return { id, label };
       }),
     ];
-  }, [farmerCrops]);
+  }, [farmerCrops, language, screens.allCrops]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Header title={config.titleTe} showBack onBack={() => router.back()} />
+      <Header title={pageTitle} showBack onBack={() => router.back()} />
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
@@ -124,16 +132,14 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
             <MaterialCommunityIcons name={config.heroIcon} size={28} color={colors.white} />
           </View>
           <View style={styles.heroText}>
-            <Title style={styles.heroTitle}>{config.titleEn}</Title>
+            <Title style={styles.heroTitle}>{pageTitle}</Title>
             <Body style={styles.heroBody}>{config.subtitle}</Body>
           </View>
         </View>
 
         <View style={styles.banner}>
           <MaterialCommunityIcons name="information-outline" size={16} color={colors.info} />
-          <Caption style={styles.bannerText}>
-            CIB&RC reference — active ingredient, dose, target. Dealer brand pack label verify cheyandi.
-          </Caption>
+          <Caption style={styles.bannerText}>{screens.catalogBanner}</Caption>
         </View>
 
         <SearchInput value={search} onChangeText={setSearch} placeholder={config.searchPlaceholder} />
@@ -146,7 +152,7 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
                 {config.targetFilters.map((t) => (
                   <Chip
                     key={t.id}
-                    label={t.labelTe}
+                    label={filterLabel(language, t.labelTe, t.label)}
                     selected={target === t.id}
                     onPress={() => setTarget(t.id)}
                   />

@@ -20,12 +20,14 @@ import { VarietyDetailCard } from '@/features/mandi/components/VarietyDetailCard
 import { VarietyPicker } from '@/features/mandi/components/VarietyPicker';
 import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
 import { useMandiRates } from '@/hooks/useMandiRates';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useAlertStore } from '@/store/alertStore';
 import { colors, layout, spacing } from '@/theme';
 
 export default function MandiRatesScreen() {
   const insets = useSafeAreaInsets();
   const keyboardHeight = useKeyboardHeight();
+  const { app, screens } = useTranslation();
   const [refreshing, setRefreshing] = useState(false);
   const [varietySearch, setVarietySearch] = useState('');
   const {
@@ -67,10 +69,10 @@ export default function MandiRatesScreen() {
 
   const sourceLabel =
     source === 'live'
-      ? `Live Agmarknet · ${cropAnalytics.length} varieties`
+      ? screens.mandiSourceLive(cropAnalytics.length)
       : source === 'cached'
-        ? 'Cached'
-        : 'Reference avg — pull to refresh for live';
+        ? screens.mandiSourceCached
+        : screens.mandiSourceReference;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -90,12 +92,12 @@ export default function MandiRatesScreen() {
   return (
     <KeyboardSafeView style={styles.container}>
       <View style={styles.headerWrap}>
-        <Header title="Mandi Rates" showBack onBack={() => router.back()} />
+        <Header title={app.mandiRates} showBack onBack={() => router.back()} />
       </View>
 
       <View style={styles.searchWrap}>
         <SearchInput
-          placeholder="Variety search — Masoori, 1010, BPT, hybrid..."
+          placeholder={screens.mandiSearchPlaceholder}
           value={varietySearch}
           onChangeText={setVarietySearch}
         />
@@ -115,21 +117,18 @@ export default function MandiRatesScreen() {
         keyboardDismissMode="on-drag"
       >
         <View style={styles.content}>
-          <Caption style={styles.subtitle}>
-            Prati panta ki 100+ varieties untayi — Agmarknet nunchi live ga anni varieties fetch
-            chestam. Okko rakam ki okko rate.
-          </Caption>
+          <Caption style={styles.subtitle}>{screens.mandiSubtitle}</Caption>
 
           <View style={styles.sourceRow}>
             <Badge label={sourceLabel} variant={source === 'live' ? 'primary' : 'accent'} />
             <DataFreshnessBadge
-              label="Mandi data"
+              label={screens.mandiDataLabel}
               updatedAt={syncStatus?.mandiLastSync ?? lastFetched}
               icon="store-outline"
             />
             {lastFetched ? (
               <Caption>
-                Updated{' '}
+                {screens.mandiUpdated}{' '}
                 {new Date(lastFetched).toLocaleTimeString('en-IN', {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -144,7 +143,7 @@ export default function MandiRatesScreen() {
             </View>
           ) : null}
 
-          <SectionTitle title="Select crop / Panta" />
+          <SectionTitle title={screens.mandiSelectCrop} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
             <View style={styles.chipRow}>
               {MANDI_CROPS.map((crop) => (
@@ -162,7 +161,7 @@ export default function MandiRatesScreen() {
             <ListSkeleton count={3} />
           ) : (
             <>
-              <SectionTitle title="Variety / Rakam — select" />
+              <SectionTitle title={screens.mandiSelectVariety} />
               <VarietyPicker
                 varieties={varietyList}
                 selectedId={selectedVarietyId}
@@ -192,7 +191,9 @@ export default function MandiRatesScreen() {
                     </>
                   ) : null}
 
-                  <SectionTitle title={`All ${selectedCrop.name} varieties today (${cropAnalytics.length})`} />
+                  <SectionTitle
+                    title={screens.mandiAllVarietiesToday(selectedCrop.name, cropAnalytics.length)}
+                  />
                   {cropAnalytics.map((item) => (
                     <View key={`${item.cropId}-${item.varietyId}-${item.varietyName}`} style={styles.listItem}>
                       <MandiRateCard
@@ -210,11 +211,7 @@ export default function MandiRatesScreen() {
 
           <View style={styles.footerNote}>
             <MaterialCommunityIcons name="information-outline" size={16} color={colors.textTertiary} />
-            <Caption style={styles.footerText}>
-              Curated varieties (Full guide) = complete fertilizer & spray data. Other varieties =
-              live Agmarknet rates + general crop advice. Data refreshes from government mandi
-              records daily.
-            </Caption>
+            <Caption style={styles.footerText}>{screens.mandiFooterNote}</Caption>
           </View>
         </View>
       </ScrollView>

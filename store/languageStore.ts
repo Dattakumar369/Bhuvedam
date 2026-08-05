@@ -1,8 +1,13 @@
 import { create } from 'zustand';
 
-import { DEFAULT_LANGUAGE, type LanguageCode } from '@/constants/languages';
+import { DEFAULT_LANGUAGE, LANGUAGES, type LanguageCode } from '@/constants/languages';
 import { STORAGE_KEYS } from '@/constants/app';
 import { secureStorage } from '@/utils/storage';
+import { useCropCatalogStore } from '@/store/cropCatalogStore';
+
+function isValidLanguage(code: string | null | undefined): code is LanguageCode {
+  return LANGUAGES.some((l) => l.code === code);
+}
 
 interface LanguageState {
   language: LanguageCode;
@@ -16,12 +21,13 @@ export const useLanguageStore = create<LanguageState>((set) => ({
   setLanguage: async (language) => {
     await secureStorage.set(STORAGE_KEYS.language, language);
     set({ language });
+    useCropCatalogStore.getState().setLanguage(language);
   },
 
   hydrate: async () => {
     const stored = await secureStorage.get(STORAGE_KEYS.language);
-    if (stored) {
-      set({ language: stored as LanguageCode });
-    }
+    const language = isValidLanguage(stored) ? stored : DEFAULT_LANGUAGE;
+    set({ language });
+    useCropCatalogStore.getState().setLanguage(language);
   },
 }));

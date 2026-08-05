@@ -9,7 +9,6 @@ import { APP } from '@/constants/app';
 import { LANGUAGES, type LanguageCode } from '@/constants/languages';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppColors } from '@/hooks/useAppColors';
-import { useCropCatalogStore } from '@/store/cropCatalogStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { useUserStore } from '@/store/userStore';
 import { layout, radius, spacing } from '@/theme';
@@ -22,13 +21,9 @@ export default function LanguageScreen() {
   const setLanguage = useLanguageStore((s) => s.setLanguage);
   const setOnboardingComplete = useUserStore((s) => s.setOnboardingComplete);
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
-  const refreshCropCatalog = useCropCatalogStore((s) => s.setLanguage);
 
   const pickLanguage = async (code: LanguageCode) => {
     await setLanguage(code);
-    if (isAuthenticated) {
-      refreshCropCatalog(code);
-    }
   };
 
   const handlePrimaryAction = async () => {
@@ -46,8 +41,8 @@ export default function LanguageScreen() {
         <Header title={app.language} showBack onBack={() => router.back()} />
       ) : (
         <Animated.View entering={FadeInDown.springify()} style={styles.header}>
-          <Headline>Choose Language</Headline>
-          <Subtitle>अपनी भाषा चुनें · Choose your preferred language</Subtitle>
+          <Headline>{app.chooseLanguage}</Headline>
+          <Subtitle>{app.chooseLanguageSubtitle}</Subtitle>
         </Animated.View>
       )}
 
@@ -67,7 +62,7 @@ export default function LanguageScreen() {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         <Button
-          label={isAuthenticated ? 'Done' : 'Continue'}
+          label={isAuthenticated ? app.done : app.continueBtn}
           onPress={() => void handlePrimaryAction()}
           fullWidth
           size="lg"

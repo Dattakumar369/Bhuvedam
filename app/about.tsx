@@ -6,14 +6,16 @@ import { AppLogo } from '@/components/brand';
 import { Card, Header } from '@/components/ui';
 import { Body, Headline, Subtitle } from '@/components/ui/Typography';
 import { APP } from '@/constants/app';
+import { useTranslation } from '@/hooks/useTranslation';
 import { colors, layout, spacing } from '@/theme';
 
 export default function AboutScreen() {
   const insets = useSafeAreaInsets();
+  const { app, screens } = useTranslation();
 
   return (
     <View style={styles.container}>
-      <Header title="About" showBack onBack={() => router.back()} />
+      <Header title={app.aboutApp} showBack onBack={() => router.back()} />
 
       <ScrollView
         contentContainerStyle={[
@@ -25,27 +27,19 @@ export default function AboutScreen() {
           <AppLogo size={88} style={styles.logo} />
           <Headline>{APP.name}</Headline>
           <Subtitle>{APP.tagline}</Subtitle>
-          <Subtitle style={styles.version}>Version {APP.version}</Subtitle>
+          <Subtitle style={styles.version}>
+            {screens.versionLabel} {APP.version}
+          </Subtitle>
         </View>
 
         <Card variant="elevated">
-          <Body style={styles.paragraph}>
-            Bhuvedam is an AI-powered agriculture assistant designed to help farmers make smarter
-            decisions. We combine weather intelligence, crop expertise, and conversational AI to
-            deliver actionable insights right at your fingertips.
-          </Body>
-          <Body style={styles.paragraph}>
-            Our mission is to empower every farmer with technology that was once available only to
-            large agribusinesses — making precision farming accessible, affordable, and easy to use.
-          </Body>
+          <Body style={styles.paragraph}>{screens.aboutPara1}</Body>
+          <Body style={styles.paragraph}>{screens.aboutPara2}</Body>
         </Card>
 
         <Card variant="filled" style={styles.mission}>
-          <Subtitle style={styles.missionLabel}>OUR MISSION</Subtitle>
-          <Body style={styles.missionText}>
-            To democratize agricultural intelligence and help farmers increase yield, reduce waste,
-            and build sustainable farming practices for future generations.
-          </Body>
+          <Subtitle style={styles.missionLabel}>{screens.aboutMissionLabel}</Subtitle>
+          <Body style={styles.missionText}>{screens.aboutMissionText}</Body>
         </Card>
       </ScrollView>
     </View>

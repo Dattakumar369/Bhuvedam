@@ -1,4 +1,12 @@
 import type { LanguageCode } from '@/constants/languages';
+import { LANGUAGES } from '@/constants/languages';
+import { hiApp } from '@/constants/i18n/locales/hiApp';
+import { mrApp } from '@/constants/i18n/locales/mrApp';
+import { taApp } from '@/constants/i18n/locales/taApp';
+import { knApp } from '@/constants/i18n/locales/knApp';
+
+const langName = (code: string) =>
+  LANGUAGES.find((l) => l.code === code)?.nativeName ?? code.toUpperCase();
 
 export interface AppTranslations {
   greetingMorning: string;
@@ -109,6 +117,13 @@ export interface AppTranslations {
   sessionExpired: string;
   backToLogin: string;
   syncFailed: string;
+  tabHome: string;
+  tabCrop: string;
+  tabAi: string;
+  tabProfile: string;
+  chooseLanguage: string;
+  chooseLanguageSubtitle: string;
+  done: string;
 }
 
 const enApp: AppTranslations = {
@@ -140,7 +155,7 @@ const enApp: AppTranslations = {
   farmAlerts: 'Farm Alerts',
   farmAlertsDesc: 'Weather, mandi rates & crop reminders',
   language: 'Language',
-  languageCurrent: (code) => `Current: ${code.toUpperCase()}`,
+  languageCurrent: (code) => `Current: ${langName(code)}`,
   location: 'Location',
   locationDetecting: 'Detecting...',
   about: 'ABOUT',
@@ -220,6 +235,13 @@ const enApp: AppTranslations = {
   sessionExpired: 'Your session expired. Please log in again.',
   backToLogin: '← Back to login',
   syncFailed: 'Could not sync farm data to server. Will retry later.',
+  tabHome: 'Home',
+  tabCrop: 'Crop',
+  tabAi: 'AI',
+  tabProfile: 'Profile',
+  chooseLanguage: 'Choose Language',
+  chooseLanguageSubtitle: 'Choose your preferred language',
+  done: 'Done',
 };
 
 const teApp: AppTranslations = {
@@ -251,7 +273,7 @@ const teApp: AppTranslations = {
   farmAlerts: 'పొలం alerts',
   farmAlertsDesc: 'వాతావరణం, మండి ధరలు & పంట reminders',
   language: 'భాష',
-  languageCurrent: (code) => `ప్రస్తుతం: ${code.toUpperCase()}`,
+  languageCurrent: (code) => `ప్రస్తుతం: ${langName(code)}`,
   location: 'స్థానం',
   locationDetecting: 'గుర్తిస్తున్నాం...',
   about: 'గురించి',
@@ -331,15 +353,22 @@ const teApp: AppTranslations = {
   sessionExpired: 'Session expire ayyindi. Malli login cheyandi.',
   backToLogin: '← Login ki vellu',
   syncFailed: 'Server ki farm data sync fail. Taruvata retry avutundi.',
+  tabHome: 'హోమ్',
+  tabCrop: 'పంట',
+  tabAi: 'AI',
+  tabProfile: 'ప్రొఫైల్',
+  chooseLanguage: 'భాష ఎంచుకోండి',
+  chooseLanguageSubtitle: 'మీకు నచ్చిన భాష ఎంచుకోండి',
+  done: 'పూర్తి',
 };
 
 export const APP_TRANSLATIONS: Record<LanguageCode, AppTranslations> = {
   en: enApp,
   te: teApp,
-  hi: enApp,
-  mr: enApp,
-  ta: enApp,
-  kn: enApp,
+  hi: hiApp,
+  mr: mrApp,
+  ta: taApp,
+  kn: knApp,
 };
 
 export function getAppTranslations(language: LanguageCode): AppTranslations {

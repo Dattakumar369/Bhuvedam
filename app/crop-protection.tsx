@@ -25,6 +25,7 @@ import {
   getStagesForCrop,
 } from '@/services/cropProtection/protectionAdvisor';
 import { useFarmerContextStore } from '@/store/farmerContextStore';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { CropDisease, FertilizerRecommendation, SprayRecommendation } from '@/types/cropProtection';
 import { colors, layout, radius, spacing } from '@/theme';
 
@@ -32,6 +33,7 @@ type Mode = 'stage' | 'disease';
 
 export default function CropProtectionScreen() {
   const insets = useSafeAreaInsets();
+  const { screens } = useTranslation();
   const farmerCrops = useFarmerContextStore((s) => s.crops);
   const defaultCrop = farmerCrops[0] ?? 'rice';
   const fetchRates = useMandiStore((s) => s.fetchRates);
@@ -137,26 +139,22 @@ export default function CropProtectionScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Fertilizer & Spray Guide" showBack onBack={() => router.back()} />
+      <Header title={screens.cropProtTitle} showBack onBack={() => router.back()} />
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.content}>
-          <Caption style={styles.subtitle}>
-            Prati panta ki 100+ rakalu untayi. Curated varieties ki full guide; migata varieties ki
-            general crop advice + live mandi rates. Panta vayasu leda rogam batti spray & eruvu
-            cheppistam.
-          </Caption>
+          <Caption style={styles.subtitle}>{screens.cropProtSubtitle}</Caption>
 
           {catalogStats ? (
             <View style={styles.statsRow}>
-              <StatPill label="Fertilizers" value={catalogStats.fertilizers} target={1000} />
-              <StatPill label="Pesticides" value={catalogStats.pesticides} target={2000} />
-              <StatPill label="Fungicides" value={catalogStats.fungicides} target={1000} />
-              <StatPill label="Diseases" value={catalogStats.diseases} target={2000} />
-              <StatPill label="Crops" value={catalogStats.crops} target={250} />
+              <StatPill label={screens.statFertilizers} value={catalogStats.fertilizers} target={1000} />
+              <StatPill label={screens.statPesticides} value={catalogStats.pesticides} target={2000} />
+              <StatPill label={screens.statFungicides} value={catalogStats.fungicides} target={1000} />
+              <StatPill label={screens.statDiseases} value={catalogStats.diseases} target={2000} />
+              <StatPill label={screens.statCrops} value={catalogStats.crops} target={250} />
             </View>
           ) : null}
 
@@ -164,7 +162,7 @@ export default function CropProtectionScreen() {
             <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.sm }} />
           ) : null}
 
-          <SectionTitle title="Select crop / Panta" />
+          <SectionTitle title={screens.cropProtSelectCrop} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.chipRow}>
               {CROPS.map((c) => (
@@ -186,9 +184,9 @@ export default function CropProtectionScreen() {
 
           {varietyList.length > 0 ? (
             <>
-              <SectionTitle title="Variety / Rakam — search & select" />
+              <SectionTitle title={screens.cropProtSelectVariety} />
               <SearchInput
-                placeholder="Variety search — Masoori, 1010, BPT..."
+                placeholder={screens.cropProtVarietySearch}
                 value={varietySearch}
                 onChangeText={setVarietySearch}
               />
@@ -208,13 +206,13 @@ export default function CropProtectionScreen() {
 
           <View style={styles.modeRow}>
             <ModeButton
-              label="By crop age / Vayasu"
+              label={screens.cropProtByStage}
               icon="timeline-clock-outline"
               active={mode === 'stage'}
               onPress={() => setMode('stage')}
             />
             <ModeButton
-              label="By disease / Rogam"
+              label={screens.cropProtByDisease}
               icon="bug-outline"
               active={mode === 'disease'}
               onPress={() => setMode('disease')}
@@ -223,7 +221,7 @@ export default function CropProtectionScreen() {
 
           {mode === 'stage' ? (
             <>
-              <SectionTitle title="Crop stage / Panta dasa" />
+              <SectionTitle title={screens.cropProtStage} />
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={styles.chipRow}>
                   {stages.map((s) => (
@@ -240,7 +238,7 @@ export default function CropProtectionScreen() {
           ) : (
             <>
               <SearchInput
-                placeholder="Rogam search — blast, bollworm, whitefly..."
+                placeholder={screens.cropProtDiseaseSearch}
                 value={search}
                 onChangeText={setSearch}
               />
@@ -258,21 +256,21 @@ export default function CropProtectionScreen() {
               </ScrollView>
               {diseases[0] ? (
                 <CardHint
-                  title="Symptoms / Lakshanaalu"
+                  title={screens.cropProtSymptoms}
                   text={
                     diseases.find((d) => d.id === activeDiseaseId)?.symptomsTe ??
                     diseases[0].symptomsTe
                   }
                 />
               ) : (
-                <Caption style={styles.empty}>No disease data for this crop yet.</Caption>
+                <Caption style={styles.empty}>{screens.cropProtNoDisease}</Caption>
               )}
             </>
           )}
 
           {fertilizers.length > 0 ? (
             <>
-              <SectionTitle title="Fertilizers / Eruvulu" />
+              <SectionTitle title={screens.cropProtFertilizers} />
               {fertilizers.map((f) => (
                 <FertilizerCard key={`${f.name}-${f.timing}`} item={f} />
               ))}
@@ -281,23 +279,18 @@ export default function CropProtectionScreen() {
 
           {sprays.length > 0 ? (
             <>
-              <SectionTitle title="Spray advisory / Mandu pichikari" />
+              <SectionTitle title={screens.cropProtSprays} />
               {sprays.map((s) => (
                 <SprayAdvisoryCard key={s.id} item={s} />
               ))}
             </>
           ) : (
-            <Caption style={styles.empty}>
-              No spray advice for this selection. Try another stage or ask AI chat.
-            </Caption>
+            <Caption style={styles.empty}>{screens.cropProtNoSpray}</Caption>
           )}
 
           <View style={styles.disclaimer}>
             <MaterialCommunityIcons name="information-outline" size={16} color={colors.textTertiary} />
-            <Caption style={styles.disclaimerText}>
-              Always follow product label & local agriculture officer advice. Prices are approximate
-              market ranges. PHI = days before harvest when spray is not allowed.
-            </Caption>
+            <Caption style={styles.disclaimerText}>{screens.cropProtDisclaimer}</Caption>
           </View>
         </View>
       </ScrollView>

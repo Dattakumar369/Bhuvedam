@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 import { CROP_CATEGORIES, CROP_CATEGORY_TELUGU, CROPS, type CropCategory, type CropInfo } from '@/constants/crops';
 import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
-import type { LanguageCode } from '@/constants/languages';
+import { DEFAULT_LANGUAGE, type LanguageCode } from '@/constants/languages';
 import { fetchCropsFromBackend, searchCropsLocal } from '@/services/crops/cropService';
 
 interface CropCatalogState {
@@ -24,7 +24,7 @@ export const useCropCatalogStore = create<CropCatalogState>((set, get) => ({
   error: null,
   source: 'local',
   lastFetched: null,
-  language: 'te',
+  language: DEFAULT_LANGUAGE,
 
   setLanguage: (language) => {
     set({ language });

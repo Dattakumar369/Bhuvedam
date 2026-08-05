@@ -21,6 +21,7 @@ import {
 import type { FieldCorner, FieldMeasurement } from '@/types/fieldMeasure';
 import type { Coordinates } from '@/types/location';
 import { formatAreaDisplay, measurePolygon } from '@/utils/geoArea';
+import { useTranslation } from '@/hooks/useTranslation';
 import { colors, radius, spacing } from '@/theme';
 
 interface FieldGpsMeasureProps {
@@ -28,10 +29,10 @@ interface FieldGpsMeasureProps {
   onApply: (measurement: FieldMeasurement) => void;
 }
 
-function qualityLabel(quality: GpsQuality): string {
-  if (quality === 'good') return '±1–2m bagundi ✓';
-  if (quality === 'ok') return '±2–3m ok';
-  return 'GPS weak';
+function qualityLabel(quality: GpsQuality, fm: ReturnType<typeof useTranslation>['fm']): string {
+  if (quality === 'good') return fm.qualityGood;
+  if (quality === 'ok') return fm.qualityOk;
+  return fm.qualityPoor;
 }
 
 function qualityColor(quality: GpsQuality): string {
@@ -41,6 +42,7 @@ function qualityColor(quality: GpsQuality): string {
 }
 
 export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasureProps) {
+  const { fm, language } = useTranslation();
   const [mode, setMode] = useState<'walk' | 'corner'>('corner');
   const [points, setPoints] = useState<FieldCorner[]>(initialPoints);
   const [capturing, setCapturing] = useState(false);
@@ -88,7 +90,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     setCapturing(true);
     setError(null);
     setLiveAccuracy(null);
-    setCaptureStep('Moola lo nilchondi — GPS reading (~3–5 sec, stable ayyaka auto save)');
+    setCaptureStep(fm.cornerCaptureStart);
 
     const onProgress = (p: CaptureProgress) => {
       setCaptureStep(p.message);
@@ -97,7 +99,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
 
     try {
       const corner = await captureFieldCorner(onProgress);
-      const validationError = validateCornerPoints(points, corner);
+      const validationError = validateCornerPoints(points, corner, language);
       if (validationError) {
         setError(validationError);
         return;
@@ -155,7 +157,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     } catch (err) {
       setWalking(false);
       setLivePosition(null);
-      setError(err instanceof Error ? err.message : 'Walk tracking start avvaledu');
+      setError(err instanceof Error ? err.message : fm.walkStartFailed);
     }
   };
 
@@ -168,15 +170,13 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
 
     const simplified = simplifyWalkPoints(points as Coordinates[]);
     if (simplified.length < 3) {
-      setError('Polam chuttu polamaina tiragali — inka konni steps tirigi malli try cheyandi');
+      setError(fm.walkTooFewPoints);
       return;
     }
 
     const gap = walkLoopGapMeters(simplified);
     if (gap > 15) {
-      setError(
-        `Start point daggaraki tiragali — ippudu ${Math.round(gap)}m dooram undi. Polam chuttu complete chesi start daggaraki vachi Stop nokki.`,
-      );
+      setError(fm.walkLoopGap(Math.round(gap)));
     }
   };
 
@@ -215,7 +215,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     <View style={styles.wrap}>
       <View style={styles.titleRow}>
         <MaterialCommunityIcons name="vector-polygon" size={20} color={colors.primary} />
-        <Label style={styles.title}>📍 GPS polam measure</Label>
+        <Label style={styles.title}>{fm.title}</Label>
       </View>
 
       <View style={styles.modeRow}>
@@ -230,7 +230,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
             color={mode === 'walk' ? colors.surface : colors.primary}
           />
           <Caption style={[styles.modeChipText, mode === 'walk' && styles.modeChipTextActive]}>
-            Tiragandi
+            {fm.modeWalk}
           </Caption>
         </Pressable>
         <Pressable
@@ -244,19 +244,17 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
             color={mode === 'corner' ? colors.surface : colors.primary}
           />
           <Caption style={[styles.modeChipText, mode === 'corner' && styles.modeChipTextActive]}>
-            Moolalu pin ★
+            {fm.modeCorner}
           </Caption>
         </Pressable>
       </View>
 
       <Caption style={styles.help}>
-        {mode === 'walk'
-          ? 'Polam border chuttu tirigi start point daggariki vachaka Stop nokki. GPS + accelerometer smooth ON — phone shake cheyakandi.'
-          : 'Prati moola daggar “add” nokki — 3–5 sec nilchondi, stable ayyaka auto save. Rendu moola tarvata inka fast. Chinna polam ki tape/patta measure best.'}
+        {mode === 'walk' ? fm.helpWalk : fm.helpCorner}
       </Caption>
 
       {mode === 'walk' && walking && !points.length ? (
-        <Caption style={styles.mapWaiting}>Map load avutundi — GPS fix kosam 2–3 sec wait...</Caption>
+        <Caption style={styles.mapWaiting}>{fm.mapWaiting}</Caption>
       ) : null}
 
       <FieldMeasureMap
@@ -269,10 +267,11 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
         <View style={[styles.captureBox, walkProgress.nearStart && styles.captureBoxNearStart]}>
           <Caption style={styles.captureText}>{walkProgress.message}</Caption>
           <Caption style={styles.liveAccuracy}>
-            {walkProgress.pointCount} points · {walkProgress.distanceWalkedM}m tirigaru
-            {walkProgress.currentAccuracyM != null
-              ? ` · ±${Math.round(walkProgress.currentAccuracyM)}m`
-              : ''}
+            {fm.walkProgressMeta(
+              walkProgress.pointCount,
+              walkProgress.distanceWalkedM,
+              walkProgress.currentAccuracyM ?? undefined,
+            )}
           </Caption>
         </View>
       ) : null}
@@ -282,8 +281,8 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
           <Caption style={styles.captureText}>{captureStep}</Caption>
           {liveAccuracy != null ? (
             <Caption style={styles.liveAccuracy}>
-              Best signal: ±{Math.round(liveAccuracy * 10) / 10}m
-              {liveAccuracy <= 3 ? ' ✓' : liveAccuracy <= 5 ? ' — inka wait cheyandi' : ' — weak'}
+              {fm.bestSignal} ±{Math.round(liveAccuracy * 10) / 10}m
+              {liveAccuracy <= 3 ? ' ✓' : liveAccuracy <= 5 ? fm.bestSignalWait : fm.bestSignalWeak}
             </Caption>
           ) : null}
         </View>
@@ -292,25 +291,23 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
       {points.length > 0 ? (
         <View style={styles.pointsBox}>
           <Caption style={styles.pointsSummary}>
-            {mode === 'walk'
-              ? `${points.length} GPS points record ayyayi`
-              : `${points.length} moolalu`}
+            {mode === 'walk' ? fm.pointsWalk(points.length) : fm.pointsCorner(points.length)}
           </Caption>
           {mode === 'corner'
             ? points.map((point, index) => (
                 <View key={`${point.latitude}-${point.longitude}-${index}`} style={styles.pointRow}>
                   <View style={styles.pointHeader}>
-                    <Caption style={styles.pointLabel}>Moola {index + 1}</Caption>
+                    <Caption style={styles.pointLabel}>{fm.cornerLabel(index + 1)}</Caption>
                     {point.quality ? (
                       <Caption style={[styles.qualityTag, { color: qualityColor(point.quality) }]}>
-                        {qualityLabel(point.quality)}
+                        {qualityLabel(point.quality, fm)}
                       </Caption>
                     ) : null}
                   </View>
                   <Caption style={styles.pointCoords}>
                     {point.latitude.toFixed(6)}, {point.longitude.toFixed(6)}
                     {point.accuracyMeters != null
-                      ? ` · ${formatAccuracyHint(point.accuracyMeters)}`
+                      ? ` · ${formatAccuracyHint(point.accuracyMeters, undefined, language)}`
                       : ''}
                   </Caption>
                 </View>
@@ -321,28 +318,28 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
 
       {areaDisplay ? (
         <View style={styles.resultBox}>
-          <Body style={styles.resultTitle}>GPS estimate / సుమారు విస్తీర్ణం</Body>
+          <Body style={styles.resultTitle}>{fm.resultTitle}</Body>
           <Caption style={styles.estimateBadge}>{areaDisplay.badge}</Caption>
           <Body style={styles.resultCents}>{areaDisplay.primary}</Body>
           <Caption style={styles.resultAcres}>{areaDisplay.secondary}</Caption>
           {measurement ? (
             <Caption style={styles.resultSub}>
-              {Math.round(measurement.areaSqMeters)} sq.m ·{' '}
-              {mode === 'walk' ? `${points.length} walk points` : `${points.length} moolalu`}
+              {mode === 'walk'
+                ? fm.resultSubWalk(points.length, measurement.areaSqMeters)
+                : fm.resultSubCorner(points.length, measurement.areaSqMeters)}
             </Caption>
           ) : null}
           {measurement && measurement.uncertaintyPercent > 5 ? (
             <Caption style={styles.uncertainty}>
-              Approx ±{measurement.uncertaintyPercent}% (GPS signal batti)
+              {fm.uncertainty(measurement.uncertaintyPercent)}
             </Caption>
           ) : null}
         </View>
       ) : points.length > 0 && mode === 'corner' ? (
-        <Caption style={styles.hint}>Inka {3 - points.length} moola add cheyandi area kanipinchadaniki</Caption>
+        <Caption style={styles.hint}>{fm.hintNeedCorners(3 - points.length)}</Caption>
       ) : points.length >= 3 && mode === 'walk' && !loopClosed && !walking ? (
         <Caption style={styles.hint}>
-          Start point daggaraki {Math.round(loopGapM)}m undi — polam chuttu complete cheyandi, lekapothe area tappu
-          vastundi
+          {fm.hintLoopGap(Math.round(loopGapM))}
         </Caption>
       ) : null}
 
@@ -352,14 +349,14 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
         {mode === 'walk' ? (
           walking ? (
             <Button
-              label="Stop — polam chuttu aipoyindi (map lo aapadam chupistundi)"
+              label={fm.btnStopWalk}
               onPress={stopWalk}
               fullWidth
               size="md"
             />
           ) : (
             <Button
-              label="Polam chuttu tiragadam start (map open avutundi)"
+              label={fm.btnStartWalk}
               onPress={() => void startWalk()}
               fullWidth
               size="md"
@@ -367,7 +364,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
           )
         ) : (
           <Button
-            label={capturing ? 'GPS reading...' : `మూలం ${points.length + 1} add cheyandi`}
+            label={capturing ? fm.btnAddCornerLoading : fm.btnAddCorner(points.length + 1)}
             onPress={() => void addCorner()}
             loading={capturing}
             fullWidth
@@ -380,19 +377,19 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
             disabled={!points.length || capturing || walking}
             style={[styles.secondaryBtn, (!points.length || walking) && styles.secondaryBtnDisabled]}
           >
-            <Caption style={styles.secondaryText}>Undo</Caption>
+            <Caption style={styles.secondaryText}>{fm.undo}</Caption>
           </Pressable>
           <Pressable
             onPress={clearCorners}
             disabled={!points.length || capturing || walking}
             style={[styles.secondaryBtn, (!points.length || walking) && styles.secondaryBtnDisabled]}
           >
-            <Caption style={styles.secondaryText}>Clear</Caption>
+            <Caption style={styles.secondaryText}>{fm.clear}</Caption>
           </Pressable>
         </View>
         {measurement ? (
           <Button
-            label="Use GPS size / Ee size use cheyandi"
+            label={fm.btnUseSize}
             onPress={applyMeasurement}
             fullWidth
             size="md"

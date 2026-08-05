@@ -12,11 +12,13 @@ import {
   GOVT_SCHEMES_UPDATED,
 } from '@/constants/govtSchemes';
 import { SchemeCard } from '@/features/schemes/components/SchemeCard';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { GovtSchemeCategory, GovtSchemeRegion } from '@/types/govtScheme';
 import { colors, layout, spacing } from '@/theme';
 
 export default function PathakaluScreen() {
   const insets = useSafeAreaInsets();
+  const { screens } = useTranslation();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<GovtSchemeCategory | 'all'>('all');
   const [region, setRegion] = useState<GovtSchemeRegion | 'all'>('all');
@@ -43,7 +45,7 @@ export default function PathakaluScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Header title="ప్రభుత్వ Pathakalu" showBack onBack={() => router.back()} />
+      <Header title={screens.pathakaluTitle} showBack onBack={() => router.back()} />
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
@@ -51,23 +53,20 @@ export default function PathakaluScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.intro}>
-          <Title style={styles.introTitle}>Subsidy, Loans & Insurance</Title>
-          <Body style={styles.introBody}>
-            PM-KISAN, KCC, crop insurance, Rythu Bharosa, Annadata Sukhibhava — latest government
-            pathakalu ikkada chudandi. Meeru add/update cheyalsina avasaram ledu.
-          </Body>
+          <Title style={styles.introTitle}>{screens.pathakaluIntroTitle}</Title>
+          <Body style={styles.introBody}>{screens.pathakaluIntroBody}</Body>
           <Caption style={styles.updated}>
-            Last updated: {GOVT_SCHEMES_UPDATED} · {GOVT_SCHEMES.length} schemes
+            {screens.pathakaluUpdated(GOVT_SCHEMES_UPDATED, GOVT_SCHEMES.length)}
           </Caption>
         </View>
 
         <SearchInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Search — PM-KISAN, KCC, insurance..."
+          placeholder={screens.pathakaluSearch}
         />
 
-        <Caption style={styles.filterLabel}>రకం</Caption>
+        <Caption style={styles.filterLabel}>{screens.pathakaluCategory}</Caption>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.chipRow}>
             {GOVT_SCHEME_CATEGORIES.map((c) => (
@@ -81,7 +80,7 @@ export default function PathakaluScreen() {
           </View>
         </ScrollView>
 
-        <Caption style={styles.filterLabel}>రాష్ట్రం</Caption>
+        <Caption style={styles.filterLabel}>{screens.pathakaluRegion}</Caption>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.chipRow}>
             {GOVT_SCHEME_REGIONS.map((r) => (
@@ -96,7 +95,7 @@ export default function PathakaluScreen() {
         </ScrollView>
 
         <Caption style={styles.resultCount}>
-          {filtered.length} pathakalu kanipistunnayi
+          {screens.pathakaluResultCount(filtered.length)}
         </Caption>
 
         <View style={styles.list}>
@@ -106,13 +105,10 @@ export default function PathakaluScreen() {
         </View>
 
         {!filtered.length ? (
-          <Caption style={styles.empty}>Search or filter marchi try cheyandi</Caption>
+          <Caption style={styles.empty}>{screens.pathakaluEmpty}</Caption>
         ) : null}
 
-        <Caption style={styles.disclaimer}>
-          Information only — exact eligibility & amounts official government portals lo verify
-          cheyandi. Schemes update avuthu untayi.
-        </Caption>
+        <Caption style={styles.disclaimer}>{screens.pathakaluDisclaimer}</Caption>
       </ScrollView>
     </View>
   );

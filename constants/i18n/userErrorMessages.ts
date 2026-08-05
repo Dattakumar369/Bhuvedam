@@ -1,4 +1,10 @@
 import type { LanguageCode } from '@/constants/languages';
+import {
+  HI_ERRORS,
+  KN_ERRORS,
+  MR_ERRORS,
+  TA_ERRORS,
+} from '@/constants/i18n/userErrorMessagesLocales';
 
 /** Plain-language messages for farmers — never show HTTP codes or tech errors */
 const EN: Record<string, string | ((sec: number) => string)> = {
@@ -120,7 +126,20 @@ const TE: Record<string, string | ((sec: number) => string)> = {
 };
 
 function pick(lang: LanguageCode): Record<string, string | ((sec: number) => string)> {
-  return lang === 'te' ? TE : EN;
+  switch (lang) {
+    case 'te':
+      return TE;
+    case 'hi':
+      return HI_ERRORS;
+    case 'mr':
+      return MR_ERRORS;
+    case 'ta':
+      return TA_ERRORS;
+    case 'kn':
+      return KN_ERRORS;
+    default:
+      return EN;
+  }
 }
 
 function resolveEntry(

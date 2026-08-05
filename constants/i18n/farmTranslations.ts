@@ -1,4 +1,8 @@
 import type { LanguageCode } from '@/constants/languages';
+import { hiFarm } from '@/constants/i18n/locales/hiFarm';
+import { mrFarm } from '@/constants/i18n/locales/mrFarm';
+import { taFarm } from '@/constants/i18n/locales/taFarm';
+import { knFarm } from '@/constants/i18n/locales/knFarm';
 
 export interface FarmSetupStepCopy {
   title: string;
@@ -183,10 +187,10 @@ const teFarm: FarmTranslations = {
 export const FARM_TRANSLATIONS: Record<LanguageCode, FarmTranslations> = {
   en: enFarm,
   te: teFarm,
-  hi: enFarm,
-  mr: enFarm,
-  ta: enFarm,
-  kn: enFarm,
+  hi: hiFarm,
+  mr: mrFarm,
+  ta: taFarm,
+  kn: knFarm,
 };
 
 export function getFarmTranslations(language: LanguageCode): FarmTranslations {
@@ -198,8 +202,8 @@ export function cropLabelForLanguage(
   crop: { name: string; nameTe?: string },
   language: LanguageCode,
 ): string {
-  if (language === 'te') return crop.nameTe || crop.name;
-  return crop.name;
+  if (language === 'en') return crop.name;
+  return crop.nameTe || crop.name;
 }
 
 /** Soil type label for selected language */

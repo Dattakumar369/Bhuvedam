@@ -1,5 +1,5 @@
 import { DEFAULT_LANGUAGE, type LanguageCode } from '@/constants/languages';
-import { EN_TOPIC_CATEGORIES, TE_TOPIC_CATEGORIES } from '@/constants/i18n/topicCategories';
+import { EN_TOPIC_CATEGORIES, TE_TOPIC_CATEGORIES, TOPIC_CATEGORIES_BY_LANG } from '@/constants/i18n/topicCategories';
 
 export interface AiTopicCategory {
   title: string;
@@ -143,7 +143,7 @@ const hi: Translations = {
     'मिट्टी की उर्वरता प्राकृतिक रूप से कैसे बढ़ाएं?',
     'टमाटर के लिए कौन सा उर्वरक सबसे अच्छा है?',
   ],
-  aiTopicCategories: EN_TOPIC_CATEGORIES,
+  aiTopicCategories: TOPIC_CATEGORIES_BY_LANG.hi,
   topicPickerHint: 'सभी topics — category चुनें और tap करें',
   chatPlaceholder: 'खेती, फसल, मौसम के बारे में पूछें...',
   chatListeningPlaceholder: 'सुन रहा है...',
@@ -214,9 +214,8 @@ const mr: Translations = {
     'मातीची सुपीकता नैसर्गिकरित्या कशी वाढवावी?',
     'टोमॅटोसाठी कोणते खत सर्वोत्तम?',
   ],
-  aiTopicCategories: EN_TOPIC_CATEGORIES,
+  aiTopicCategories: TOPIC_CATEGORIES_BY_LANG.mr,
   topicPickerHint: 'सर्व topics — category निवडा',
-  chatPlaceholder: 'शेती, पिके, हवामान विचारा...',
   chatListeningPlaceholder: 'ऐकत आहे...',
   newChat: 'नवीन चॅट',
   aiAssistantTitle: 'AI सहाय्यक',
@@ -285,9 +284,8 @@ const ta: Translations = {
     'மண் வளத்தை இயற்கையாக எப்படி மேம்படுத்துவது?',
     'தக்காளிக்கு எந்த உரம் சிறந்தது?',
   ],
-  aiTopicCategories: EN_TOPIC_CATEGORIES,
+  aiTopicCategories: TOPIC_CATEGORIES_BY_LANG.ta,
   topicPickerHint: 'அனைத்து topics — category தேர்ந்தெடுக்கவும்',
-  chatPlaceholder: 'விவசாயம், பயிர்கள், வானிலை பற்றி கேளுங்கள்...',
   chatListeningPlaceholder: 'கேட்கிறது...',
   newChat: 'புதிய அரட்டை',
   aiAssistantTitle: 'AI உதவியாளர்',
@@ -424,8 +422,7 @@ const kn: Translations = {
     'ಮಣ್ಣಿನ ಫಲವತ್ತತೆಯನ್ನು ಸ್ವಾಭಾವಿಕವಾಗಿ ಹೇಗೆ ಹೆಚ್ಚಿಸುವುದು?',
     'ಟೊಮಾಟೊಗಳಿಗೆ ಯಾವ ರಸಗೊಬ್ಬರ ಉತ್ತಮ?',
   ],
-  aiTopicCategories: EN_TOPIC_CATEGORIES,
-  topicPickerHint: 'ಎಲ್ಲ topics — category ಆಯ್ಕೆ ಮಾಡಿ',
+  aiTopicCategories: TOPIC_CATEGORIES_BY_LANG.kn,
   chatPlaceholder: 'ಕೃಷಿ, ಬೆಳೆಗಳು, ಹವಾಮಾನ ಬಗ್ಗೆ ಕೇಳಿ...',
   chatListeningPlaceholder: 'ಕೇಳುತ್ತಿದೆ...',
   newChat: 'ಹೊಸ ಚಾಟ್',
@@ -497,7 +494,7 @@ export function getTranslations(language: LanguageCode = DEFAULT_LANGUAGE): Tran
   const base = translations[language] ?? translations.en;
   return {
     ...base,
-    aiTopicCategories: base.aiTopicCategories ?? EN_TOPIC_CATEGORIES,
+    aiTopicCategories: TOPIC_CATEGORIES_BY_LANG[language] ?? EN_TOPIC_CATEGORIES,
     voiceBarStopHint: base.voiceBarStopHint ?? translations.en.voiceBarStopHint,
     voiceStopListening: base.voiceStopListening ?? translations.en.voiceStopListening,
     voiceCancelListening: base.voiceCancelListening ?? translations.en.voiceCancelListening,

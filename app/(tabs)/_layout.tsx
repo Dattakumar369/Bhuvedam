@@ -4,12 +4,14 @@ import { Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppColors } from '@/hooks/useAppColors';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useUserStore } from '@/store/userStore';
 import { layout, spacing } from '@/theme';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const c = useAppColors();
+  const { app } = useTranslation();
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
   const token = useUserStore((s) => s.token);
 
@@ -39,7 +41,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: app.tabHome,
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="home-variant" size={size} color={color} />
           ),
@@ -48,7 +50,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="crop"
         options={{
-          title: 'Crop',
+          title: app.tabCrop,
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="sprout" size={size} color={color} />
           ),
@@ -57,7 +59,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="ai"
         options={{
-          title: 'AI',
+          title: app.tabAi,
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="robot-outline" size={size} color={color} />
           ),
@@ -66,7 +68,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: app.tabProfile,
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="account-circle-outline" size={size} color={color} />
           ),
