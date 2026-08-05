@@ -116,7 +116,7 @@ export const useAIStore = create<AIState>((set, get) => ({
     }
 
     const lastUserId = await secureStorage.get(STORAGE_KEYS.lastUserId);
-    if (!lastUserId || lastUserId !== userId) {
+    if (lastUserId && lastUserId !== userId) {
       await get().reset();
       return;
     }

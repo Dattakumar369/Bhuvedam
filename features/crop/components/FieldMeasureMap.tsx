@@ -109,8 +109,8 @@ export function FieldMeasureMap({ points, livePosition, walking }: FieldMeasureM
           provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
           mapType="satellite"
           initialRegion={initialRegion}
-          showsUserLocation={walking}
-          showsMyLocationButton={walking}
+          showsUserLocation={false}
+          showsMyLocationButton={false}
           rotateEnabled={false}
         >
           {pathCoords.length >= 2 ? (

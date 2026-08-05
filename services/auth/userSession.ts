@@ -11,16 +11,6 @@ import type { User } from '@/types/user';
 import { logger } from '@/utils/logger';
 import { appCache, secureStorage } from '@/utils/storage';
 
-async function hasOrphanedScopedData(): Promise<boolean> {
-  const [farmer, chats, alerts, mandi] = await Promise.all([
-    secureStorage.get(STORAGE_KEYS.farmerContext),
-    secureStorage.get(STORAGE_KEYS.conversations),
-    secureStorage.get(STORAGE_KEYS.farmAlerts),
-    secureStorage.get(STORAGE_KEYS.mandiSnapshot),
-  ]);
-  return Boolean(farmer || chats || alerts || mandi);
-}
-
 /** Wipe per-user cached data so a new login does not inherit the previous account. */
 export async function resetUserScopedData(): Promise<void> {
   await Promise.all([
@@ -68,10 +58,13 @@ export async function loadFarmerProfileForUser(user: User): Promise<void> {
   await secureStorage.set(STORAGE_KEYS.user, JSON.stringify(nextUser));
 }
 
-/** Reload chats/alerts from disk — only after lastUserId matches. */
+/** Reload chats/alerts from disk for this user. */
 export async function hydrateUserScopedStores(userId: string): Promise<void> {
   const lastUserId = await secureStorage.get(STORAGE_KEYS.lastUserId);
-  if (lastUserId !== userId) return;
+  if (lastUserId && lastUserId !== userId) return;
+  if (!lastUserId) {
+    await secureStorage.set(STORAGE_KEYS.lastUserId, userId);
+  }
   await useAIStore.getState().hydrate();
   await useAlertStore.getState().hydrate();
 }
@@ -79,14 +72,12 @@ export async function hydrateUserScopedStores(userId: string): Promise<void> {
 /** Call after auth token is set — clears stale cache when account changes, then pulls server data. */
 export async function activateUserSession(user: User): Promise<void> {
   const storedUserId = await secureStorage.get(STORAGE_KEYS.lastUserId);
-  const orphaned = !storedUserId && (await hasOrphanedScopedData());
-  const accountChanged = !storedUserId || storedUserId !== user.id || orphaned;
+  const accountChanged = Boolean(storedUserId && storedUserId !== user.id);
 
   if (accountChanged) {
     logger.auth.info('Account switch — clearing local cache', {
       previousUserId: storedUserId ?? 'none',
       userId: user.id,
-      orphaned,
     });
     await resetUserScopedData();
   }
@@ -99,22 +90,21 @@ export async function activateUserSession(user: User): Promise<void> {
   }
 }
 
-/** On cold start — discard local farm/chat cache if it belongs to another user. */
+/** On cold start — discard local farm/chat cache only when it belongs to another user. */
 export async function ensureStorageMatchesUser(userId: string | undefined): Promise<void> {
   if (!userId) return;
 
   const storedUserId = await secureStorage.get(STORAGE_KEYS.lastUserId);
-  const orphaned = !storedUserId && (await hasOrphanedScopedData());
 
-  if ((storedUserId && storedUserId !== userId) || orphaned) {
+  if (storedUserId && storedUserId !== userId) {
     logger.auth.warn('Storage user mismatch — clearing scoped cache', {
-      storedUserId: storedUserId ?? 'none',
+      storedUserId,
       userId,
-      orphaned,
     });
     await resetUserScopedData();
   }
 
+  // Adopt legacy data (chats/farm saved before lastUserId existed) — do not wipe.
   await secureStorage.set(STORAGE_KEYS.lastUserId, userId);
 }
 

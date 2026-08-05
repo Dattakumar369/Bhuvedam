@@ -3,6 +3,7 @@ import * as Location from 'expo-location';
 import {
   isDeviceMoving,
   isDeviceStationary,
+  isMotionSensorReady,
   startMotionSensor,
   stopMotionSensor,
 } from '@/services/location/motionSensor';
@@ -136,6 +137,7 @@ function hasStableTail(samples: GpsSample[]): boolean {
   const center = weightedCentroid(tail);
   const gpsStable = clusterSpreadMeters(tail, center) <= STABLE_SPREAD_M;
   if (!SENSOR_FUSION_ENABLED) return gpsStable;
+  if (!isMotionSensorReady()) return gpsStable;
   return gpsStable && isDeviceStationary();
 }
 
@@ -466,13 +468,15 @@ export async function startFieldWalkTracking(
   };
 
   pushProgress(
-    SENSOR_FUSION_ENABLED ? msg.walkStartFusion : msg.walkStartPlain,
+    SENSOR_FUSION_ENABLED && isMotionSensorReady() ? msg.walkStartFusion : msg.walkStartPlain,
     recorded.length,
     null,
     false,
   );
 
-  const subscription = await Location.watchPositionAsync(
+  let subscription: Location.LocationSubscription;
+  try {
+    subscription = await Location.watchPositionAsync(
     {
       accuracy: Location.Accuracy.BestForNavigation,
       distanceInterval: 2,
@@ -507,7 +511,7 @@ export async function startFieldWalkTracking(
       const first = recorded[0]!;
       const nearStart = recorded.length >= 4 && distanceMeters(first, sample) <= WALK_CLOSE_LOOP_M;
 
-      if (SENSOR_FUSION_ENABLED && !isDeviceMoving() && step >= WALK_MIN_STEP_M) {
+      if (SENSOR_FUSION_ENABLED && isMotionSensorReady() && !isDeviceMoving() && step >= WALK_MIN_STEP_M) {
         pushProgress(msg.walkJitterIgnore, recorded.length, acc, nearStart, sample);
         return;
       }
@@ -537,6 +541,10 @@ export async function startFieldWalkTracking(
       );
     },
   );
+  } catch {
+    if (SENSOR_FUSION_ENABLED) stopMotionSensor();
+    throw new Error(msg.walkStartFailed);
+  }
 
   return {
     stop: () => {
