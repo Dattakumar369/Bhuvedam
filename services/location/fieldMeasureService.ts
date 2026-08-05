@@ -1,13 +1,28 @@
 import * as Location from 'expo-location';
 
+import {
+  isDeviceMoving,
+  isDeviceStationary,
+  startMotionSensor,
+  stopMotionSensor,
+} from '@/services/location/motionSensor';
 import { requestLocationPermission } from '@/services/location/locationService';
 import type { Coordinates } from '@/types/location';
+import { GpsKalmanFilter } from '@/utils/gpsKalmanFilter';
+
+/** Level 1 fusion: accelerometer motion gate + Kalman GPS smoothing. */
+export const SENSOR_FUSION_ENABLED = true;
 
 /** Target: corners within ~1–3 m in open sky. Phone GPS cannot match survey-grade 1 cm. */
-const WARMUP_MS = 14_000;
-const WARMUP_POLL_MS = 450;
-const SAMPLE_COUNT = 16;
-const SAMPLE_GAP_MS = 450;
+const CORNER_POLL_MS = 300;
+const CORNER_MIN_SAMPLES = 5;
+const CORNER_TARGET_SAMPLES = 8;
+const CORNER_MIN_MS_COLD = 2_500;
+const CORNER_MAX_MS_COLD = 8_000;
+const CORNER_MIN_MS_WARM = 1_500;
+const CORNER_MAX_MS_WARM = 5_000;
+/** After first corner, GPS stays warm — next corners finish faster. */
+const GPS_SESSION_WARM_MS = 90_000;
 
 /** Reject corner if we cannot get readings this good after warm-up. */
 const MAX_ACCEPT_ACCURACY_M = 5;
@@ -16,8 +31,10 @@ const OK_ACCURACY_M = 3.5;
 
 /** All used samples must lie within this radius of the final point. */
 const MAX_CLUSTER_SPREAD_M = 2.5;
-const STABLE_WINDOW = 5;
+const STABLE_WINDOW = 4;
 const STABLE_SPREAD_M = 2;
+
+let lastCornerCaptureAt = 0;
 
 export type GpsQuality = 'good' | 'ok' | 'poor';
 
@@ -88,12 +105,41 @@ function removeOutliers(samples: GpsSample[], center: Coordinates, maxDistM: num
   return samples.filter((s) => distanceMeters(s, center) <= maxDistM);
 }
 
+function isGpsSessionWarm(): boolean {
+  return lastCornerCaptureAt > 0 && Date.now() - lastCornerCaptureAt < GPS_SESSION_WARM_MS;
+}
+
+function bestSampleAccuracy(samples: GpsSample[]): number | null {
+  const accs = samples.map((s) => s.accuracy).filter((v): v is number => v != null);
+  if (!accs.length) return null;
+  return Math.min(...accs);
+}
+
+function hasStableCluster(samples: GpsSample[]): boolean {
+  const accurate = samples.filter(
+    (s) => s.accuracy != null && s.accuracy <= MAX_ACCEPT_ACCURACY_M,
+  );
+  if (accurate.length < CORNER_MIN_SAMPLES) return false;
+  const centroid = weightedCentroid(accurate);
+  const cluster = removeOutliers(accurate, centroid, MAX_CLUSTER_SPREAD_M);
+  if (cluster.length < CORNER_MIN_SAMPLES) return false;
+  return clusterSpreadMeters(cluster, weightedCentroid(cluster)) <= STABLE_SPREAD_M;
+}
+
 function hasStableTail(samples: GpsSample[]): boolean {
   if (samples.length < STABLE_WINDOW) return false;
   const tail = samples.slice(-STABLE_WINDOW).filter((s) => (s.accuracy ?? 99) <= MAX_ACCEPT_ACCURACY_M);
   if (tail.length < STABLE_WINDOW) return false;
   const center = weightedCentroid(tail);
-  return clusterSpreadMeters(tail, center) <= STABLE_SPREAD_M;
+  const gpsStable = clusterSpreadMeters(tail, center) <= STABLE_SPREAD_M;
+  if (!SENSOR_FUSION_ENABLED) return gpsStable;
+  return gpsStable && isDeviceStationary();
+}
+
+function smoothSample(sample: GpsSample, filter: GpsKalmanFilter): GpsSample {
+  if (!SENSOR_FUSION_ENABLED) return sample;
+  const smoothed = filter.filter(sample.latitude, sample.longitude, sample.accuracy);
+  return { ...sample, latitude: smoothed.latitude, longitude: smoothed.longitude };
 }
 
 async function readPosition(): Promise<GpsSample> {
@@ -110,43 +156,72 @@ async function readPosition(): Promise<GpsSample> {
 }
 
 /**
- * Warm up GPS at the corner — phone needs clear sky view for ~2–3 m accuracy.
+ * One fast capture loop — exits early when Kalman + accelerometer say stable (~3–5 s).
+ * First corner may take up to ~8 s; later corners in same session often ~2–3 s.
  */
-async function warmUpGps(onProgress?: (p: CaptureProgress) => void): Promise<GpsSample[]> {
-  const warmupSamples: GpsSample[] = [];
-  let bestAccuracy: number | null = null;
+async function collectCornerSamples(
+  filter: GpsKalmanFilter,
+  onProgress?: (p: CaptureProgress) => void,
+): Promise<GpsSample[]> {
+  const warm = isGpsSessionWarm();
+  const minMs = warm ? CORNER_MIN_MS_WARM : CORNER_MIN_MS_COLD;
+  const maxMs = warm ? CORNER_MAX_MS_WARM : CORNER_MAX_MS_COLD;
+  const samples: GpsSample[] = [];
   const started = Date.now();
 
   onProgress?.({
     phase: 'warming',
-    message: 'GPS warm-up — polam moola lo nilchondi, phone pai ki chudandi (open sky)',
+    message: warm
+      ? 'Moola lo nilchondi — GPS reading (~2–3 sec)'
+      : 'Moola lo nilchondi, phone shake cheyakandi — GPS reading',
     bestAccuracyMeters: null,
     sampleIndex: 0,
-    totalSamples: SAMPLE_COUNT,
+    totalSamples: CORNER_TARGET_SAMPLES,
   });
 
-  while (Date.now() - started < WARMUP_MS) {
-    const sample = await readPosition();
-    warmupSamples.push(sample);
-    if (sample.accuracy != null) {
-      bestAccuracy =
-        bestAccuracy == null ? sample.accuracy : Math.min(bestAccuracy, sample.accuracy);
+  while (Date.now() - started < maxMs) {
+    const sample = smoothSample(await readPosition(), filter);
+    samples.push(sample);
+
+    const elapsed = Date.now() - started;
+    const best = bestSampleAccuracy(samples);
+    const stable = hasStableTail(samples) && hasStableCluster(samples);
+    const phase: CaptureProgress['phase'] = elapsed < minMs ? 'warming' : 'sampling';
+
+    let message: string;
+    if (elapsed < minMs) {
+      const waitSec = Math.max(1, Math.ceil((minMs - elapsed) / 1000));
+      message = `GPS fix avutundi… ${waitSec}s — moola daggarame nilchondi`;
+    } else if (stable) {
+      message = 'Stable reading — almost done…';
+    } else {
+      message = `Moola reading… ${Math.round(elapsed / 1000)}s`;
     }
 
-    const elapsed = Math.round((Date.now() - started) / 1000);
     onProgress?.({
-      phase: 'warming',
-      message: `GPS fix avutundi… ${elapsed}s / ${Math.round(WARMUP_MS / 1000)}s — moola daggarame nilchondi`,
-      bestAccuracyMeters: bestAccuracy,
-      sampleIndex: warmupSamples.length,
-      totalSamples: SAMPLE_COUNT,
+      phase,
+      message,
+      bestAccuracyMeters: best,
+      sampleIndex: samples.length,
+      totalSamples: CORNER_TARGET_SAMPLES,
     });
 
-    if (hasStableTail(warmupSamples)) break;
-    await delay(WARMUP_POLL_MS);
+    const elapsedOk = elapsed >= minMs;
+    if (elapsedOk && stable && samples.length >= CORNER_MIN_SAMPLES) break;
+    if (samples.length >= CORNER_TARGET_SAMPLES && stable) break;
+    if (
+      samples.length >= CORNER_TARGET_SAMPLES &&
+      best != null &&
+      best <= OK_ACCURACY_M &&
+      elapsed >= minMs
+    ) {
+      break;
+    }
+
+    await delay(CORNER_POLL_MS);
   }
 
-  return warmupSamples;
+  return samples;
 }
 
 /**
@@ -166,88 +241,76 @@ export async function captureFieldCorner(
     throw new Error('Phone lo Location/GPS OFF undi — Settings lo ON cheyandi');
   }
 
-  const warmupSamples = await warmUpGps(onProgress);
-  const samples: GpsSample[] = [...warmupSamples];
+  if (SENSOR_FUSION_ENABLED) await startMotionSensor();
+  const filter = new GpsKalmanFilter();
 
-  for (let i = 0; i < SAMPLE_COUNT; i++) {
-    const sample = await readPosition();
-    samples.push(sample);
-
-    const bestAcc = samples
-      .map((s) => s.accuracy)
-      .filter((v): v is number => v != null)
-      .sort((a, b) => a - b)[0] ?? null;
+  try {
+    const samples = await collectCornerSamples(filter, onProgress);
 
     onProgress?.({
-      phase: 'sampling',
-      message: `Moola reading ${i + 1}/${SAMPLE_COUNT} — phone ni moola marker pai pettandi`,
-      bestAccuracyMeters: bestAcc,
-      sampleIndex: i + 1,
-      totalSamples: SAMPLE_COUNT,
+      phase: 'processing',
+      message: 'Stable point calculate avutundi…',
+      bestAccuracyMeters: null,
+      sampleIndex: samples.length,
+      totalSamples: CORNER_TARGET_SAMPLES,
     });
 
-    if (i < SAMPLE_COUNT - 1) await delay(SAMPLE_GAP_MS);
-  }
-
-  onProgress?.({
-    phase: 'processing',
-    message: 'Stable GPS point calculate avutundi…',
-    bestAccuracyMeters: null,
-    sampleIndex: SAMPLE_COUNT,
-    totalSamples: SAMPLE_COUNT,
-  });
-
-  const accurate = samples.filter(
-    (s) => s.accuracy != null && s.accuracy <= MAX_ACCEPT_ACCURACY_M,
-  );
-
-  if (!accurate.length) {
-    const worstBest = samples
-      .map((s) => s.accuracy)
-      .filter((v): v is number => v != null)
-      .sort((a, b) => a - b)[0];
-    throw new Error(
-      `GPS sariga fix avvaledu (best ±${Math.round(worstBest ?? 10)}m). Open sky lo 15 sec nilchondi, phone moola daggaraki pettandi, malli try cheyandi.`,
+    const accurate = samples.filter(
+      (s) => s.accuracy != null && s.accuracy <= MAX_ACCEPT_ACCURACY_M,
     );
+
+    if (!accurate.length) {
+      const worstBest = samples
+        .map((s) => s.accuracy)
+        .filter((v): v is number => v != null)
+        .sort((a, b) => a - b)[0];
+      throw new Error(
+        `GPS sariga fix avvaledu (best ±${Math.round(worstBest ?? 10)}m). Open sky lo 3–5 sec nilchondi, phone moola daggaraki pettandi, malli try cheyandi.`,
+      );
+    }
+
+    let centroid = weightedCentroid(accurate);
+    let cluster = removeOutliers(accurate, centroid, MAX_CLUSTER_SPREAD_M);
+    if (cluster.length < 4) {
+      cluster = [...accurate].sort(
+        (a, b) => (a.accuracy ?? 99) - (b.accuracy ?? 99),
+      ).slice(0, Math.min(8, accurate.length));
+    }
+
+    centroid = weightedCentroid(cluster);
+    cluster = removeOutliers(cluster, centroid, MAX_CLUSTER_SPREAD_M);
+    if (!cluster.length) cluster = accurate.slice(0, 4);
+
+    centroid = weightedCentroid(cluster);
+    const spread = clusterSpreadMeters(cluster, centroid);
+    const accuracyMeters =
+      cluster.reduce((sum, s) => sum + (s.accuracy ?? MAX_ACCEPT_ACCURACY_M), 0) / cluster.length;
+
+    if (spread > MAX_CLUSTER_SPREAD_M) {
+      throw new Error(
+        `GPS readings stable kaavu (±${Math.round(spread)}m spread). Moola lo koncham nilchondi, phone shake cheyakunda malli try cheyandi.`,
+      );
+    }
+
+    if (accuracyMeters > MAX_ACCEPT_ACCURACY_M) {
+      throw new Error(
+        `GPS accuracy chaala taggindi (±${Math.round(accuracyMeters)}m). Open sky lo wait chesi malli add cheyandi.`,
+      );
+    }
+
+    lastCornerCaptureAt = Date.now();
+
+    return {
+      latitude: centroid.latitude,
+      longitude: centroid.longitude,
+      accuracyMeters,
+      spreadMeters: spread,
+      quality: qualityFromAccuracy(accuracyMeters),
+      sampleCount: samples.length,
+    };
+  } finally {
+    if (SENSOR_FUSION_ENABLED) stopMotionSensor();
   }
-
-  let centroid = weightedCentroid(accurate);
-  let cluster = removeOutliers(accurate, centroid, MAX_CLUSTER_SPREAD_M);
-  if (cluster.length < 4) {
-    cluster = [...accurate].sort(
-      (a, b) => (a.accuracy ?? 99) - (b.accuracy ?? 99),
-    ).slice(0, Math.min(8, accurate.length));
-  }
-
-  centroid = weightedCentroid(cluster);
-  cluster = removeOutliers(cluster, centroid, MAX_CLUSTER_SPREAD_M);
-  if (!cluster.length) cluster = accurate.slice(0, 4);
-
-  centroid = weightedCentroid(cluster);
-  const spread = clusterSpreadMeters(cluster, centroid);
-  const accuracyMeters =
-    cluster.reduce((sum, s) => sum + (s.accuracy ?? MAX_ACCEPT_ACCURACY_M), 0) / cluster.length;
-
-  if (spread > MAX_CLUSTER_SPREAD_M) {
-    throw new Error(
-      `GPS readings stable kaavu (±${Math.round(spread)}m spread). Moola lo 15 sec nilchondi, malli try cheyandi.`,
-    );
-  }
-
-  if (accuracyMeters > MAX_ACCEPT_ACCURACY_M) {
-    throw new Error(
-      `GPS accuracy chaala taggindi (±${Math.round(accuracyMeters)}m). Open sky lo wait chesi malli add cheyandi.`,
-    );
-  }
-
-  return {
-    latitude: centroid.latitude,
-    longitude: centroid.longitude,
-    accuracyMeters,
-    spreadMeters: spread,
-    quality: qualityFromAccuracy(accuracyMeters),
-    sampleCount: samples.length,
-  };
 }
 
 export function validateCornerPoints(
@@ -368,6 +431,9 @@ export async function startFieldWalkTracking(
   let stopped = false;
   let distanceWalkedM = 0;
   const recorded: Coordinates[] = [...existingPoints];
+  const kalman = new GpsKalmanFilter();
+
+  if (SENSOR_FUSION_ENABLED) await startMotionSensor();
 
   const pushProgress = (
     message: string,
@@ -391,7 +457,9 @@ export async function startFieldWalkTracking(
   };
 
   pushProgress(
-    'Polam border chuttu tiragandi — phone chethulo pettandi, open sky chudali',
+    SENSOR_FUSION_ENABLED
+      ? 'Polam border chuttu tiragandi — phone chethulo pettandi (GPS + motion smooth ON)'
+      : 'Polam border chuttu tiragandi — phone chethulo pettandi, open sky chudali',
     recorded.length,
     null,
     false,
@@ -406,11 +474,12 @@ export async function startFieldWalkTracking(
     (position) => {
       if (stopped) return;
 
-      const sample: GpsSample = {
+      const raw: GpsSample = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
         accuracy: position.coords.accuracy ?? null,
       };
+      const sample = smoothSample(raw, kalman);
 
       const acc = sample.accuracy;
       if (acc != null && acc > WALK_MAX_ACCURACY_M) {
@@ -436,6 +505,17 @@ export async function startFieldWalkTracking(
       const step = distanceMeters(last, sample);
       const first = recorded[0]!;
       const nearStart = recorded.length >= 4 && distanceMeters(first, sample) <= WALK_CLOSE_LOOP_M;
+
+      if (SENSOR_FUSION_ENABLED && !isDeviceMoving() && step >= WALK_MIN_STEP_M) {
+        pushProgress(
+          'Nilchunnapudu GPS jitter ignore — tiragadam continue cheyandi',
+          recorded.length,
+          acc,
+          nearStart,
+          sample,
+        );
+        return;
+      }
 
       if (step < WALK_MIN_STEP_M) {
         pushProgress(
@@ -471,6 +551,7 @@ export async function startFieldWalkTracking(
     stop: () => {
       stopped = true;
       subscription.remove();
+      if (SENSOR_FUSION_ENABLED) stopMotionSensor();
     },
   };
 }

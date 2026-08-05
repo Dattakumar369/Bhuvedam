@@ -88,7 +88,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     setCapturing(true);
     setError(null);
     setLiveAccuracy(null);
-    setCaptureStep('GPS warm-up — polam moola lo nilchondi, phone open sky chudali (~15 sec)');
+    setCaptureStep('Moola lo nilchondi — GPS reading (~3–5 sec, stable ayyaka auto save)');
 
     const onProgress = (p: CaptureProgress) => {
       setCaptureStep(p.message);
@@ -251,8 +251,8 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
 
       <Caption style={styles.help}>
         {mode === 'walk'
-          ? 'Polam border chuttu tirigi start point daggariki vachaka Stop nokki. Loop complete kaakapothe area wrong vastundi.'
-          : 'Open sky lo prati moola daggar 15 sec nilchondi, “add” nokki — idi kante exact. Chinna polam ki tape/patta measure best.'}
+          ? 'Polam border chuttu tirigi start point daggariki vachaka Stop nokki. GPS + accelerometer smooth ON — phone shake cheyakandi.'
+          : 'Prati moola daggar “add” nokki — 3–5 sec nilchondi, stable ayyaka auto save. Rendu moola tarvata inka fast. Chinna polam ki tape/patta measure best.'}
       </Caption>
 
       {mode === 'walk' && walking && !points.length ? (
