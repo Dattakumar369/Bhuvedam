@@ -1,9 +1,9 @@
-import type { LanguageCode } from '@/constants/languages';
-import { LANGUAGES } from '@/constants/languages';
 import { hiApp } from '@/constants/i18n/locales/hiApp';
+import { knApp } from '@/constants/i18n/locales/knApp';
 import { mrApp } from '@/constants/i18n/locales/mrApp';
 import { taApp } from '@/constants/i18n/locales/taApp';
-import { knApp } from '@/constants/i18n/locales/knApp';
+import type { LanguageCode } from '@/constants/languages';
+import { LANGUAGES } from '@/constants/languages';
 
 const langName = (code: string) =>
   LANGUAGES.find((l) => l.code === code)?.nativeName ?? code.toUpperCase();
@@ -22,6 +22,7 @@ export interface AppTranslations {
   fungicides: string;
   sprayGuide: string;
   mandiRates: string;
+  nearbyPlaces: string;
   schemes: string;
   fieldMeasure: string;
   cropGuide: string;
@@ -140,6 +141,7 @@ const enApp: AppTranslations = {
   fungicides: 'Fungicides',
   sprayGuide: 'Spray Guide',
   mandiRates: 'Mandi Rates',
+  nearbyPlaces: 'Mandi & Shops',
   schemes: 'Schemes',
   fieldMeasure: 'Field Measure',
   cropGuide: 'Crop Guide',
@@ -258,6 +260,7 @@ const teApp: AppTranslations = {
   fungicides: 'శిలీంధ్ర నాశినులు',
   sprayGuide: 'స్ప్రే గైడ్',
   mandiRates: 'మండి ధరలు',
+  nearbyPlaces: 'Mandi & Shops',
   schemes: 'పథకాలు',
   fieldMeasure: 'పొలం కొలత',
   cropGuide: 'పంట గైడ్',

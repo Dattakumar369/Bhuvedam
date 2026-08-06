@@ -122,6 +122,12 @@ export default function HomeScreen() {
               onPress={() => router.push('/mandi-rates' as Href)}
             />
             <QuickAction
+              icon="map-marker-radius"
+              label={app.nearbyPlaces}
+              color="#00897B"
+              onPress={() => router.push('/nearby-places' as Href)}
+            />
+            <QuickAction
               icon="bank-outline"
               label={app.schemes}
               color="#1565C0"

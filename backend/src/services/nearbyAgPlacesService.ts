@@ -27,7 +27,7 @@ function toNumber(value: string | number | null | undefined): number {
 }
 
 /** Haversine distance in km. */
-export function distanceKm(
+function haversineKm(
   lat1: number,
   lon1: number,
   lat2: number,
@@ -63,7 +63,7 @@ function rowToNearby(row: AgPlaceRow, fromLat: number, fromLon: number): NearbyP
     latitude: lat,
     longitude: lon,
     phone: row.phone,
-    distanceKm: Math.round(distanceKm(fromLat, fromLon, lat, lon) * 10) / 10,
+    distanceKm: Math.round(haversineKm(fromLat, fromLon, lat, lon) * 10) / 10,
     source: 'database',
   };
 }

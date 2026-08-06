@@ -5,8 +5,8 @@ import { InteractionManager, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui';
 import { Body, Caption, Label } from '@/components/ui/Typography';
-import { FieldDrawMap } from '@/features/crop/components/FieldDrawMap';
-import { FieldMeasureMap } from '@/features/crop/components/FieldMeasureMap';
+import { FieldInteractiveMap } from '@/features/crop/components/FieldInteractiveMap';
+import { isGoogleMapsConfigured } from '@/constants/mapsConfig';
 import {
   captureFieldCorner,
   formatAccuracyHint,
@@ -260,6 +260,24 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     ]);
   };
 
+  const movePoint = (index: number, coord: Coordinates) => {
+    setPoints((prev) =>
+      prev.map((p, i) =>
+        i === index
+          ? {
+              ...p,
+              latitude: coord.latitude,
+              longitude: coord.longitude,
+              ...(mode === 'draw'
+                ? { accuracyMeters: drawAccuracyEstimate, quality: 'good' as const }
+                : {}),
+            }
+          : p,
+      ),
+    );
+    setError(null);
+  };
+
   const undoCorner = () => {
     setPoints((prev) => prev.slice(0, -1));
     setError(null);
@@ -298,7 +316,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
       )
     : null;
 
-  const showMap = mode === 'corner' || (mode === 'walk' && !walking && points.length > 0);
+  const showInteractiveMap = isGoogleMapsConfigured();
 
   return (
     <View style={styles.wrap}>
@@ -354,15 +372,24 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
 
       <Caption style={styles.help}>
         {mode === 'draw'
-          ? 'Satellite map lo polam border moolalu tap cheyandi — GPS wait ledu. Zoom chesi exact ga mark cheyandi.'
+          ? 'Village search chesi mee polam daggaraki vellandi — map lo moolalu tap chesi, pin drag chesi adjust cheyandi. Polam ki vellalsina avasaram ledu.'
           : mode === 'corner'
-            ? 'Prati moola daggar 3–8 sec nilchondi (open sky). ±3m kante weak reading accept cheyadu.'
-            : 'Polam border chuttu tirigi start point daggariki vachaka Stop nokki.'}
+            ? 'Map open lo undi — GPS pin chesaka marker drag chesi satellite prakaram adjust cheyandi.'
+            : 'Map lo live path kanipistundi — aipoyaka moolalu drag chesi adjust cheyochu.'}
       </Caption>
 
-      {mode === 'draw' ? <FieldDrawMap points={points} onAddPoint={addDrawPoint} /> : null}
+      {showInteractiveMap ? (
+        <FieldInteractiveMap
+          mode={mode}
+          points={points}
+          livePosition={livePosition}
+          walking={walking}
+          onAddPoint={mode === 'draw' ? addDrawPoint : undefined}
+          onMovePoint={movePoint}
+        />
+      ) : null}
 
-      {mode === 'walk' && walking ? (
+      {mode === 'walk' && walking && !showInteractiveMap ? (
         <View style={styles.walkGpsBox}>
           <MaterialCommunityIcons name="crosshairs-gps" size={28} color={colors.primary} />
           <Caption style={styles.walkGpsTitle}>GPS recording — polam chuttu tiragandi</Caption>
@@ -375,15 +402,6 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
             </Caption>
           ) : null}
         </View>
-      ) : null}
-
-      {mode !== 'draw' ? (
-        <FieldMeasureMap
-          enabled={showMap}
-          points={points}
-          livePosition={livePosition}
-          walking={false}
-        />
       ) : null}
 
       {walking && walkProgress ? (
@@ -495,7 +513,11 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
             size="md"
           />
         ) : (
-          <Caption style={styles.drawHint}>Map meeda polam moolalu tap cheyandi ↑</Caption>
+          <Caption style={styles.drawHint}>
+            {mode === 'draw'
+              ? 'Map lo moolalu tap cheyandi · pin drag chesi adjust ↑'
+              : 'Map lo chusi GPS pin / walk use cheyandi ↑'}
+          </Caption>
         )}
         <View style={styles.secondaryRow}>
           <Pressable

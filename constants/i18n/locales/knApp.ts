@@ -18,6 +18,7 @@ export const knApp: AppTranslations = {
   fungicides: 'ಶಿಲೀಂಧ್ರನಾಶಕಗಳು',
   sprayGuide: 'ಸಿಂಪಡಣೆ ಮಾರ್ಗದರ್ಶಿ',
   mandiRates: 'ಮಂಡಿ ಬೆಲೆ',
+  nearbyPlaces: 'Mandi & Shops',
   schemes: 'ಯೋಜನೆಗಳು',
   fieldMeasure: 'ಹೊಲ ಅಳತೆ',
   cropGuide: 'ಬೆಳೆ ಮಾರ್ಗದರ್ಶಿ',

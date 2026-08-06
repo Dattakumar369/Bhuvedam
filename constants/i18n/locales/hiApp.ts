@@ -18,6 +18,7 @@ export const hiApp: AppTranslations = {
   fungicides: 'फफूंदनाशक',
   sprayGuide: 'स्प्रे गाइड',
   mandiRates: 'मंडी भाव',
+  nearbyPlaces: 'Mandi & Shops',
   schemes: 'योजनाएं',
   fieldMeasure: 'खेत माप',
   cropGuide: 'फसल गाइड',

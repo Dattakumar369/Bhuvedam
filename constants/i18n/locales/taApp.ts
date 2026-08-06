@@ -18,6 +18,7 @@ export const taApp: AppTranslations = {
   fungicides: 'பூஞ்சைக்கொல்லிகள்',
   sprayGuide: 'தெளிப்பு வழிகாட்டி',
   mandiRates: 'மandi விலை',
+  nearbyPlaces: 'Mandi & Shops',
   schemes: 'திட்டங்கள்',
   fieldMeasure: 'வயல் அளவீடு',
   cropGuide: 'பயிர் வழிகாட்டி',

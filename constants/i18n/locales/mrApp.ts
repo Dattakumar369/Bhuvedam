@@ -18,6 +18,7 @@ export const mrApp: AppTranslations = {
   fungicides: 'बुरशीनाशके',
   sprayGuide: 'फवारणी मार्गदर्शक',
   mandiRates: 'मंडी भाव',
+  nearbyPlaces: 'Mandi & Shops',
   schemes: 'योजना',
   fieldMeasure: 'शेत मोजमाप',
   cropGuide: 'पीक मार्गदर्शक',

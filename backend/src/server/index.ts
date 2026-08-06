@@ -598,8 +598,17 @@ app.get('/api/places/nearby', async (c) => {
     return c.json({ error: 'lat and lng required' }, 400);
   }
 
-  const data = await findNearbyAgPlacesFromDb(lat, lng, type, radiusKm, limit);
-  return c.json({ data, source: 'database', count: data.length });
+  try {
+    let data = await findNearbyAgPlacesFromDb(lat, lng, type, radiusKm, limit);
+    if (data.length === 0) {
+      await seedCuratedAgPlaces();
+      data = await findNearbyAgPlacesFromDb(lat, lng, type, radiusKm, limit);
+    }
+    return c.json({ data, source: 'database', count: data.length });
+  } catch (err) {
+    console.error('[places/nearby]', err);
+    return c.json({ data: [], source: 'database', count: 0 });
+  }
 });
 
 app.post('/api/places/seed', adminAuthMiddleware, async (c) => {
