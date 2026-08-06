@@ -21,7 +21,6 @@ import { VISION_SYSTEM_ADDON, historyHasVisionImage } from '@/services/ai/vision
 import { imageSessionCache } from '@/services/media/imageSessionCache';
 import { generateId } from '@/utils/format';
 import { detectQueryLanguage } from '@/utils/detectQueryLanguage';
-import { secureStorage } from '@/utils/storage';
 import {
   loadConversationsForUser,
   persistConversationsForUser,
@@ -105,6 +104,10 @@ function createWelcomeConversation(language: LanguageCode): Conversation {
   };
 }
 
+function conversationMessageCount(conversations: Conversation[]): number {
+  return conversations.reduce((sum, conv) => sum + conv.messages.length, 0);
+}
+
 export const useAIStore = create<AIState>((set, get) => ({
   conversations: [],
   activeConversationId: null,
@@ -128,13 +131,14 @@ export const useAIStore = create<AIState>((set, get) => ({
       const parsed = JSON.parse(raw) as Conversation[];
       if (!parsed.length) return;
 
-      const current = get().conversations;
-      if (parsed.length >= current.length) {
-        set({
-          conversations: parsed,
-          activeConversationId: get().activeConversationId ?? parsed[0]?.id ?? null,
-        });
-      }
+      const storedMessages = conversationMessageCount(parsed);
+      const currentMessages = conversationMessageCount(get().conversations);
+      if (storedMessages <= currentMessages) return;
+
+      set({
+        conversations: parsed,
+        activeConversationId: get().activeConversationId ?? parsed[0]?.id ?? null,
+      });
     } catch {
       // ignore corrupt storage
     }
