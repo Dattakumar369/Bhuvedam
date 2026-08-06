@@ -11,15 +11,16 @@ import { isGoogleMapsConfigured } from '@/constants/mapsConfig';
 import {
   FIELD_CLOSE_DELTA,
   FIELD_DEFAULT_REGION,
+  FIELD_DEFAULT_ZOOM,
   FIELD_MAP_MAX_ZOOM,
   FIELD_MAP_MIN_ZOOM,
-  FIELD_SEARCH_DELTA,
+  FIELD_ULTRA_ZOOM,
   clampRegionDelta,
-  regionAt,
 } from '@/constants/mapViewConfig';
 import { searchPlaces } from '@/services/geo/placeSearchService';
 import { requestLocationPermission } from '@/services/location/locationService';
 import type { Coordinates, PlaceSearchResult } from '@/types/location';
+import { centerMapAtZoom, stepMapZoom } from '@/utils/mapCameraZoom';
 import { reverseGeocodeMapLabel } from '@/utils/mapLocationLabel';
 import { colors, radius, spacing } from '@/theme';
 
@@ -110,10 +111,8 @@ function FieldInteractiveMapInner({
   }, []);
 
   const centerOnCoords = useCallback(
-    (coords: Coordinates, delta = FIELD_CLOSE_DELTA) => {
-      const next = regionAt(coords.latitude, coords.longitude, delta);
-      setRegion(next);
-      mapRef.current?.animateToRegion(next, 450);
+    (coords: Coordinates, zoom = FIELD_DEFAULT_ZOOM) => {
+      centerMapAtZoom(mapRef, coords.latitude, coords.longitude, zoom);
       refreshAreaLabel(coords.latitude, coords.longitude);
     },
     [refreshAreaLabel],
@@ -124,25 +123,21 @@ function FieldInteractiveMapInner({
       const perm = await requestLocationPermission();
       if (perm !== 'granted') return;
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      centerOnCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      centerOnCoords(
+        { latitude: pos.coords.latitude, longitude: pos.coords.longitude },
+        FIELD_DEFAULT_ZOOM,
+      );
     } catch {
       // ignore
     }
   }, [centerOnCoords]);
 
-  const zoomRegion = useCallback((factor: number) => {
-    setRegion((prev) => {
-      const nextDelta = clampRegionDelta(prev.latitudeDelta * factor, FIELD_CLOSE_DELTA * 0.5, 0.02);
-      const next: Region = {
-        latitude: prev.latitude,
-        longitude: prev.longitude,
-        latitudeDelta: nextDelta,
-        longitudeDelta: nextDelta,
-      };
-      mapRef.current?.animateToRegion(next, 220);
-      return next;
-    });
-  }, []);
+  const handleZoom = useCallback(
+    (step: 'in' | 'out' | 'ultra') => {
+      void stepMapZoom(mapRef, step, region);
+    },
+    [region],
+  );
 
   useEffect(() => {
     if (mode === 'draw' || mode === 'corner') void centerOnUser();
@@ -182,9 +177,9 @@ function FieldInteractiveMapInner({
           animated: true,
         });
       } else if (pathCoords.length === 1) {
-        centerOnCoords(pathCoords[0]!, FIELD_CLOSE_DELTA);
+        centerOnCoords(pathCoords[0]!, FIELD_ULTRA_ZOOM);
       } else if (livePosition && mode === 'walk') {
-        centerOnCoords(livePosition, FIELD_CLOSE_DELTA);
+        centerOnCoords(livePosition, FIELD_DEFAULT_ZOOM);
       }
     } catch {
       // ignore
@@ -204,7 +199,7 @@ function FieldInteractiveMapInner({
     if (place.latitude == null || place.longitude == null) return;
     setPlaceQuery(place.label);
     setPlaceResults([]);
-    centerOnCoords({ latitude: place.latitude, longitude: place.longitude }, FIELD_SEARCH_DELTA);
+    centerOnCoords({ latitude: place.latitude, longitude: place.longitude }, FIELD_DEFAULT_ZOOM);
     setAreaLabel(place.label);
   };
 
@@ -220,7 +215,7 @@ function FieldInteractiveMapInner({
 
   const hintText =
     mode === 'draw'
-      ? 'Hybrid lo village/road perlu kanipistayi · zoom +/- · moolalu tap · drag adjust'
+      ? 'Hybrid + Ultra zoom (21) · +/- · moolalu tap · drag adjust'
       : mode === 'corner'
         ? 'Map lo perlu chusi GPS pin chesi marker drag chesi adjust cheyandi'
         : walking
@@ -282,10 +277,17 @@ function FieldInteractiveMapInner({
               Satellite
             </Caption>
           </Pressable>
-          <Pressable style={styles.toolBtn} onPress={() => zoomRegion(0.55)} accessibilityLabel="Zoom in">
+          <Pressable style={styles.toolBtn} onPress={() => handleZoom('in')} accessibilityLabel="Zoom in">
             <MaterialCommunityIcons name="plus" size={22} color={colors.primary} />
           </Pressable>
-          <Pressable style={styles.toolBtn} onPress={() => zoomRegion(1.8)} accessibilityLabel="Zoom out">
+          <Pressable
+            style={[styles.toolBtn, styles.ultraBtn]}
+            onPress={() => handleZoom('ultra')}
+            accessibilityLabel="Ultra zoom"
+          >
+            <MaterialCommunityIcons name="magnify-plus" size={20} color={colors.surface} />
+          </Pressable>
+          <Pressable style={styles.toolBtn} onPress={() => handleZoom('out')} accessibilityLabel="Zoom out">
             <MaterialCommunityIcons name="minus" size={22} color={colors.primary} />
           </Pressable>
           <Pressable style={styles.toolBtn} onPress={() => void centerOnUser()} accessibilityLabel="My location">
@@ -364,7 +366,7 @@ function FieldInteractiveMapInner({
       <Caption style={styles.footer}>
         {points.length} moolalu
         {editable ? ' · pin pattukoni drag chesi adjust cheyandi' : ''}
-        {' · Hybrid = satellite + village/road perlu'}
+        {' · Ultra 🔍 = max zoom 21 (clear satellite)'}
       </Caption>
     </View>
   );
@@ -425,6 +427,7 @@ const styles = StyleSheet.create({
   layerChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   layerText: { fontFamily: 'Poppins_600SemiBold', color: colors.primary, fontSize: 11 },
   layerTextActive: { color: colors.surface },
+  ultraBtn: { backgroundColor: colors.primary, borderColor: colors.primary },
   toolBtn: {
     width: 36,
     height: 36,

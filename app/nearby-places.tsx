@@ -9,10 +9,11 @@ import { MapErrorBoundary } from '@/components/MapErrorBoundary';
 import { Card, Header } from '@/components/ui';
 import { Body, Caption } from '@/components/ui/Typography';
 import { isGoogleMapsConfigured } from '@/constants/mapsConfig';
-import { FIELD_CLOSE_DELTA, NEARBY_OVERVIEW_DELTA, regionAt } from '@/constants/mapViewConfig';
+import { FIELD_DEFAULT_ZOOM, NEARBY_MAP_MAX_ZOOM, NEARBY_OVERVIEW_DELTA, regionAt } from '@/constants/mapViewConfig';
 import { NearbyPlaceCard } from '@/features/places/components/NearbyPlaceCard';
 import { useNearbyPlaces } from '@/hooks/useNearbyPlaces';
 import type { NearbyPlaceFilter } from '@/types/nearbyPlace';
+import { centerMapAtZoom, stepMapZoom } from '@/utils/mapCameraZoom';
 import { reverseGeocodeMapLabel } from '@/utils/mapLocationLabel';
 import { colors, layout, radius, spacing } from '@/theme';
 
@@ -35,6 +36,7 @@ function NearbyPlacesMap({
 }) {
   const mapRef = useRef<MapView>(null);
   const [ready, setReady] = useState(false);
+  const [mapRegion, setMapRegion] = useState(regionAt(latitude, longitude, NEARBY_OVERVIEW_DELTA));
 
   const region = useMemo(
     () => regionAt(latitude, longitude, NEARBY_OVERVIEW_DELTA),
@@ -79,13 +81,17 @@ function NearbyPlacesMap({
             provider={PROVIDER_GOOGLE}
             mapType="standard"
             initialRegion={region}
-            onMapReady={() => setReady(true)}
+            onMapReady={() => {
+              setReady(true);
+              centerMapAtZoom(mapRef, latitude, longitude, FIELD_DEFAULT_ZOOM);
+            }}
+            onRegionChangeComplete={setMapRegion}
             showsUserLocation
             rotateEnabled={false}
             zoomEnabled
             scrollEnabled
             minZoomLevel={12}
-            maxZoomLevel={19}
+            maxZoomLevel={NEARBY_MAP_MAX_ZOOM}
           >
             {places.map((place) => (
               <Marker
@@ -100,23 +106,19 @@ function NearbyPlacesMap({
           <View style={styles.zoomRow}>
             <Pressable
               style={styles.zoomBtn}
-              onPress={() =>
-                mapRef.current?.animateToRegion(
-                  regionAt(latitude, longitude, FIELD_CLOSE_DELTA * 3),
-                  300,
-                )
-              }
+              onPress={() => void stepMapZoom(mapRef, 'in', mapRegion)}
             >
               <MaterialCommunityIcons name="plus" size={20} color={colors.primary} />
             </Pressable>
             <Pressable
+              style={[styles.zoomBtn, styles.ultraZoomBtn]}
+              onPress={() => void stepMapZoom(mapRef, 'ultra', mapRegion)}
+            >
+              <MaterialCommunityIcons name="magnify-plus" size={18} color={colors.surface} />
+            </Pressable>
+            <Pressable
               style={styles.zoomBtn}
-              onPress={() =>
-                mapRef.current?.animateToRegion(
-                  regionAt(latitude, longitude, NEARBY_OVERVIEW_DELTA),
-                  300,
-                )
-              }
+              onPress={() => void stepMapZoom(mapRef, 'out', mapRegion)}
             >
               <MaterialCommunityIcons name="minus" size={20} color={colors.primary} />
             </Pressable>
@@ -272,6 +274,7 @@ const styles = StyleSheet.create({
     bottom: spacing.sm,
     gap: spacing.xs,
   },
+  ultraZoomBtn: { backgroundColor: colors.primary, borderColor: colors.primary },
   zoomBtn: {
     width: 36,
     height: 36,

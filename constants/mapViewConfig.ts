@@ -1,10 +1,18 @@
 import type { Region } from 'react-native-maps';
 
-/** ~35–45 m view — good for placing field corners on satellite/hybrid. */
-export const FIELD_CLOSE_DELTA = 0.00032;
+/** ~2–3 m view — ultra close for exact corner placement. */
+export const FIELD_ULTRA_DELTA = 0.000022;
 
-/** Village / search result — still close enough to see fields & roads. */
-export const FIELD_SEARCH_DELTA = 0.00055;
+/** ~6–8 m default field view. */
+export const FIELD_CLOSE_DELTA = 0.00006;
+
+/** Village search landing — still fairly close. */
+export const FIELD_SEARCH_DELTA = 0.00014;
+
+/** Minimum region delta (ultra zoom floor). */
+export const FIELD_DELTA_MIN = 0.000018;
+
+export const FIELD_DELTA_MAX = 0.012;
 
 /** Default when no GPS yet (Andhra interior). */
 export const FIELD_DEFAULT_REGION: Region = {
@@ -14,16 +22,31 @@ export const FIELD_DEFAULT_REGION: Region = {
   longitudeDelta: FIELD_CLOSE_DELTA,
 };
 
-/** Nearby mandi/shops overview — closer than before but still shows multiple pins. */
-export const NEARBY_OVERVIEW_DELTA = 0.045;
+/** Nearby mandi/shops overview. */
+export const NEARBY_OVERVIEW_DELTA = 0.035;
 
-export const FIELD_MAP_MIN_ZOOM = 15;
-export const FIELD_MAP_MAX_ZOOM = 20;
+/** Google Maps native zoom — 21 = max tile detail (no quality loss). */
+export const FIELD_MAP_MIN_ZOOM = 14;
+export const FIELD_MAP_MAX_ZOOM = 21;
+export const FIELD_DEFAULT_ZOOM = 20;
+export const FIELD_ULTRA_ZOOM = 21;
+
+export const NEARBY_MAP_MAX_ZOOM = 21;
+export const NEARBY_DEFAULT_ZOOM = 18;
 
 export function regionAt(latitude: number, longitude: number, delta = FIELD_CLOSE_DELTA): Region {
   return { latitude, longitude, latitudeDelta: delta, longitudeDelta: delta };
 }
 
-export function clampRegionDelta(delta: number, min = FIELD_CLOSE_DELTA, max = 0.012): number {
+export function clampRegionDelta(
+  delta: number,
+  min = FIELD_DELTA_MIN,
+  max = FIELD_DELTA_MAX,
+): number {
   return Math.min(Math.max(delta, min), max);
+}
+
+/** Approximate Google zoom from latitudeDelta (for region sync). */
+export function zoomFromLatitudeDelta(latitudeDelta: number): number {
+  return Math.round(Math.log2(360 / Math.max(latitudeDelta, FIELD_DELTA_MIN)));
 }
