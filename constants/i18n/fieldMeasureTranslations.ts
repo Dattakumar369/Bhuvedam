@@ -68,9 +68,21 @@ export interface FieldMeasureMessages {
   mapLegendArea: string;
   mapLiveMarker: string;
   mapFallback: string;
+  mapNativeRequired: string;
   adjustTitle: string;
   adjustHint: string;
   btnWalkAgain: string;
+  fieldLocation: (label: string) => string;
+  locationLoading: string;
+  pathDistanceOsrm: (osrmM: number, walkedM: number) => string;
+  pathDistanceWalked: (walkedM: number) => string;
+  mapMinimize: string;
+  mapExpand: string;
+  mapEnlarge: string;
+  mapShrink: string;
+  mapLiveHint: string;
+  mapCenterOnMe: string;
+  mapZoomManual: string;
 }
 
 const en: FieldMeasureMessages = {
@@ -144,10 +156,22 @@ const en: FieldMeasureMessages = {
   mapLegendEnd: 'Stop point',
   mapLegendArea: 'Green = covered land area',
   mapLiveMarker: 'You are here (live GPS)',
-  mapFallback: 'Map unavailable — GPS path and area still work. Try again.',
+  mapFallback: 'Map not showing — GPS area measure still works below.',
+  mapNativeRequired: 'Map not available now — your GPS points and area are shown below.',
   adjustTitle: 'Adjust path',
   adjustHint: 'Undo wrong points or walk again if the border looks wrong on the map.',
   btnWalkAgain: 'Walk again',
+  fieldLocation: (label) => `Near: ${label}`,
+  locationLoading: 'Finding your village…',
+  pathDistanceOsrm: (routeM, walkedM) => `Border path: ${routeM}m · walked ${walkedM}m`,
+  pathDistanceWalked: (walkedM) => `Walked ${walkedM}m`,
+  mapMinimize: 'Minimize map',
+  mapExpand: 'Show map',
+  mapEnlarge: 'Bigger map',
+  mapShrink: 'Smaller map',
+  mapLiveHint: 'Map follows you as you walk — like phone navigation',
+  mapCenterOnMe: 'Go to my location',
+  mapZoomManual: 'You moved the map — tap the GPS icon to follow you again',
 };
 
 const te: FieldMeasureMessages = {
@@ -209,7 +233,8 @@ const te: FieldMeasureMessages = {
   measureIntroBody:
     'Moolalu pin (★) — prati corner daggar “add” nokki, 3–5 sec nilchondi (stable ayyaka auto save). Walk mode — border tirigi start daggaraki Stop.',
   measureIntroNote: 'GPS ±2–5m error — exact size ki patta/tape measure use cheyandi. Open sky must.',
-  mapFallback: 'Map load avvaledu — GPS path & area inka work avutundi. Malli try cheyandi.',
+  mapFallback: 'Map load avvaledu — GPS tho area measure avutundi.',
+  mapNativeRequired: 'Map ippudu kanipinchadu — GPS points tho area kindha chupistundi.',
   mapTitle: 'Satellite map — mee polam chuttu tirigina path',
   mapLegendStart: 'Modalupettadam (start)',
   mapLegendEnd: 'Aapadam (stop)',
@@ -218,6 +243,17 @@ const te: FieldMeasureMessages = {
   adjustTitle: 'Path adjust cheyandi',
   adjustHint: 'Map lo border sariga lekapothe last point undo cheyandi leda malli tiragandi.',
   btnWalkAgain: 'Malli tiragandi',
+  fieldLocation: (label) => `Ikkada daggar: ${label}`,
+  locationLoading: 'Gramam vetukutunnam…',
+  pathDistanceOsrm: (routeM, walkedM) => `Polam chuttu: ${routeM}m · tirigi ${walkedM}m`,
+  pathDistanceWalked: (walkedM) => `Tirigi ${walkedM}m`,
+  mapMinimize: 'Map peddaga undakunda',
+  mapExpand: 'Map chupinchu',
+  mapEnlarge: 'Map peddaga',
+  mapShrink: 'Map chinna ga',
+  mapLiveHint: 'Nadustunte map mee direction tho follow avutundi — phone navigation laga',
+  mapCenterOnMe: 'Na location ki velu',
+  mapZoomManual: 'Map move chesaru — malli follow avvali ante GPS icon nokki',
 };
 
 const hi: FieldMeasureMessages = {

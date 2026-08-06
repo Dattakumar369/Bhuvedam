@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, Header } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
 import { FieldGpsMeasure } from '@/features/crop/components/FieldGpsMeasure';
-import { useTranslation } from '@/hooks/useTranslation';
 import { useFarmerContextStore } from '@/store/farmerContextStore';
 import type { FieldMeasurement } from '@/types/fieldMeasure';
 import { formatAreaDisplay } from '@/utils/geoArea';
@@ -14,7 +13,6 @@ import { colors, layout, spacing } from '@/theme';
 
 export default function MeasureFieldScreen() {
   const insets = useSafeAreaInsets();
-  const { app, fm, screens } = useTranslation();
   const fieldMeasurement = useFarmerContextStore((s) => s.fieldMeasurement);
   const setFieldMeasurement = useFarmerContextStore((s) => s.setFieldMeasurement);
   const [saved, setSaved] = useState(false);
@@ -31,7 +29,7 @@ export default function MeasureFieldScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Header title={app.fieldMeasure} showBack onBack={() => router.back()} />
+      <Header title="Polam Koluvu" showBack onBack={() => router.back()} />
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
@@ -39,14 +37,19 @@ export default function MeasureFieldScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Card variant="elevated" style={styles.intro}>
-          <Title style={styles.introTitle}>{fm.measureIntroTitle}</Title>
-          <Body style={styles.introBody}>{fm.measureIntroBody}</Body>
-          <Caption style={styles.introNote}>{fm.measureIntroNote}</Caption>
+          <Title style={styles.introTitle}>GPS tho polam kolavandi</Title>
+          <Body style={styles.introBody}>
+            Moolalu pin mode (★) — prati corner daggar 15 sec nilchondi, add nokki. Walk mode lo
+            polam chuttu tirigi start point daggariki vachaka Stop nokki.
+          </Body>
+          <Caption style={styles.introNote}>
+            GPS ±2–5m error untundi — exact size ki patta/tape measure use cheyandi. Open sky must.
+          </Caption>
         </Card>
 
         {lastDisplay && !saved ? (
           <Card variant="outlined" style={styles.lastBox}>
-            <Caption style={styles.lastLabel}>{screens.measureLastGps}</Caption>
+            <Caption style={styles.lastLabel}>Last GPS measurement</Caption>
             <Body style={styles.lastValue}>{lastDisplay.primary}</Body>
             <Caption style={styles.lastSub}>{lastDisplay.secondary}</Caption>
           </Card>
@@ -54,7 +57,7 @@ export default function MeasureFieldScreen() {
 
         {saved && lastDisplay ? (
           <Card variant="elevated" style={styles.savedBox}>
-            <Caption style={styles.savedLabel}>{screens.measureSaved}</Caption>
+            <Caption style={styles.savedLabel}>✓ Saved</Caption>
             <Body style={styles.savedValue}>{lastDisplay.primary}</Body>
             <Caption style={styles.savedSub}>{lastDisplay.secondary}</Caption>
           </Card>

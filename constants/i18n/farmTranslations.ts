@@ -50,6 +50,13 @@ export interface FarmTranslations {
   villagePh: string;
   statePh: string;
   addressRequiredHint: string;
+  gpsFillAddress: string;
+  gpsFillLoading: string;
+  gpsFillFailed: string;
+  placeSearchPlaceholder: string;
+  placeSearchLoading: string;
+  placeSearchNoResults: string;
+  placeSearchHint: string;
   acres: string;
   cents: string;
   centsOptional: string;
@@ -110,6 +117,13 @@ const enFarm: FarmTranslations = {
   villagePh: 'e.g. Pedakurapadu',
   statePh: 'Andhra Pradesh / Telangana',
   addressRequiredHint: 'Fill all fields for accurate mandi rates & weather',
+  gpsFillAddress: 'Use GPS — fill village',
+  gpsFillLoading: 'Getting GPS location…',
+  gpsFillFailed: 'Could not get location — check GPS permission',
+  placeSearchPlaceholder: 'Search village or place…',
+  placeSearchLoading: 'Searching places…',
+  placeSearchNoResults: 'No places found — try another spelling',
+  placeSearchHint: 'Type village name and pick from the list',
   acres: 'Acres *',
   cents: 'Cents (optional)',
   centsOptional: 'Cents (optional)',
@@ -170,6 +184,13 @@ const teFarm: FarmTranslations = {
   villagePh: 'ఉదా: పెదకూరపాడు',
   statePh: 'ఆంధ్ర ప్రదేశ్ / తెలంగాణ',
   addressRequiredHint: 'మండి ధరలు మరియు వాతావరణం సరిగా రావాలి — అన్నీ పూరించండి',
+  gpsFillAddress: 'GPS — గ్రామం auto fill',
+  gpsFillLoading: 'GPS location తీసుకుంటున్నాం…',
+  gpsFillFailed: 'Location రాలేదు — GPS permission చూడండి',
+  placeSearchPlaceholder: 'గ్రామం / place వెతకండి…',
+  placeSearchLoading: 'Places search…',
+  placeSearchNoResults: 'ఏ place కనిపించలేదు — spelling మార్చండి',
+  placeSearchHint: 'Gramam peru type chesi list nundi select cheyandi',
   acres: 'ఎకరాలు *',
   cents: 'సెంట్లు (ఐచ్ఛికం)',
   centsOptional: 'సెంట్లు (ఐచ్ఛికం)',

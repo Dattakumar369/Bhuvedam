@@ -1,18 +1,8 @@
-import type { FeatureCollection, LineString, Point, Polygon } from 'geojson';
-import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
-import {
-  Camera,
-  GeoJSONSource,
-  Layer,
-  Map,
-} from '@maplibre/maplibre-react-native';
+import { useEffect, useMemo, useRef } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
+import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 
-import { MapErrorBoundary } from '@/components/MapErrorBoundary';
 import { Caption } from '@/components/ui/Typography';
-import { MAP_ATTRIBUTION, SATELLITE_MAP_STYLE } from '@/constants/mapStyles';
-import { useTranslation } from '@/hooks/useTranslation';
-import { simplifyWalkPoints } from '@/services/location/fieldMeasureService';
 import type { Coordinates } from '@/types/location';
 import { colors, radius, spacing } from '@/theme';
 
@@ -20,245 +10,181 @@ interface FieldMeasureMapProps {
   points: Coordinates[];
   livePosition?: Coordinates | null;
   walking: boolean;
-  reviewing?: boolean;
-  mapKey: string;
 }
 
 const MAP_HEIGHT = 280;
-const MAX_MAP_POINTS = 32;
+const DEFAULT_DELTA = 0.0008;
 
-function toLngLat(point: Coordinates): [number, number] {
-  return [point.longitude, point.latitude];
-}
-
-function mapRenderPoints(points: Coordinates[]): Coordinates[] {
-  if (points.length <= MAX_MAP_POINTS) return points;
-  const simplified = simplifyWalkPoints(points, 6);
-  if (simplified.length <= MAX_MAP_POINTS) return simplified;
-  const step = Math.ceil(simplified.length / MAX_MAP_POINTS);
-  const sampled: Coordinates[] = [];
-  for (let i = 0; i < simplified.length; i += step) {
-    sampled.push(simplified[i]!);
-  }
-  const last = simplified[simplified.length - 1]!;
-  const tail = sampled[sampled.length - 1]!;
-  if (tail.latitude !== last.latitude || tail.longitude !== last.longitude) {
-    sampled.push(last);
-  }
-  return sampled.length >= 2 ? sampled : simplified.slice(0, MAX_MAP_POINTS);
-}
-
-function viewStateFromCoords(points: Coordinates[], live?: Coordinates | null) {
+function regionFromPoints(points: Coordinates[], live?: Coordinates | null): Region {
   const all = [...points];
   if (live) all.push(live);
   if (!all.length) {
-    return { center: [80.648, 16.5062] as [number, number], zoom: 14 };
+    return {
+      latitude: 16.5062,
+      longitude: 80.648,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    };
   }
+
   const lats = all.map((p) => p.latitude);
   const lons = all.map((p) => p.longitude);
-  const center: [number, number] = [
-    (Math.min(...lons) + Math.max(...lons)) / 2,
-    (Math.min(...lats) + Math.max(...lats)) / 2,
-  ];
-  const latSpan = Math.max(...lats) - Math.min(...lats);
-  const lonSpan = Math.max(...lons) - Math.min(...lons);
-  const span = Math.max(latSpan, lonSpan, 0.0008);
-  const zoom = Math.min(18, Math.max(14, 17 - Math.log2(span / 0.002)));
-  return { center, zoom };
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLon = Math.min(...lons);
+  const maxLon = Math.max(...lons);
+  const pad = 0.00025;
+
+  return {
+    latitude: (minLat + maxLat) / 2,
+    longitude: (minLon + maxLon) / 2,
+    latitudeDelta: Math.max(maxLat - minLat + pad, DEFAULT_DELTA),
+    longitudeDelta: Math.max(maxLon - minLon + pad, DEFAULT_DELTA),
+  };
 }
 
-function FieldMeasureMapInner({
-  points,
-  livePosition,
-  walking,
-  reviewing = false,
-  mapKey,
-}: FieldMeasureMapProps) {
-  const { fm } = useTranslation();
-  const renderPoints = useMemo(() => mapRenderPoints(points), [points]);
+export function FieldMeasureMap({ points, livePosition, walking }: FieldMeasureMapProps) {
+  const mapRef = useRef<MapView>(null);
+
+  const startPoint = points[0] ?? null;
+  const endPoint = points.length > 1 ? points[points.length - 1] : null;
+  const showEndMarker = !walking && endPoint != null && points.length > 1;
 
   const pathCoords = useMemo(() => {
-    const coords = [...renderPoints];
-    if (walking && livePosition) coords.push(livePosition);
+    const coords = points.map((p) => ({
+      latitude: p.latitude,
+      longitude: p.longitude,
+    }));
+    if (walking && livePosition) {
+      coords.push({
+        latitude: livePosition.latitude,
+        longitude: livePosition.longitude,
+      });
+    }
     return coords;
-  }, [renderPoints, livePosition, walking]);
+  }, [points, livePosition, walking]);
 
-  const viewState = useMemo(
-    () => viewStateFromCoords(renderPoints, walking ? livePosition : null),
-    [renderPoints, livePosition, walking, mapKey],
+  const polygonCoords = useMemo(() => {
+    if (points.length < 3) return [];
+    return points.map((p) => ({ latitude: p.latitude, longitude: p.longitude }));
+  }, [points]);
+
+  const initialRegion = useMemo(
+    () => regionFromPoints(points, livePosition),
+    [points, livePosition],
   );
 
-  const pathGeoJson = useMemo((): FeatureCollection<LineString> => {
-    if (pathCoords.length < 2) {
-      return { type: 'FeatureCollection', features: [] };
-    }
-    return {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: pathCoords.map(toLngLat),
+  useEffect(() => {
+    if (!mapRef.current || pathCoords.length < 1) {
+      if (walking && livePosition && mapRef.current) {
+        mapRef.current.animateToRegion(
+          {
+            latitude: livePosition.latitude,
+            longitude: livePosition.longitude,
+            latitudeDelta: DEFAULT_DELTA,
+            longitudeDelta: DEFAULT_DELTA,
           },
-        },
-      ],
-    };
-  }, [pathCoords]);
+          400,
+        );
+      }
+      return;
+    }
+    mapRef.current.fitToCoordinates(pathCoords, {
+      edgePadding: { top: 48, right: 48, bottom: 48, left: 48 },
+      animated: true,
+    });
+  }, [pathCoords, walking, livePosition]);
 
-  const polygonGeoJson = useMemo((): FeatureCollection<Polygon> => {
-    if (!reviewing || walking || renderPoints.length < 3) {
-      return { type: 'FeatureCollection', features: [] };
-    }
-    const ring = renderPoints.map(toLngLat);
-    const first = ring[0]!;
-    const last = ring[ring.length - 1]!;
-    if (first[0] !== last[0] || first[1] !== last[1]) {
-      ring.push(first);
-    }
-    return {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'Polygon',
-            coordinates: [ring],
-          },
-        },
-      ],
-    };
-  }, [renderPoints, reviewing, walking]);
+  const visible = walking || points.length > 0;
 
-  const markerGeoJson = useMemo((): FeatureCollection<Point> => {
-    const features: FeatureCollection<Point>['features'] = [];
-    const start = renderPoints[0];
-    if (start) {
-      features.push({
-        type: 'Feature',
-        properties: { role: 'start' },
-        geometry: { type: 'Point', coordinates: toLngLat(start) },
-      });
-    }
-    if (reviewing && !walking && renderPoints.length > 1) {
-      const end = renderPoints[renderPoints.length - 1]!;
-      features.push({
-        type: 'Feature',
-        properties: { role: 'end' },
-        geometry: { type: 'Point', coordinates: toLngLat(end) },
-      });
-    }
-    if (walking && livePosition) {
-      features.push({
-        type: 'Feature',
-        properties: { role: 'live' },
-        geometry: { type: 'Point', coordinates: toLngLat(livePosition) },
-      });
-    }
-    return { type: 'FeatureCollection', features };
-  }, [renderPoints, livePosition, walking, reviewing]);
+  if (!visible) return null;
 
   return (
     <View style={styles.wrap}>
-      <Caption style={styles.mapTitle}>{fm.mapTitle}</Caption>
+      <Caption style={styles.mapTitle}>Satellite map — mee polam chuttu tirigina path</Caption>
       <View style={styles.mapBox}>
-        <Map mapStyle={SATELLITE_MAP_STYLE} style={styles.map}>
-          <Camera
-            key={mapKey}
-            initialViewState={{
-              center: viewState.center,
-              zoom: viewState.zoom,
-            }}
-          />
-
-          {polygonGeoJson.features.length > 0 ? (
-            <GeoJSONSource id="field-polygon" data={polygonGeoJson}>
-              <Layer
-                id="field-polygon-fill"
-                type="fill"
-                paint={{ 'fill-color': 'rgba(46, 125, 50, 0.35)' }}
-              />
-              <Layer
-                id="field-polygon-line"
-                type="line"
-                paint={{ 'line-color': colors.primary, 'line-width': 2 }}
-              />
-            </GeoJSONSource>
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+          mapType="satellite"
+          initialRegion={initialRegion}
+          showsUserLocation={walking}
+          showsMyLocationButton={walking}
+          rotateEnabled={false}
+        >
+          {pathCoords.length >= 2 ? (
+            <Polyline
+              coordinates={pathCoords}
+              strokeColor={colors.primary}
+              strokeWidth={4}
+              lineCap="round"
+              lineJoin="round"
+            />
           ) : null}
 
-          {pathGeoJson.features.length > 0 ? (
-            <GeoJSONSource id="field-path" data={pathGeoJson}>
-              <Layer
-                id="field-path-line"
-                type="line"
-                paint={{
-                  'line-color': colors.primary,
-                  'line-width': 4,
-                  'line-cap': 'round',
-                  'line-join': 'round',
-                }}
-              />
-            </GeoJSONSource>
+          {polygonCoords.length >= 3 && !walking ? (
+            <Polygon
+              coordinates={polygonCoords}
+              fillColor="rgba(46, 125, 50, 0.35)"
+              strokeColor={colors.primary}
+              strokeWidth={2}
+            />
           ) : null}
 
-          {markerGeoJson.features.length > 0 ? (
-            <GeoJSONSource id="field-markers" data={markerGeoJson}>
-              <Layer
-                id="field-marker-circles"
-                type="circle"
-                paint={{
-                  'circle-radius': 7,
-                  'circle-color': [
-                    'match',
-                    ['get', 'role'],
-                    'start',
-                    '#2E7D32',
-                    'end',
-                    colors.error,
-                    'live',
-                    '#1E88E5',
-                    '#2E7D32',
-                  ],
-                  'circle-stroke-width': 2,
-                  'circle-stroke-color': '#ffffff',
-                }}
-              />
-            </GeoJSONSource>
+          {walking && polygonCoords.length >= 3 ? (
+            <Polygon
+              coordinates={polygonCoords}
+              fillColor="rgba(46, 125, 50, 0.2)"
+              strokeColor={`${colors.primary}99`}
+              strokeWidth={2}
+            />
           ) : null}
-        </Map>
+
+          {startPoint ? (
+            <Marker
+              coordinate={startPoint}
+              title="Modalupettadam"
+              description="Ekkada nunchi start chesaru"
+              pinColor="green"
+            />
+          ) : null}
+
+          {showEndMarker && endPoint ? (
+            <Marker
+              coordinate={endPoint}
+              title="Aapadam"
+              description="Ekkada aaparu"
+              pinColor="red"
+            />
+          ) : null}
+
+          {walking && livePosition && points.length === 0 ? (
+            <Marker
+              coordinate={livePosition}
+              title="Ippudu ikkada"
+              description="GPS fix avutundi..."
+              pinColor="blue"
+            />
+          ) : null}
+        </MapView>
       </View>
-
-      <Caption style={styles.attribution}>{MAP_ATTRIBUTION}</Caption>
 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.dot, styles.dotStart]} />
-          <Caption style={styles.legendText}>🟢 {fm.mapLegendStart}</Caption>
+          <Caption style={styles.legendText}>🟢 Modalupettadam (start)</Caption>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.dot, styles.dotEnd]} />
-          <Caption style={styles.legendText}>🔴 {fm.mapLegendEnd}</Caption>
+          <Caption style={styles.legendText}>🔴 Aapadam (stop)</Caption>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.dot, styles.dotArea]} />
-          <Caption style={styles.legendText}>{fm.mapLegendArea}</Caption>
+          <Caption style={styles.legendText}>Green = cover chesina bhumi</Caption>
         </View>
       </View>
     </View>
-  );
-}
-
-export function FieldMeasureMap(props: FieldMeasureMapProps) {
-  const { fm } = useTranslation();
-  const visible = props.walking || props.points.length > 0;
-  if (!visible) return null;
-
-  return (
-    <MapErrorBoundary fallbackMessage={fm.mapFallback}>
-      <FieldMeasureMapInner {...props} />
-    </MapErrorBoundary>
   );
 }
 
@@ -277,11 +203,6 @@ const styles = StyleSheet.create({
     borderColor: `${colors.primary}40`,
   },
   map: { flex: 1 },
-  attribution: {
-    color: colors.textTertiary,
-    fontSize: 10,
-    textAlign: 'center',
-  },
   legend: {
     gap: spacing.xxs,
     paddingHorizontal: spacing.xs,

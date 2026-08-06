@@ -5,6 +5,6 @@ module.exports = {
   expo: {
     ...appJson.expo,
     version: '1.0.2',
-    plugins: [...(appJson.expo.plugins ?? []), '@maplibre/maplibre-react-native'],
+    plugins: [...(appJson.expo.plugins ?? [])],
   },
 };

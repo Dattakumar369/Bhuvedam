@@ -1,6 +1,11 @@
 import * as Location from 'expo-location';
 
-import type { LocationData, LocationPermissionStatus } from '@/types/location';
+import { reverseGeocodeNominatim } from '@/services/geo/nominatimService';
+import type {
+  LocationData,
+  LocationPermissionStatus,
+  ReverseGeocodeResult,
+} from '@/types/location';
 
 export async function getLocationPermissionStatus(): Promise<LocationPermissionStatus> {
   const { status } = await Location.getForegroundPermissionsAsync();
@@ -21,6 +26,47 @@ function buildLocationLabel(address: Location.LocationGeocodedAddress): string {
   return parts.join(', ') || 'Current Location';
 }
 
+function fromExpoAddress(
+  latitude: number,
+  longitude: number,
+  address: Location.LocationGeocodedAddress,
+): ReverseGeocodeResult {
+  const label = buildLocationLabel(address);
+  return {
+    latitude,
+    longitude,
+    label,
+    city: address.city ?? address.district ?? address.subregion ?? label,
+    region: address.region ?? undefined,
+    country: address.country ?? undefined,
+    district: address.district ?? address.subregion ?? undefined,
+    state: address.region ?? undefined,
+    source: 'expo',
+  };
+}
+
+function coordinateFallback(latitude: number, longitude: number): LocationData {
+  const label = `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`;
+  return { latitude, longitude, city: label, label };
+}
+
+/** Nominatim (OSM) first for Indian village names; Expo geocoder as fallback. */
+export async function reverseGeocodeFromGps(
+  coords: { latitude: number; longitude: number },
+): Promise<LocationData> {
+  const nominatim = await reverseGeocodeNominatim(coords);
+  if (nominatim?.label) return nominatim;
+
+  try {
+    const [address] = await Location.reverseGeocodeAsync(coords);
+    if (address) return fromExpoAddress(coords.latitude, coords.longitude, address);
+  } catch {
+    // fall through
+  }
+
+  return coordinateFallback(coords.latitude, coords.longitude);
+}
+
 export async function getCurrentLocation(): Promise<LocationData> {
   const permission = await requestLocationPermission();
 
@@ -33,25 +79,7 @@ export async function getCurrentLocation(): Promise<LocationData> {
   });
 
   const { latitude, longitude } = position.coords;
-
-  let label = 'Current Location';
-  let city = 'Current Location';
-  let region: string | undefined;
-  let country: string | undefined;
-
-  try {
-    const [address] = await Location.reverseGeocodeAsync({ latitude, longitude });
-    if (address) {
-      label = buildLocationLabel(address);
-      city = address.city ?? address.district ?? address.subregion ?? label;
-      region = address.region ?? undefined;
-      country = address.country ?? undefined;
-    }
-  } catch {
-    label = `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`;
-  }
-
-  return { latitude, longitude, city, region, country, label };
+  return reverseGeocodeFromGps({ latitude, longitude });
 }
 
 export async function watchLocation(
@@ -68,16 +96,8 @@ export async function watchLocation(
     },
     async (position) => {
       const { latitude, longitude } = position.coords;
-      let label = `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`;
-
-      try {
-        const [address] = await Location.reverseGeocodeAsync({ latitude, longitude });
-        if (address) label = buildLocationLabel(address);
-      } catch {
-        // keep coordinate label
-      }
-
-      onUpdate({ latitude, longitude, city: label, label });
+      const location = await reverseGeocodeFromGps({ latitude, longitude });
+      onUpdate(location);
     },
   );
 

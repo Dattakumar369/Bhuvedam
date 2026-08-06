@@ -7,6 +7,9 @@ import { Body, Caption, Title } from '@/components/ui/Typography';
 import { CROP_CATEGORY_EN, CROP_CATEGORY_TELUGU, CROPS } from '@/constants/crops';
 import { cropLabelForLanguage, soilLabelForLanguage } from '@/constants/i18n/farmTranslations';
 import { useTranslation } from '@/hooks/useTranslation';
+import { searchPlaces } from '@/services/geo/placeSearchService';
+import { getCurrentLocation } from '@/services/location/locationService';
+import type { PlaceSearchResult } from '@/types/location';
 import { useCropCatalogStore } from '@/store/cropCatalogStore';
 import { SOIL_TYPE_OPTIONS } from '@/constants/soilTypes';
 import { CropPlantingDetailsStep } from '@/features/crop/components/CropPlantingDetailsStep';
@@ -52,10 +55,63 @@ export function FarmSetupWizard({
   const [stateInput, setStateInput] = useState(initial.stateInput);
   const [selectedSoil, setSelectedSoil] = useState(initial.selectedSoil);
   const [cropSearch, setCropSearch] = useState('');
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [placeQuery, setPlaceQuery] = useState('');
+  const [placeResults, setPlaceResults] = useState<PlaceSearchResult[]>([]);
+  const [placeSearching, setPlaceSearching] = useState(false);
+  const [addressHint, setAddressHint] = useState<string | null>(null);
 
   useEffect(() => {
     void hydrateCrops(language);
   }, [hydrateCrops, language]);
+
+  useEffect(() => {
+    const q = placeQuery.trim();
+    if (q.length < 2) {
+      setPlaceResults([]);
+      setPlaceSearching(false);
+      return;
+    }
+
+    setPlaceSearching(true);
+    const timer = setTimeout(() => {
+      void searchPlaces(q, { limit: 6, countryCode: 'in' }).then((results) => {
+        setPlaceResults(results);
+        setPlaceSearching(false);
+      });
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [placeQuery]);
+
+  const applyPlace = (place: PlaceSearchResult) => {
+    if (place.village) setVillageInput(place.village);
+    if (place.mandal) setMandalInput(place.mandal);
+    if (place.district) setDistrictInput(place.district);
+    if (place.state) setStateInput(place.state);
+    setPlaceQuery(place.label);
+    setPlaceResults([]);
+    setAddressHint(null);
+  };
+
+  const fillFromGps = async () => {
+    setGpsLoading(true);
+    setAddressHint(null);
+    try {
+      const loc = await getCurrentLocation();
+      if (loc.village) setVillageInput(loc.village);
+      if (loc.mandal) setMandalInput(loc.mandal);
+      if (loc.district) setDistrictInput(loc.district);
+      if (loc.state) setStateInput(loc.state);
+      if (!loc.village && !loc.mandal && loc.label) {
+        setPlaceQuery(loc.label);
+      }
+    } catch {
+      setAddressHint(farm.gpsFillFailed);
+    } finally {
+      setGpsLoading(false);
+    }
+  };
 
   const cropsByGroup = useMemo(
     () => cropsGroupedFn(cropSearch),
@@ -197,6 +253,38 @@ export function FarmSetupWizard({
 
       {step === 3 ? (
         <View style={styles.stepBody}>
+          <Button
+            label={gpsLoading ? farm.gpsFillLoading : farm.gpsFillAddress}
+            onPress={() => void fillFromGps()}
+            loading={gpsLoading}
+            fullWidth
+            size="md"
+          />
+          <SearchInput
+            value={placeQuery}
+            onChangeText={setPlaceQuery}
+            placeholder={farm.placeSearchPlaceholder}
+          />
+          <Caption style={styles.placeHint}>{farm.placeSearchHint}</Caption>
+          {placeSearching ? (
+            <Caption style={styles.placeStatus}>{farm.placeSearchLoading}</Caption>
+          ) : null}
+          {placeResults.length > 0 ? (
+            <View style={styles.placeList}>
+              {placeResults.map((place) => (
+                <Pressable
+                  key={`${place.latitude}-${place.longitude}-${place.label}`}
+                  onPress={() => applyPlace(place)}
+                  style={styles.placeRow}
+                >
+                  <MaterialCommunityIcons name="map-marker" size={18} color={colors.primary} />
+                  <Caption style={styles.placeRowText}>{place.label}</Caption>
+                </Pressable>
+              ))}
+            </View>
+          ) : placeQuery.trim().length >= 2 && !placeSearching ? (
+            <Caption style={styles.placeStatus}>{farm.placeSearchNoResults}</Caption>
+          ) : null}
           <PrimaryInput
             label={farm.district}
             value={districtInput}
@@ -222,6 +310,7 @@ export function FarmSetupWizard({
             placeholder={farm.statePh}
           />
           <Caption style={styles.requiredHint}>{farm.addressRequiredHint}</Caption>
+          {addressHint ? <Caption style={styles.addressError}>{addressHint}</Caption> : null}
         </View>
       ) : null}
 
@@ -342,6 +431,26 @@ const styles = StyleSheet.create({
   cropCheck: { position: 'absolute', top: 6, right: 6 },
   optionalHint: { textAlign: 'center', color: colors.textTertiary },
   requiredHint: { textAlign: 'center', color: colors.textSecondary, lineHeight: 18 },
+  placeHint: { color: colors.textTertiary, lineHeight: 18, fontSize: 11 },
+  placeStatus: { color: colors.textSecondary, textAlign: 'center' },
+  placeList: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  placeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  placeRowText: { flex: 1, color: colors.textPrimary, lineHeight: 18 },
+  addressError: { color: colors.error, textAlign: 'center', lineHeight: 18 },
   soilGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   soilTile: {
     paddingHorizontal: spacing.md,
