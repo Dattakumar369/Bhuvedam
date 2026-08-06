@@ -107,6 +107,11 @@ import {
 import { researchAgricultureOnline } from '../services/webResearchService';
 import { fetchMandiAnalyticsFromDb } from '../services/mandiAnalyticsService';
 import { normalizeMandiCropId } from '../services/mandiCropMapping';
+import {
+  findNearbyAgPlacesFromDb,
+  seedCuratedAgPlaces,
+  type NearbyPlaceType,
+} from '../services/nearbyAgPlacesService';
 
 const app = new Hono<{ Variables: FarmerAuthVariables }>();
 
@@ -579,6 +584,27 @@ app.get('/api/mandi/prices', async (c) => {
     cropId: normalizeMandiCropId(row.cropId, row.commodity),
   }));
   return c.json({ data, source: 'agmarknet' });
+});
+
+/** Nearby mandi markets & fertilizer shops — DB fallback when Google Places unavailable */
+app.get('/api/places/nearby', async (c) => {
+  const lat = Number(c.req.query('lat'));
+  const lng = Number(c.req.query('lng'));
+  const type = (c.req.query('type') ?? 'all') as NearbyPlaceType;
+  const radiusKm = Number(c.req.query('radiusKm') ?? 50);
+  const limit = Number(c.req.query('limit') ?? 20);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return c.json({ error: 'lat and lng required' }, 400);
+  }
+
+  const data = await findNearbyAgPlacesFromDb(lat, lng, type, radiusKm, limit);
+  return c.json({ data, source: 'database', count: data.length });
+});
+
+app.post('/api/places/seed', adminAuthMiddleware, async (c) => {
+  const result = await seedCuratedAgPlaces();
+  return c.json({ success: true, ...result });
 });
 
 /** Mandi analytics with stored history — today / yesterday / month / year stats */

@@ -5,12 +5,14 @@ import { InteractionManager, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui';
 import { Body, Caption, Label } from '@/components/ui/Typography';
+import { FieldDrawMap } from '@/features/crop/components/FieldDrawMap';
 import { FieldMeasureMap } from '@/features/crop/components/FieldMeasureMap';
 import {
   captureFieldCorner,
   formatAccuracyHint,
   isWalkLoopClosed,
   MAX_APPLY_AVG_ACCURACY_M,
+  distanceMeters,
   simplifyWalkPoints,
   startFieldWalkTracking,
   validateCornerPoints,
@@ -43,7 +45,7 @@ function qualityColor(quality: GpsQuality): string {
 }
 
 export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasureProps) {
-  const [mode, setMode] = useState<'walk' | 'corner'>('corner');
+  const [mode, setMode] = useState<'walk' | 'corner' | 'draw'>('draw');
   const [points, setPoints] = useState<FieldCorner[]>(initialPoints);
   const [capturing, setCapturing] = useState(false);
   const [walking, setWalking] = useState(false);
@@ -80,18 +82,22 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     return points as Coordinates[];
   }, [mode, points]);
 
-  const loopClosed = mode === 'walk' ? isWalkLoopClosed(measurePoints) : points.length >= 3;
+  const loopClosed =
+    mode === 'walk' ? isWalkLoopClosed(measurePoints) : points.length >= 3;
   const loopGapM = mode === 'walk' ? walkLoopGapMeters(measurePoints) : 0;
+
+  const drawAccuracyEstimate = 1.5;
 
   const measurement = useMemo(() => {
     if (measurePoints.length < 3 || !loopClosed) return null;
-    const result = measurePolygon(measurePoints, avgAccuracy);
+    const accuracyForCalc = mode === 'draw' ? drawAccuracyEstimate : avgAccuracy;
+    const result = measurePolygon(measurePoints, accuracyForCalc);
     return {
       points,
       ...result,
       measuredAt: new Date().toISOString(),
     } satisfies FieldMeasurement;
-  }, [measurePoints, avgAccuracy, loopClosed, points]);
+  }, [measurePoints, avgAccuracy, loopClosed, mode, points]);
 
   const addCorner = async () => {
     setCapturing(true);
@@ -220,19 +226,38 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     });
   };
 
-  const switchMode = (next: 'walk' | 'corner') => {
+  const switchMode = (next: 'walk' | 'corner' | 'draw') => {
     if (walking || capturing) return;
-    if (next === 'walk') {
-      walkSessionRef.current?.stop();
-      walkSessionRef.current = null;
-      setWalking(false);
-      setWalkProgress(null);
-      setLivePosition(null);
-      setPoints([]);
-    }
+    walkSessionRef.current?.stop();
+    walkSessionRef.current = null;
+    setWalking(false);
+    setWalkProgress(null);
+    setLivePosition(null);
+    if (next !== mode) setPoints([]);
     setMode(next);
     setError(null);
-    setWalkProgress(null);
+  };
+
+  const addDrawPoint = (coord: Coordinates) => {
+    if (points.length >= 2) {
+      const last = points[points.length - 1]!;
+      const dist = distanceMeters(last, coord);
+      if (dist < 2) {
+        setError('Previous point ki chaala daggaraga undi — zoom chesi next moola tap cheyandi.');
+        return;
+      }
+    }
+    setError(null);
+    setPoints((prev) => [
+      ...prev,
+      {
+        latitude: coord.latitude,
+        longitude: coord.longitude,
+        accuracyMeters: drawAccuracyEstimate,
+        quality: 'good' as const,
+        sampleCount: 1,
+      },
+    ]);
   };
 
   const undoCorner = () => {
@@ -258,7 +283,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
       );
       return;
     }
-    if (points.some((p) => p.quality === 'poor')) {
+    if (mode === 'corner' && points.some((p) => p.quality === 'poor')) {
       setError('Oka moola GPS weak undi — Undo chesi open sky lo malli add cheyandi.');
       return;
     }
@@ -266,10 +291,13 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
   };
 
   const areaDisplay = measurement
-    ? formatAreaDisplay(measurement.areaAcres, measurement.areaCents, 'gps')
+    ? formatAreaDisplay(
+        measurement.areaAcres,
+        measurement.areaCents,
+        mode === 'draw' ? 'map' : 'gps',
+      )
     : null;
 
-  /** Walk lo map mount cheyakunda — Android APK crash fix. Map only corner mode or walk aipoyaka. */
   const showMap = mode === 'corner' || (mode === 'walk' && !walking && points.length > 0);
 
   return (
@@ -295,6 +323,20 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
           </Caption>
         </Pressable>
         <Pressable
+          onPress={() => switchMode('draw')}
+          disabled={walking || capturing}
+          style={[styles.modeChip, mode === 'draw' && styles.modeChipActive]}
+        >
+          <MaterialCommunityIcons
+            name="draw"
+            size={18}
+            color={mode === 'draw' ? colors.surface : colors.primary}
+          />
+          <Caption style={[styles.modeChipText, mode === 'draw' && styles.modeChipTextActive]}>
+            Map draw
+          </Caption>
+        </Pressable>
+        <Pressable
           onPress={() => switchMode('corner')}
           disabled={walking || capturing}
           style={[styles.modeChip, mode === 'corner' && styles.modeChipActive]}
@@ -305,16 +347,20 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
             color={mode === 'corner' ? colors.surface : colors.primary}
           />
           <Caption style={[styles.modeChipText, mode === 'corner' && styles.modeChipTextActive]}>
-            Moolalu pin ★
+            GPS pin
           </Caption>
         </Pressable>
       </View>
 
       <Caption style={styles.help}>
-        {mode === 'corner'
-          ? 'Prati moola daggar 3–8 sec nilchondi (open sky). ±3m kante weak reading accept cheyadu — area tappu vastundi.'
-          : 'Polam border chuttu tirigi start point daggariki vachaka Stop nokki. Loop complete kaakapothe area wrong vastundi.'}
+        {mode === 'draw'
+          ? 'Satellite map lo polam border moolalu tap cheyandi — GPS wait ledu. Zoom chesi exact ga mark cheyandi.'
+          : mode === 'corner'
+            ? 'Prati moola daggar 3–8 sec nilchondi (open sky). ±3m kante weak reading accept cheyadu.'
+            : 'Polam border chuttu tirigi start point daggariki vachaka Stop nokki.'}
       </Caption>
+
+      {mode === 'draw' ? <FieldDrawMap points={points} onAddPoint={addDrawPoint} /> : null}
 
       {mode === 'walk' && walking ? (
         <View style={styles.walkGpsBox}>
@@ -331,12 +377,14 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
         </View>
       ) : null}
 
-      <FieldMeasureMap
-        enabled={showMap}
-        points={points}
-        livePosition={livePosition}
-        walking={false}
-      />
+      {mode !== 'draw' ? (
+        <FieldMeasureMap
+          enabled={showMap}
+          points={points}
+          livePosition={livePosition}
+          walking={false}
+        />
+      ) : null}
 
       {walking && walkProgress ? (
         <View style={[styles.captureBox, walkProgress.nearStart && styles.captureBoxNearStart]}>
@@ -438,14 +486,16 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
               size="md"
             />
           )
-        ) : (
+        ) : mode === 'corner' ? (
           <Button
-            label={capturing ? 'GPS reading...' : `మూలం ${points.length + 1} add cheyandi`}
+            label={capturing ? 'GPS reading...' : `Moolam ${points.length + 1} add`}
             onPress={() => void addCorner()}
             loading={capturing}
             fullWidth
             size="md"
           />
+        ) : (
+          <Caption style={styles.drawHint}>Map meeda polam moolalu tap cheyandi ↑</Caption>
         )}
         <View style={styles.secondaryRow}>
           <Pressable
@@ -487,22 +537,24 @@ const styles = StyleSheet.create({
   },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   title: { color: colors.primary, flex: 1 },
-  modeRow: { flexDirection: 'row', gap: spacing.sm },
+  modeRow: { flexDirection: 'row', gap: spacing.xs },
   modeChip: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
+    gap: 2,
     paddingVertical: spacing.sm,
+    paddingHorizontal: 2,
     borderRadius: radius.md,
     borderWidth: 2,
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
   modeChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  modeChipText: { fontFamily: 'Poppins_600SemiBold', color: colors.primary },
+  modeChipText: { fontFamily: 'Poppins_600SemiBold', color: colors.primary, fontSize: 10 },
   modeChipTextActive: { color: colors.surface },
+  drawHint: { textAlign: 'center', color: colors.textSecondary, fontStyle: 'italic' },
   help: { color: colors.textSecondary, lineHeight: 20 },
   walkGpsBox: {
     alignItems: 'center',

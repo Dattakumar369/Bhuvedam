@@ -43,7 +43,7 @@ export function sqMetersToCents(sqMeters: number): number {
 export function formatAreaDisplay(
   areaAcres: number,
   areaCents?: number,
-  source?: 'patta' | 'tape' | 'gps',
+  source?: 'patta' | 'tape' | 'gps' | 'map',
 ): {
   primary: string;
   secondary: string;
@@ -56,7 +56,9 @@ export function formatAreaDisplay(
   const badge =
     source === 'gps'
       ? 'GPS estimate / సుమారు'
-      : source === 'tape'
+      : source === 'map'
+        ? 'Map draw / మ్యాప్ లో గీసి'
+        : source === 'tape'
         ? 'Exact — tape measure / లేఖీ exact'
         : source === 'patta'
           ? 'Exact — patta / పట్టా exact'
@@ -89,7 +91,7 @@ export function parseMetersInput(value: string): number | null {
 export function formatAreaLabel(
   areaAcres: number,
   areaCents?: number,
-  source?: 'patta' | 'tape' | 'gps',
+  source?: 'patta' | 'tape' | 'gps' | 'map',
 ): string {
   return formatAreaDisplay(areaAcres, areaCents, source).full;
 }

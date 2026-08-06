@@ -10,6 +10,7 @@ export * from './crops';
 export * from './cropCalendar';
 export * from './weather';
 export * from './mandiPrices';
+export * from './agPlaces';
 export * from './fertilizers';
 export * from './fertilizerProducts';
 export * from './agCatalog';

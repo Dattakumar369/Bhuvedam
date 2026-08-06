@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, type Region } from 'react-native-maps';
 
 import { MapErrorBoundary } from '@/components/MapErrorBoundary';
@@ -18,8 +18,7 @@ interface FieldMeasureMapProps {
 const MAP_HEIGHT = 280;
 const DEFAULT_DELTA = 0.0008;
 
-const mapsNativeAvailable =
-  Platform.OS === 'ios' || Boolean(process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim());
+import { isGoogleMapsConfigured } from '@/constants/mapsConfig';
 
 function regionFromPoints(points: Coordinates[], live?: Coordinates | null): Region {
   const all = [...points];
@@ -106,7 +105,7 @@ function FieldMeasureMapInner({ points, livePosition, walking }: FieldMeasureMap
     }
   }, [pathCoords, walking, livePosition]);
 
-  if (!mapsNativeAvailable) {
+  if (!isGoogleMapsConfigured()) {
     return (
       <View style={styles.wrap}>
         <Caption style={styles.mapTitle}>GPS path record avutundi — map review taruvata chupistundi</Caption>

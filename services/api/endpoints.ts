@@ -66,6 +66,9 @@ export const ENDPOINTS = {
   cropDiseases: {
     list: '/api/crop-diseases',
   },
+  places: {
+    nearby: '/api/places/nearby',
+  },
   mandi: {
     prices: '/api/mandi/prices',
     analytics: '/api/mandi/analytics',

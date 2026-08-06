@@ -39,8 +39,8 @@ export default function MeasureFieldScreen() {
         <Card variant="elevated" style={styles.intro}>
           <Title style={styles.introTitle}>GPS tho polam kolavandi</Title>
           <Body style={styles.introBody}>
-            Moolalu pin (★) — prati corner daggar 3–8 sec nilchondi. Tiragandi mode lo polam chuttu
-            tirigi start daggaraki vachi Stop nokki. Weak GPS (±3m+) accept cheyadu.
+            Map draw — satellite lo polam border tap cheyandi (recommended). GPS pin or Tiragandi
+            kuda use cheyochu. Mandi/shops Google Places or database nundi vastayi.
           </Body>
           <Caption style={styles.introNote}>
             GPS ±2–5m error untundi — exact size ki patta/tape measure use cheyandi. Open sky must.

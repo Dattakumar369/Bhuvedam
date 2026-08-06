@@ -1,6 +1,6 @@
 import type { Coordinates } from '@/types/location';
 
-export type AreaMeasureMode = 'patta' | 'tape' | 'gps';
+export type AreaMeasureMode = 'patta' | 'tape' | 'gps' | 'map';
 
 export interface FieldCorner extends Coordinates {
   accuracyMeters?: number | null;
