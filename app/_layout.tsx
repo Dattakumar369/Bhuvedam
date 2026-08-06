@@ -53,7 +53,8 @@ function RootNavigator() {
       <Stack.Screen name="pesticides/[id]" />
       <Stack.Screen name="fungicides/index" />
       <Stack.Screen name="fungicides/[id]" />
-      <Stack.Screen name="crop-guide" />
+      <Stack.Screen name="voice-assistant" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="nearby-places" />
     </Stack>
   );
 }

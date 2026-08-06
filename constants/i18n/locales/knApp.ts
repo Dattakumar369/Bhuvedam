@@ -19,6 +19,7 @@ export const knApp: AppTranslations = {
   sprayGuide: 'ಸಿಂಪಡಣೆ ಮಾರ್ಗದರ್ಶಿ',
   mandiRates: 'ಮಂಡಿ ಬೆಲೆ',
   nearbyPlaces: 'Mandi & Shops',
+  talkToBhuvedam: 'Matladandi 🎤',
   schemes: 'ಯೋಜನೆಗಳು',
   fieldMeasure: 'ಹೊಲ ಅಳತೆ',
   cropGuide: 'ಬೆಳೆ ಮಾರ್ಗದರ್ಶಿ',

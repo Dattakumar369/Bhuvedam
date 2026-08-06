@@ -19,6 +19,7 @@ export const mrApp: AppTranslations = {
   sprayGuide: 'फवारणी मार्गदर्शक',
   mandiRates: 'मंडी भाव',
   nearbyPlaces: 'Mandi & Shops',
+  talkToBhuvedam: 'Matladandi 🎤',
   schemes: 'योजना',
   fieldMeasure: 'शेत मोजमाप',
   cropGuide: 'पीक मार्गदर्शक',

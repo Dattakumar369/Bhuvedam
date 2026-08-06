@@ -16,6 +16,7 @@ import {
 import { Body, Caption } from '@/components/ui/Typography';
 import { LiveLocationBadge } from '@/features/weather/components/LocationBanner';
 import { FarmAlertsCard } from '@/features/alerts/FarmAlertsCard';
+import { FEATURES } from '@/constants/features';
 import { getLocalizedGreeting } from '@/constants/i18n/appTranslations';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -75,6 +76,28 @@ export default function HomeScreen() {
         </View>
 
         <FarmAlertsCard />
+
+        {FEATURES.voiceCompanionEnabled ? (
+          <Animated.View entering={FadeInDown.delay(100).springify()}>
+            <Pressable
+              style={[styles.voiceCard, { backgroundColor: colors.primary }]}
+              onPress={() => router.push('/voice-assistant' as Href)}
+            >
+              <View style={styles.voiceCardIcon}>
+                <MaterialCommunityIcons name="microphone" size={32} color={colors.white} />
+              </View>
+              <View style={styles.voiceCardText}>
+                <Body style={styles.voiceCardTitle}>{app.talkToBhuvedam}</Body>
+                <Caption style={styles.voiceCardSub}>
+                  {language === 'te'
+                    ? 'Matladandi — typing avasaram ledu. Crop add, mandi, mandu — anni cheppochu.'
+                    : 'Speak — no typing. Add crops, mandi, spray advice by voice.'}
+                </Caption>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={28} color="rgba(255,255,255,0.9)" />
+            </Pressable>
+          </Animated.View>
+        ) : null}
 
         <Animated.View entering={FadeInDown.delay(200).springify()}>
           <SectionTitle title={app.quickActions} />
@@ -203,6 +226,25 @@ const styles = StyleSheet.create({
     gap: spacing.xl,
   },
   weatherSection: { marginTop: spacing.sm },
+  chatContent: { flex: 1 },
+  voiceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+  },
+  voiceCardIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voiceCardText: { flex: 1, gap: spacing.xxs },
+  voiceCardTitle: { color: colors.white, fontFamily: 'Poppins_700Bold', fontSize: 17 },
+  voiceCardSub: { color: 'rgba(255,255,255,0.9)', lineHeight: 18, fontSize: 12 },
   actionsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

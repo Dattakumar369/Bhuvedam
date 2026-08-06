@@ -4,4 +4,6 @@ export const FEATURES = {
   commerceEnabled: false,
   /** Chat photo upload — hidden until vision model is production-ready */
   chatImageUploadEnabled: false,
+  /** Full-screen voice companion for low-literacy farmers */
+  voiceCompanionEnabled: true,
 } as const;
