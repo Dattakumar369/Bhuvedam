@@ -23,7 +23,7 @@ import { imageSessionCache } from '@/services/media/imageSessionCache';
 import { generateId } from '@/utils/format';
 import { detectQueryLanguage } from '@/utils/detectQueryLanguage';
 import { secureStorage } from '@/utils/storage';
-import { getUserScoped, setUserScoped } from '@/utils/userScopedStorage';
+import { getUserScoped, loadConversationsForUser, setUserScoped } from '@/utils/userScopedStorage';
 
 const MAX_STORED_CONVERSATIONS = 15;
 const MAX_MESSAGES_PER_CONVERSATION = 60;
@@ -120,17 +120,16 @@ export const useAIStore = create<AIState>((set, get) => ({
       return;
     }
 
-    const lastUserId = await secureStorage.get(STORAGE_KEYS.lastUserId);
-    if (lastUserId && lastUserId !== userId) {
-      await get().clearMemory();
-      return;
-    }
-
-    const raw = await getUserScoped(userId, STORAGE_KEYS.conversations);
+    const raw = await loadConversationsForUser(userId);
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw) as Conversation[];
-      if (parsed.length) set({ conversations: parsed });
+      if (parsed.length) {
+        set({
+          conversations: parsed,
+          activeConversationId: parsed[0]?.id ?? null,
+        });
+      }
     } catch {
       // ignore corrupt storage
     }

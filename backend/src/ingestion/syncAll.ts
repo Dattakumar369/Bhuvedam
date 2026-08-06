@@ -10,6 +10,7 @@ import { seedBhuvedamCrops } from './seedBhuvedamCrops';
 import { syncGlobalWeather } from './sources/openMeteoSource';
 import { syncGlobalSoilGrid } from './sources/soilGridsSource';
 import { syncAllKnowledge } from './sources/openLibrarySource';
+import { syncAllPublications } from './sources/publicationKnowledgeSource';
 import {
   ensureDataSources,
   finishSyncJob,
@@ -103,6 +104,17 @@ export async function runCompleteSync(): Promise<SyncResult[]> {
       },
     },
     { label: 'Research & books (OpenAlex/Open Library)', sourceId: 'openalex', run: () => syncAllKnowledge() },
+    {
+      label: 'Publications (ICAR, PJTSAU, ANGRAU, FAO, Gov)',
+      sourceId: 'publications',
+      run: async () => {
+        const parts = await syncAllPublications();
+        return {
+          fetched: parts.curated.fetched + parts.research.fetched,
+          upserted: parts.curated.upserted + parts.research.upserted,
+        };
+      },
+    },
     { label: 'Weather forecasts', sourceId: 'open_meteo', run: () => syncGlobalWeather() },
     { label: 'SoilGrids sample', sourceId: 'soilgrids', run: () => syncGlobalSoilGrid({ maxPoints: 1 }) },
   ];
@@ -172,9 +184,13 @@ async function main() {
   } else if (target === 'knowledge') {
     const r = await syncAllKnowledge();
     console.log('Knowledge (research, books, pests):', r);
+  } else if (target === 'publications') {
+    await ensureDataSources();
+    const r = await syncAllPublications();
+    console.log('Publications (ICAR/PJTSAU/ANGRAU/FAO/Gov):', JSON.stringify(r, null, 2));
   } else {
     console.log(
-      'Usage: tsx src/ingestion/syncAll.ts [all|complete|crops|mandi|soil|weather|fertilizers|fertilizer-catalog|ag-catalog|bulk-catalog|knowledge]',
+      'Usage: tsx src/ingestion/syncAll.ts [all|complete|crops|mandi|soil|weather|fertilizers|fertilizer-catalog|ag-catalog|bulk-catalog|knowledge|publications]',
     );
   }
 

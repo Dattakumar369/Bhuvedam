@@ -21,6 +21,7 @@
     "sync:ag-catalog": "tsx src/ingestion/syncAll.ts ag-catalog",
     "sync:bulk-catalog": "tsx src/ingestion/syncAll.ts bulk-catalog",
     "sync:knowledge": "tsx src/ingestion/syncAll.ts knowledge",
+    "sync:publications": "tsx src/ingestion/syncAll.ts publications",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

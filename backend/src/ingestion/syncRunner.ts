@@ -80,6 +80,14 @@ export async function ensureDataSources() {
       description: 'Generated pesticides, fungicides, fertilizers, diseases per crop',
       regionScope: 'India',
     },
+    {
+      id: 'publications',
+      name: 'ICAR / PJTSAU / ANGRAU / FAO / Gov Publications',
+      type: 'manual' as const,
+      baseUrl: 'https://www.icar.org.in',
+      description: 'Curated publications, university research, FAO guides, government advisories',
+      regionScope: 'India — AP & Telangana priority',
+    },
   ];
 
   for (const s of sources) {

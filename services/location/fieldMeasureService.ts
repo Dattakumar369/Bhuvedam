@@ -397,7 +397,9 @@ export async function startFieldWalkTracking(
     false,
   );
 
-  const subscription = await Location.watchPositionAsync(
+  let subscription: Location.LocationSubscription;
+  try {
+    subscription = await Location.watchPositionAsync(
     {
       accuracy: Location.Accuracy.BestForNavigation,
       distanceInterval: 2,
@@ -466,11 +468,18 @@ export async function startFieldWalkTracking(
       );
     },
   );
+  } catch {
+    throw new Error('GPS tracking start avvaledu — Location permission & GPS ON chudandi');
+  }
 
   return {
     stop: () => {
       stopped = true;
-      subscription.remove();
+      try {
+        subscription.remove();
+      } catch {
+        // ignore
+      }
     },
   };
 }

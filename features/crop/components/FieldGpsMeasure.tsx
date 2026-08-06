@@ -1,6 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import * as Location from 'expo-location';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { InteractionManager, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui';
 import { Body, Caption, Label } from '@/components/ui/Typography';
@@ -51,6 +52,13 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
   const [liveAccuracy, setLiveAccuracy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const walkSessionRef = useRef<WalkTrackSession | null>(null);
+  const lastLiveUpdateRef = useRef(0);
+  const pointsRef = useRef<FieldCorner[]>(initialPoints);
+  const LIVE_MAP_UPDATE_MS = 1000;
+
+  useEffect(() => {
+    pointsRef.current = points;
+  }, [points]);
 
   useEffect(() => {
     return () => {
@@ -122,10 +130,25 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
 
   const startWalk = async () => {
     setError(null);
-    setWalking(true);
     setWalkProgress(null);
     setLivePosition(null);
+    lastLiveUpdateRef.current = 0;
     setPoints([]);
+
+    try {
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.BestForNavigation,
+      });
+      setLivePosition({
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+      });
+    } catch {
+      setError('GPS location raaledu — Location ON unda chudandi');
+      return;
+    }
+
+    setWalking(true);
 
     try {
       const session = await startFieldWalkTracking(
@@ -138,14 +161,23 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
             sampleCount: corner.sampleCount,
           };
           setPoints((prev) => [...prev, fieldCorner]);
+          setLivePosition({
+            latitude: corner.latitude,
+            longitude: corner.longitude,
+          });
+          lastLiveUpdateRef.current = Date.now();
         },
         (progress) => {
           setWalkProgress(progress);
           if (progress.liveLatitude != null && progress.liveLongitude != null) {
-            setLivePosition({
-              latitude: progress.liveLatitude,
-              longitude: progress.liveLongitude,
-            });
+            const now = Date.now();
+            if (now - lastLiveUpdateRef.current >= LIVE_MAP_UPDATE_MS) {
+              lastLiveUpdateRef.current = now;
+              setLivePosition({
+                latitude: progress.liveLatitude,
+                longitude: progress.liveLongitude,
+              });
+            }
           }
         },
         [],
@@ -160,24 +192,32 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
   };
 
   const stopWalk = () => {
-    walkSessionRef.current?.stop();
+    const session = walkSessionRef.current;
     walkSessionRef.current = null;
+    session?.stop();
+
     setWalking(false);
     setWalkProgress(null);
     setLivePosition(null);
 
-    const simplified = simplifyWalkPoints(points as Coordinates[]);
-    if (simplified.length < 3) {
-      setError('Polam chuttu polamaina tiragali — inka konni steps tirigi malli try cheyandi');
-      return;
-    }
+    InteractionManager.runAfterInteractions(() => {
+      const currentPoints = pointsRef.current;
+      const simplified = simplifyWalkPoints(currentPoints as Coordinates[]);
 
-    const gap = walkLoopGapMeters(simplified);
-    if (gap > 15) {
-      setError(
-        `Start point daggaraki tiragali — ippudu ${Math.round(gap)}m dooram undi. Polam chuttu complete chesi start daggaraki vachi Stop nokki.`,
-      );
-    }
+      if (simplified.length < 3) {
+        setError('Polam chuttu polamaina tiragali — inka konni steps tirigi malli try cheyandi');
+        return;
+      }
+
+      const gap = walkLoopGapMeters(simplified);
+      if (gap > 15) {
+        setError(
+          `Start point daggaraki tiragali — ippudu ${Math.round(gap)}m dooram undi. Polam chuttu complete chesi start daggaraki vachi Stop nokki.`,
+        );
+      } else {
+        setError(null);
+      }
+    });
   };
 
   const switchMode = (next: 'walk' | 'corner') => {

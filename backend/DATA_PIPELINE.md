@@ -38,7 +38,37 @@ npm run sync:mandi    # Agmarknet varieties + prices
 npm run sync:soil     # SoilGrids pH/N/P globally
 npm run sync:weather  # Open-Meteo
 npm run sync:fertilizers  # FAO nutrient catalog
+npm run sync:publications # ICAR → PJTSAU → ANGRAU → research → FAO → gov advisories
 ```
+
+### Publication knowledge (issue identification)
+
+Priority order in `ag_knowledge`:
+
+1. ICAR publications & guidelines
+2. PJTSAU (Telangana) bulletins
+3. ANGRAU (Andhra Pradesh) bulletins
+4. University research papers (OpenAlex)
+5. FAO documents
+6. Government advisories (MoA/DoA)
+
+```powershell
+npm run sync:publications
+# Admin API: POST /api/knowledge/publications/sync
+```
+
+Extend curated bulletins in `backend/src/ingestion/data/`:
+
+| File | Entries | Content |
+|------|---------|---------|
+| `icarPublications.ts` | 25 | ICAR POP, IPM, disease bulletins |
+| `angrauPublications.ts` | 18 | AP regional advisories |
+| `pjtsauPublications.ts` | 18 | Telangana regional advisories |
+| `faoPublications.ts` | 14 | FAO global guides |
+
+Plus ICAR guidelines + gov advisories → **~102 curated entries** in DB (+ university research papers).
+
+To add from PDF/book: paste symptoms, doses, varieties into a new entry object, then `npm run sync:publications`.
 
 ### 4. Start API server
 
@@ -66,6 +96,9 @@ Use your LAN IP (not `localhost`) when testing on a physical phone.
 | **Agmarknet** | Mandi prices, variety names | India |
 | **SoilGrids** | pH, N, organic C, clay/sand/silt | Global |
 | **Open-Meteo** | Weather forecasts | Global |
+| **ICAR / PJTSAU / ANGRAU** | Package of practices, pest/disease bulletins | India — AP & TG |
+| **FAO** | IPM, water, post-harvest, 4R nutrient guides | Global reference |
+| **Gov advisories** | MoA schemes, kharif/rabi alerts, pesticide safety | India |
 
 ## Schedule sync (production)
 

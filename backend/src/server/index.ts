@@ -30,6 +30,7 @@ import { agProducts, cropDiseaseCatalog } from '../db/schema/agProducts';
 import { appError, parseOtpWaitSeconds } from '../errors/appError';
 import { syncBulkAgCatalog } from '../ingestion/sources/bulkAgCatalogSource';
 import { syncIndianAgCatalog, syncIndianFertilizerCatalog } from '../ingestion/sources/indianAgCatalogSource';
+import { syncAllPublications } from '../ingestion/sources/publicationKnowledgeSource';
 import { syncSoilAtPoint } from '../ingestion/sources/soilGridsSource';
 import { runFullSync } from '../ingestion/syncAll';
 import { geoKey } from '../ingestion/utils';
@@ -725,6 +726,17 @@ app.get('/api/soil-health/recommendations', async (c) => {
 app.post('/api/ag-catalog/sync', adminAuthMiddleware, async (c) => {
   const results = await syncIndianAgCatalog();
   return c.json({ ok: true, results, source: 'indian_ag_catalog' });
+});
+
+/** Sync ICAR, PJTSAU, ANGRAU, FAO publications + university research into ag_knowledge */
+app.post('/api/knowledge/publications/sync', adminAuthMiddleware, async (c) => {
+  const results = await syncAllPublications();
+  return c.json({
+    ok: true,
+    results,
+    source: 'publications',
+    priority: ['icar', 'pjtsau', 'angrau', 'university_research', 'fao', 'gov_advisory'],
+  });
 });
 
 /** Bulk catalog — 2000+ pesticides, 1000+ fungicides, 1000+ fertilizers, 2000+ diseases */

@@ -2,6 +2,7 @@ import { desc, ilike, or, sql } from 'drizzle-orm';
 
 import { db } from '../db';
 import { agKnowledge, agrochemicals, diseases, diseaseSprays } from '../db/schema';
+import { publicationPriority } from '../ingestion/data/publicationTypes';
 import { buildAgCatalogContextForAI } from './agCatalogSearch';
 
 export interface KnowledgeHit {
@@ -44,18 +45,26 @@ export async function searchKnowledge(query: string, limit = 20): Promise<Knowle
       ),
     )
     .orderBy(desc(agKnowledge.citationCount))
-    .limit(limit);
+    .limit(limit * 2);
 
-  const hits: KnowledgeHit[] = rows.map((r) => ({
-    type: r.type,
-    title: r.title,
-    summary: r.summary,
-    authors: (r.authors as string[]) ?? [],
-    url: r.url,
-    source: r.source,
-    citationCount: r.citationCount,
-    tags: (r.tags as string[]) ?? [],
-  }));
+  const hits: KnowledgeHit[] = rows
+    .map((r) => ({
+      type: r.type,
+      title: r.title,
+      summary: r.summary,
+      authors: (r.authors as string[]) ?? [],
+      url: r.url,
+      source: r.source,
+      citationCount: r.citationCount,
+      tags: (r.tags as string[]) ?? [],
+    }))
+    .sort((a, b) => {
+      const pa = publicationPriority(a.source);
+      const pb = publicationPriority(b.source);
+      if (pa !== pb) return pa - pb;
+      return (b.citationCount ?? 0) - (a.citationCount ?? 0);
+    })
+    .slice(0, limit);
 
   if (hits.length < limit) {
     const diseaseRows = await db
@@ -122,7 +131,14 @@ export function formatKnowledgeForAI(hits: KnowledgeHit[], query: string, catalo
     for (const h of hits) {
       const auth = h.authors.length ? ` — ${h.authors.slice(0, 3).join(', ')}` : '';
       const cite = h.citationCount ? ` [${h.citationCount} citations]` : '';
-      lines.push(`[${h.type.toUpperCase()}] ${h.title}${auth}${cite}`);
+      const priority = publicationPriority(h.source);
+      const trust =
+        priority <= 3
+          ? '★★★ trusted'
+          : priority <= 6
+            ? '★★ official'
+            : 'research';
+      lines.push(`[${h.type.toUpperCase()}|${h.source}|${trust}] ${h.title}${auth}${cite}`);
       if (h.summary) lines.push(`  ${h.summary.slice(0, 450)}`);
       if (h.url) lines.push(`  Link: ${h.url}`);
       lines.push('');

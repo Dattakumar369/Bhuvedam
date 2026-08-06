@@ -23,13 +23,46 @@ export async function migrateLegacyStorageForUser(userId: string): Promise<void>
   for (const baseKey of SCOPED_BASE_KEYS) {
     const scoped = userScopedKey(baseKey, userId);
     const existing = await secureStorage.get(scoped);
-    if (existing) continue;
+
+    if (existing && hasStoredPayload(baseKey, existing)) {
+      continue;
+    }
 
     const legacy = await secureStorage.get(baseKey);
-    if (legacy) {
+    if (legacy && hasStoredPayload(baseKey, legacy)) {
       await secureStorage.set(scoped, legacy);
     }
   }
+}
+
+function hasStoredPayload(baseKey: string, raw: string): boolean {
+  if (baseKey === STORAGE_KEYS.conversations) {
+    try {
+      const parsed = JSON.parse(raw) as unknown[];
+      return Array.isArray(parsed) && parsed.length > 0;
+    } catch {
+      return false;
+    }
+  }
+  return raw.trim().length > 2;
+}
+
+/** Load conversations — scoped first, then legacy unscoped backup. */
+export async function loadConversationsForUser(userId: string): Promise<string | null> {
+  await migrateLegacyStorageForUser(userId);
+
+  const scoped = await secureStorage.get(userScopedKey(STORAGE_KEYS.conversations, userId));
+  if (scoped && hasStoredPayload(STORAGE_KEYS.conversations, scoped)) {
+    return scoped;
+  }
+
+  const legacy = await secureStorage.get(STORAGE_KEYS.conversations);
+  if (legacy && hasStoredPayload(STORAGE_KEYS.conversations, legacy)) {
+    await secureStorage.set(userScopedKey(STORAGE_KEYS.conversations, userId), legacy);
+    return legacy;
+  }
+
+  return scoped ?? legacy;
 }
 
 export async function getUserScoped(userId: string, baseKey: string): Promise<string | null> {

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
+import MapView, { Marker, Polygon, Polyline, type Region } from 'react-native-maps';
 
+import { MapErrorBoundary } from '@/components/MapErrorBoundary';
 import { Caption } from '@/components/ui/Typography';
 import type { Coordinates } from '@/types/location';
 import { colors, radius, spacing } from '@/theme';
@@ -43,7 +44,7 @@ function regionFromPoints(points: Coordinates[], live?: Coordinates | null): Reg
   };
 }
 
-export function FieldMeasureMap({ points, livePosition, walking }: FieldMeasureMapProps) {
+function FieldMeasureMapInner({ points, livePosition, walking }: FieldMeasureMapProps) {
   const mapRef = useRef<MapView>(null);
 
   const startPoint = points[0] ?? null;
@@ -75,28 +76,32 @@ export function FieldMeasureMap({ points, livePosition, walking }: FieldMeasureM
   );
 
   useEffect(() => {
-    if (!mapRef.current || pathCoords.length < 1) {
-      if (walking && livePosition && mapRef.current) {
-        mapRef.current.animateToRegion(
-          {
-            latitude: livePosition.latitude,
-            longitude: livePosition.longitude,
-            latitudeDelta: DEFAULT_DELTA,
-            longitudeDelta: DEFAULT_DELTA,
-          },
-          400,
-        );
+    if (!mapRef.current) return;
+    try {
+      if (pathCoords.length < 2) {
+        if (walking && livePosition) {
+          mapRef.current.animateToRegion(
+            {
+              latitude: livePosition.latitude,
+              longitude: livePosition.longitude,
+              latitudeDelta: DEFAULT_DELTA,
+              longitudeDelta: DEFAULT_DELTA,
+            },
+            400,
+          );
+        }
+        return;
       }
-      return;
+      mapRef.current.fitToCoordinates(pathCoords, {
+        edgePadding: { top: 48, right: 48, bottom: 48, left: 48 },
+        animated: true,
+      });
+    } catch {
+      // Map native call failed — GPS path still works without camera animation.
     }
-    mapRef.current.fitToCoordinates(pathCoords, {
-      edgePadding: { top: 48, right: 48, bottom: 48, left: 48 },
-      animated: true,
-    });
   }, [pathCoords, walking, livePosition]);
 
   const visible = walking || points.length > 0;
-
   if (!visible) return null;
 
   return (
@@ -106,12 +111,15 @@ export function FieldMeasureMap({ points, livePosition, walking }: FieldMeasureM
         <MapView
           ref={mapRef}
           style={styles.map}
-          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
           mapType="satellite"
           initialRegion={initialRegion}
-          showsUserLocation={walking}
-          showsMyLocationButton={walking}
+          showsUserLocation={false}
+          showsMyLocationButton={false}
           rotateEnabled={false}
+          scrollEnabled
+          zoomEnabled
+          pitchEnabled={false}
+          loadingEnabled
         >
           {pathCoords.length >= 2 ? (
             <Polyline
@@ -147,6 +155,7 @@ export function FieldMeasureMap({ points, livePosition, walking }: FieldMeasureM
               title="Modalupettadam"
               description="Ekkada nunchi start chesaru"
               pinColor="green"
+              tracksViewChanges={false}
             />
           ) : null}
 
@@ -156,15 +165,17 @@ export function FieldMeasureMap({ points, livePosition, walking }: FieldMeasureM
               title="Aapadam"
               description="Ekkada aaparu"
               pinColor="red"
+              tracksViewChanges={false}
             />
           ) : null}
 
-          {walking && livePosition && points.length === 0 ? (
+          {walking && livePosition ? (
             <Marker
               coordinate={livePosition}
               title="Ippudu ikkada"
-              description="GPS fix avutundi..."
+              description="GPS live location"
               pinColor="blue"
+              tracksViewChanges={false}
             />
           ) : null}
         </MapView>
@@ -185,6 +196,17 @@ export function FieldMeasureMap({ points, livePosition, walking }: FieldMeasureM
         </View>
       </View>
     </View>
+  );
+}
+
+export function FieldMeasureMap(props: FieldMeasureMapProps) {
+  const visible = props.walking || props.points.length > 0;
+  if (!visible) return null;
+
+  return (
+    <MapErrorBoundary fallbackMessage="Map load avvaledu — GPS tho area measure avutundi kindha.">
+      <FieldMeasureMapInner {...props} />
+    </MapErrorBoundary>
   );
 }
 
