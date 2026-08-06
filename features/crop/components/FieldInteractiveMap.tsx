@@ -50,7 +50,7 @@ function regionFromPoints(points: Coordinates[], live?: Coordinates | null): Reg
   const maxLat = Math.max(...lats);
   const minLon = Math.min(...lons);
   const maxLon = Math.max(...lons);
-  const pad = 0.00012;
+  const pad = 0.00005;
 
   return {
     latitude: (minLat + maxLat) / 2,
@@ -215,7 +215,7 @@ function FieldInteractiveMapInner({
 
   const hintText =
     mode === 'draw'
-      ? 'Hybrid + Ultra zoom (21) · +/- · moolalu tap · drag adjust'
+      ? 'Hybrid + Ultra zoom (24) · +/- · moolalu tap · drag adjust'
       : mode === 'corner'
         ? 'Map lo perlu chusi GPS pin chesi marker drag chesi adjust cheyandi'
         : walking
@@ -366,7 +366,7 @@ function FieldInteractiveMapInner({
       <Caption style={styles.footer}>
         {points.length} moolalu
         {editable ? ' · pin pattukoni drag chesi adjust cheyandi' : ''}
-        {' · Ultra 🔍 = max zoom 21 (clear satellite)'}
+        {' · Ultra 🔍 = zoom 24 (max close)'}
       </Caption>
     </View>
   );

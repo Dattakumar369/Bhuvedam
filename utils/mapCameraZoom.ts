@@ -4,18 +4,17 @@ import type { Region } from 'react-native-maps';
 
 import {
   FIELD_DEFAULT_ZOOM,
-  FIELD_DELTA_MIN,
   FIELD_MAP_MAX_ZOOM,
   FIELD_MAP_MIN_ZOOM,
-  FIELD_ULTRA_DELTA,
   FIELD_ULTRA_ZOOM,
   clampRegionDelta,
+  deltaFromZoom,
   regionAt,
 } from '@/constants/mapViewConfig';
 
 type ZoomStep = 'in' | 'out' | 'ultra';
 
-/** Step zoom using Google camera levels — keeps native tile quality at max zoom 21. */
+/** Step zoom via Google camera — up to level 24 (+3 beyond native tile max 21). */
 export async function stepMapZoom(
   mapRef: RefObject<MapView | null>,
   step: ZoomStep,
@@ -34,15 +33,20 @@ export async function stepMapZoom(
           ? Math.min(current + 1, FIELD_MAP_MAX_ZOOM)
           : Math.max(current - 1, FIELD_MAP_MIN_ZOOM);
 
-    map.animateCamera({ ...camera, zoom: next, pitch: 0 }, { duration: 280 });
+    map.animateCamera({ ...camera, zoom: next, pitch: 0, altitude: 0 }, { duration: 260 });
     return;
   } catch {
     // Region fallback when getCamera unavailable
   }
 
   if (!regionFallback) return;
-  const factor = step === 'ultra' ? 0.12 : step === 'in' ? 0.42 : 1.85;
-  const delta = clampRegionDelta(regionFallback.latitudeDelta * factor, FIELD_DELTA_MIN);
+  const targetZoom =
+    step === 'ultra' ? FIELD_ULTRA_ZOOM : step === 'in' ? FIELD_DEFAULT_ZOOM + 2 : FIELD_MAP_MIN_ZOOM + 2;
+  const delta =
+    step === 'out'
+      ? clampRegionDelta(regionFallback.latitudeDelta * 1.9)
+      : deltaFromZoom(targetZoom);
+
   map.animateToRegion(
     {
       latitude: regionFallback.latitude,
@@ -50,11 +54,11 @@ export async function stepMapZoom(
       latitudeDelta: delta,
       longitudeDelta: delta,
     },
-    280,
+    260,
   );
 }
 
-/** Center map at high-quality native zoom (not blurry stretched region). */
+/** Center map at target camera zoom with crisp region fallback. */
 export function centerMapAtZoom(
   mapRef: RefObject<MapView | null>,
   latitude: number,
@@ -71,12 +75,12 @@ export function centerMapAtZoom(
         zoom,
         pitch: 0,
         heading: 0,
+        altitude: 0,
       },
       { duration: 450 },
     );
     return;
   } catch {
-    const delta = zoom >= FIELD_ULTRA_ZOOM - 0.5 ? FIELD_ULTRA_DELTA : FIELD_ULTRA_DELTA * 2.5;
-    map.animateToRegion(regionAt(latitude, longitude, delta), 450);
+    map.animateToRegion(regionAt(latitude, longitude, deltaFromZoom(zoom)), 450);
   }
 }
