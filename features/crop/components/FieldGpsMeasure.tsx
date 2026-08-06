@@ -10,6 +10,7 @@ import {
   captureFieldCorner,
   formatAccuracyHint,
   isWalkLoopClosed,
+  MAX_APPLY_AVG_ACCURACY_M,
   simplifyWalkPoints,
   startFieldWalkTracking,
   validateCornerPoints,
@@ -30,9 +31,9 @@ interface FieldGpsMeasureProps {
 }
 
 function qualityLabel(quality: GpsQuality): string {
-  if (quality === 'good') return '±1–2m bagundi ✓';
-  if (quality === 'ok') return '±2–3m ok';
-  return 'GPS weak';
+  if (quality === 'good') return '±1–2m ✓';
+  if (quality === 'ok') return '±2–3m';
+  return 'weak — malli try';
 }
 
 function qualityColor(quality: GpsQuality): string {
@@ -96,7 +97,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     setCapturing(true);
     setError(null);
     setLiveAccuracy(null);
-    setCaptureStep('GPS warm-up — polam moola lo nilchondi, phone open sky chudali (~15 sec)');
+    setCaptureStep('Moola lo nilchondi — open sky lo 3–8 sec (signal bagunte fast)');
 
     const onProgress = (p: CaptureProgress) => {
       setCaptureStep(p.message);
@@ -251,6 +252,16 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
 
   const applyMeasurement = () => {
     if (!measurement) return;
+    if (mode === 'corner' && avgAccuracy > MAX_APPLY_AVG_ACCURACY_M) {
+      setError(
+        `Moolala GPS weak (avg ±${Math.round(avgAccuracy * 10) / 10}m). Prati moola ±3m lopala ravali — weak moola Undo chesi malli add cheyandi.`,
+      );
+      return;
+    }
+    if (points.some((p) => p.quality === 'poor')) {
+      setError('Oka moola GPS weak undi — Undo chesi open sky lo malli add cheyandi.');
+      return;
+    }
     onApply(measurement);
   };
 
@@ -300,9 +311,9 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
       </View>
 
       <Caption style={styles.help}>
-        {mode === 'walk'
-          ? 'Polam border chuttu tirigi start point daggariki vachaka Stop nokki. Loop complete kaakapothe area wrong vastundi.'
-          : 'Open sky lo prati moola daggar 15 sec nilchondi, “add” nokki — idi kante exact. Chinna polam ki tape/patta measure best.'}
+        {mode === 'corner'
+          ? 'Prati moola daggar 3–8 sec nilchondi (open sky). ±3m kante weak reading accept cheyadu — area tappu vastundi.'
+          : 'Polam border chuttu tirigi start point daggariki vachaka Stop nokki. Loop complete kaakapothe area wrong vastundi.'}
       </Caption>
 
       {mode === 'walk' && walking ? (

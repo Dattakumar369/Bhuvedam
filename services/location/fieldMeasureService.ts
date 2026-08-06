@@ -4,20 +4,27 @@ import { requestLocationPermission } from '@/services/location/locationService';
 import type { Coordinates } from '@/types/location';
 
 /** Target: corners within ~1–3 m in open sky. Phone GPS cannot match survey-grade 1 cm. */
-const WARMUP_MS = 14_000;
-const WARMUP_POLL_MS = 450;
-const SAMPLE_COUNT = 16;
-const SAMPLE_GAP_MS = 450;
+const WARMUP_MS_MAX = 8_000;
+const WARMUP_MS_MIN = 2_500;
+const WARMUP_POLL_MS = 350;
+const SAMPLE_COUNT = 8;
+const SAMPLE_GAP_MS = 300;
 
-/** Reject corner if we cannot get readings this good after warm-up. */
-const MAX_ACCEPT_ACCURACY_M = 5;
-const GOOD_ACCURACY_M = 2;
-const OK_ACCURACY_M = 3.5;
+/** Signal already strong — skip long wait (typical open field: 3–6 sec). */
+const QUICK_FIX_ACCURACY_M = 2.5;
+
+/** Reject corner readings worse than this — prevents ±4m corners stacking into huge area error. */
+const MAX_ACCEPT_ACCURACY_M = 3.5;
+const GOOD_ACCURACY_M = 1.5;
+const OK_ACCURACY_M = 2.5;
 
 /** All used samples must lie within this radius of the final point. */
-const MAX_CLUSTER_SPREAD_M = 2.5;
-const STABLE_WINDOW = 5;
-const STABLE_SPREAD_M = 2;
+const MAX_CLUSTER_SPREAD_M = 1.8;
+const STABLE_WINDOW = 4;
+const STABLE_SPREAD_M = 1.5;
+
+/** Block "Use size" when average corner error is above this. */
+export const MAX_APPLY_AVG_ACCURACY_M = 3;
 
 export type GpsQuality = 'good' | 'ok' | 'poor';
 
@@ -75,13 +82,28 @@ function weightedCentroid(samples: GpsSample[]): Coordinates {
   let lat = 0;
   let lon = 0;
   for (const s of samples) {
-    const acc = Math.max(s.accuracy ?? MAX_ACCEPT_ACCURACY_M, 0.8);
+    const acc = Math.max(s.accuracy ?? MAX_ACCEPT_ACCURACY_M, 0.6);
     const w = 1 / (acc * acc);
     wSum += w;
     lat += s.latitude * w;
     lon += s.longitude * w;
   }
   return { latitude: lat / wSum, longitude: lon / wSum };
+}
+
+/** Median of best-accuracy samples — resists single bad jumps better than mean. */
+function medianOfBestSamples(samples: GpsSample[], take = 5): Coordinates {
+  const ranked = [...samples]
+    .filter((s) => s.accuracy != null && s.accuracy <= MAX_ACCEPT_ACCURACY_M)
+    .sort((a, b) => (a.accuracy ?? 99) - (b.accuracy ?? 99))
+    .slice(0, take);
+
+  if (!ranked.length) return weightedCentroid(samples);
+
+  const lats = ranked.map((s) => s.latitude).sort((a, b) => a - b);
+  const lons = ranked.map((s) => s.longitude).sort((a, b) => a - b);
+  const mid = Math.floor(ranked.length / 2);
+  return { latitude: lats[mid]!, longitude: lons[mid]! };
 }
 
 function removeOutliers(samples: GpsSample[], center: Coordinates, maxDistM: number): GpsSample[] {
@@ -110,7 +132,7 @@ async function readPosition(): Promise<GpsSample> {
 }
 
 /**
- * Warm up GPS at the corner — phone needs clear sky view for ~2–3 m accuracy.
+ * Warm up GPS — stops early when signal is good (often 3–6 sec in open field).
  */
 async function warmUpGps(onProgress?: (p: CaptureProgress) => void): Promise<GpsSample[]> {
   const warmupSamples: GpsSample[] = [];
@@ -119,13 +141,13 @@ async function warmUpGps(onProgress?: (p: CaptureProgress) => void): Promise<Gps
 
   onProgress?.({
     phase: 'warming',
-    message: 'GPS warm-up — polam moola lo nilchondi, phone pai ki chudandi (open sky)',
+    message: 'Moola lo nilchondi — signal bagunte 3–5 sec lo ready avutundi',
     bestAccuracyMeters: null,
     sampleIndex: 0,
     totalSamples: SAMPLE_COUNT,
   });
 
-  while (Date.now() - started < WARMUP_MS) {
+  while (Date.now() - started < WARMUP_MS_MAX) {
     const sample = await readPosition();
     warmupSamples.push(sample);
     if (sample.accuracy != null) {
@@ -133,16 +155,37 @@ async function warmUpGps(onProgress?: (p: CaptureProgress) => void): Promise<Gps
         bestAccuracy == null ? sample.accuracy : Math.min(bestAccuracy, sample.accuracy);
     }
 
-    const elapsed = Math.round((Date.now() - started) / 1000);
+    const elapsed = Date.now() - started;
+    const elapsedSec = Math.round(elapsed / 1000);
     onProgress?.({
       phase: 'warming',
-      message: `GPS fix avutundi… ${elapsed}s / ${Math.round(WARMUP_MS / 1000)}s — moola daggarame nilchondi`,
+      message:
+        bestAccuracy != null && bestAccuracy <= QUICK_FIX_ACCURACY_M
+          ? `GPS bagundi (±${Math.round(bestAccuracy * 10) / 10}m) — inka konni sec…`
+          : `GPS fix… ${elapsedSec}s — phone pai ki chudandi (open sky)`,
       bestAccuracyMeters: bestAccuracy,
       sampleIndex: warmupSamples.length,
       totalSamples: SAMPLE_COUNT,
     });
 
-    if (hasStableTail(warmupSamples)) break;
+    if (
+      elapsed >= WARMUP_MS_MIN &&
+      bestAccuracy != null &&
+      bestAccuracy <= QUICK_FIX_ACCURACY_M &&
+      hasStableTail(warmupSamples)
+    ) {
+      break;
+    }
+
+    if (
+      elapsed >= 5_000 &&
+      bestAccuracy != null &&
+      bestAccuracy <= OK_ACCURACY_M &&
+      hasStableTail(warmupSamples)
+    ) {
+      break;
+    }
+
     await delay(WARMUP_POLL_MS);
   }
 
@@ -207,23 +250,23 @@ export async function captureFieldCorner(
       .filter((v): v is number => v != null)
       .sort((a, b) => a - b)[0];
     throw new Error(
-      `GPS sariga fix avvaledu (best ±${Math.round(worstBest ?? 10)}m). Open sky lo 15 sec nilchondi, phone moola daggaraki pettandi, malli try cheyandi.`,
+      `GPS sariga fix avvaledu (best ±${Math.round(worstBest ?? 10)}m). Open sky lo nilchondi — ±3m kante baga ravali, lekapothe area tappu vastundi.`,
     );
   }
 
   let centroid = weightedCentroid(accurate);
   let cluster = removeOutliers(accurate, centroid, MAX_CLUSTER_SPREAD_M);
-  if (cluster.length < 4) {
-    cluster = [...accurate].sort(
-      (a, b) => (a.accuracy ?? 99) - (b.accuracy ?? 99),
-    ).slice(0, Math.min(8, accurate.length));
+  if (cluster.length < 3) {
+    cluster = [...accurate]
+      .sort((a, b) => (a.accuracy ?? 99) - (b.accuracy ?? 99))
+      .slice(0, Math.min(6, accurate.length));
   }
 
-  centroid = weightedCentroid(cluster);
+  centroid = medianOfBestSamples(cluster);
   cluster = removeOutliers(cluster, centroid, MAX_CLUSTER_SPREAD_M);
   if (!cluster.length) cluster = accurate.slice(0, 4);
 
-  centroid = weightedCentroid(cluster);
+  centroid = medianOfBestSamples(cluster);
   const spread = clusterSpreadMeters(cluster, centroid);
   const accuracyMeters =
     cluster.reduce((sum, s) => sum + (s.accuracy ?? MAX_ACCEPT_ACCURACY_M), 0) / cluster.length;
@@ -273,9 +316,11 @@ export function validateCornerPoints(
   return null;
 }
 
-/** Walk mode constants */
-const WALK_MIN_STEP_M = 3;
-const WALK_MAX_ACCURACY_M = 8;
+/** Walk mode — tighter accuracy, smaller steps for less shape error */
+const WALK_MIN_STEP_M = 2.5;
+const WALK_MAX_ACCURACY_M = 5;
+const WALK_BURST_SAMPLES = 3;
+const WALK_BURST_GAP_MS = 280;
 const WALK_CLOSE_LOOP_M = 12;
 const WALK_MIN_CLOSE_FOR_AREA_M = 15;
 
@@ -290,7 +335,7 @@ export function walkLoopGapMeters(points: Coordinates[]): number {
 }
 
 /** Remove GPS jitter — keep shape, drop redundant points */
-export function simplifyWalkPoints(points: Coordinates[], minDistM = 4): Coordinates[] {
+export function simplifyWalkPoints(points: Coordinates[], minDistM = 2.5): Coordinates[] {
   if (points.length <= 3) return points;
   const out: Coordinates[] = [points[0]!];
   for (let i = 1; i < points.length; i++) {
@@ -333,15 +378,30 @@ export interface WalkTrackSession {
   stop: () => void;
 }
 
-function sampleToCorner(sample: GpsSample): CapturedCorner {
-  const accuracyMeters = sample.accuracy ?? MAX_ACCEPT_ACCURACY_M;
+
+/** 3 quick readings when walk records a point — ~1 sec, better than single jumpy fix. */
+async function captureWalkBurst(): Promise<CapturedCorner | null> {
+  const burst: GpsSample[] = [];
+  for (let i = 0; i < WALK_BURST_SAMPLES; i++) {
+    burst.push(await readPosition());
+    if (i < WALK_BURST_SAMPLES - 1) await delay(WALK_BURST_GAP_MS);
+  }
+
+  const good = burst.filter((s) => s.accuracy != null && s.accuracy <= WALK_MAX_ACCURACY_M);
+  if (!good.length) return null;
+
+  const coords = medianOfBestSamples(good, good.length);
+  const accuracyMeters =
+    good.reduce((sum, s) => sum + (s.accuracy ?? WALK_MAX_ACCURACY_M), 0) / good.length;
+  const spread = clusterSpreadMeters(good, coords);
+
   return {
-    latitude: sample.latitude,
-    longitude: sample.longitude,
+    latitude: coords.latitude,
+    longitude: coords.longitude,
     accuracyMeters,
-    spreadMeters: null,
+    spreadMeters: spread,
     quality: qualityFromAccuracy(accuracyMeters),
-    sampleCount: 1,
+    sampleCount: good.length,
   };
 }
 
@@ -398,6 +458,26 @@ export async function startFieldWalkTracking(
   );
 
   let subscription: Location.LocationSubscription;
+  let burstBusy = false;
+
+  const recordCorner = (corner: CapturedCorner, acc: number | null, nearStart: boolean, live: GpsSample) => {
+    const last = recorded[recorded.length - 1];
+    if (last) {
+      distanceWalkedM += distanceMeters(last, corner);
+    }
+    recorded.push(corner);
+    onPoint(corner);
+    pushProgress(
+      nearStart
+        ? 'Start point daggaraki vacharu — “Stop” nokki area kanipistundi'
+        : `Recording… ${Math.round(distanceWalkedM)}m tirigaru · ${recorded.length} points`,
+      recorded.length,
+      acc,
+      nearStart,
+      live,
+    );
+  };
+
   try {
     subscription = await Location.watchPositionAsync(
     {
@@ -406,7 +486,7 @@ export async function startFieldWalkTracking(
       timeInterval: 1500,
     },
     (position) => {
-      if (stopped) return;
+      if (stopped || burstBusy) return;
 
       const sample: GpsSample = {
         latitude: position.coords.latitude,
@@ -427,10 +507,26 @@ export async function startFieldWalkTracking(
       }
 
       if (!recorded.length) {
-        const corner = sampleToCorner(sample);
-        recorded.push(corner);
-        onPoint(corner);
-        pushProgress('Start point record ayyindi — ippudu polam chuttu tiragandi', 1, acc, false, sample);
+        burstBusy = true;
+        void captureWalkBurst()
+          .then((corner) => {
+            if (stopped) return;
+            if (!corner) {
+              pushProgress(
+                'GPS weak — open sky lo nilchoni malli start cheyandi',
+                0,
+                acc,
+                false,
+                sample,
+              );
+              return;
+            }
+            recordCorner(corner, corner.accuracyMeters, false, sample);
+            pushProgress('Start point record ayyindi — ippudu polam chuttu tiragandi', 1, corner.accuracyMeters, false, sample);
+          })
+          .finally(() => {
+            burstBusy = false;
+          });
         return;
       }
 
@@ -452,20 +548,15 @@ export async function startFieldWalkTracking(
         return;
       }
 
-      const corner = sampleToCorner(sample);
-      recorded.push(corner);
-      distanceWalkedM += step;
-      onPoint(corner);
-
-      pushProgress(
-        nearStart
-          ? 'Start point daggaraki vacharu — “Stop” nokki area kanipistundi'
-          : `Recording… ${Math.round(distanceWalkedM)}m tirigaru · ${recorded.length} points`,
-        recorded.length,
-        acc,
-        nearStart,
-        sample,
-      );
+      burstBusy = true;
+      void captureWalkBurst()
+        .then((corner) => {
+          if (stopped || !corner) return;
+          recordCorner(corner, corner.accuracyMeters, nearStart, sample);
+        })
+        .finally(() => {
+          burstBusy = false;
+        });
     },
   );
   } catch {
