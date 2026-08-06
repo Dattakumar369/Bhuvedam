@@ -23,7 +23,6 @@ export interface AppTranslations {
   sprayGuide: string;
   mandiRates: string;
   nearbyPlaces: string;
-  talkToBhuvedam: string;
   schemes: string;
   fieldMeasure: string;
   cropGuide: string;
@@ -143,7 +142,6 @@ const enApp: AppTranslations = {
   sprayGuide: 'Spray Guide',
   mandiRates: 'Mandi Rates',
   nearbyPlaces: 'Mandi & Shops',
-  talkToBhuvedam: 'Talk — Matladandi',
   schemes: 'Schemes',
   fieldMeasure: 'Field Measure',
   cropGuide: 'Crop Guide',
@@ -263,7 +261,6 @@ const teApp: AppTranslations = {
   sprayGuide: 'స్ప్రే గైడ్',
   mandiRates: 'మండి ధరలు',
   nearbyPlaces: 'Mandi & Shops',
-  talkToBhuvedam: 'Matladandi 🎤',
   schemes: 'పథకాలు',
   fieldMeasure: 'పొలం కొలత',
   cropGuide: 'పంట గైడ్',

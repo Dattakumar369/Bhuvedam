@@ -19,7 +19,6 @@ export const taApp: AppTranslations = {
   sprayGuide: 'தெளிப்பு வழிகாட்டி',
   mandiRates: 'மandi விலை',
   nearbyPlaces: 'Mandi & Shops',
-  talkToBhuvedam: 'Matladandi 🎤',
   schemes: 'திட்டங்கள்',
   fieldMeasure: 'வயல் அளவீடு',
   cropGuide: 'பயிர் வழிகாட்டி',

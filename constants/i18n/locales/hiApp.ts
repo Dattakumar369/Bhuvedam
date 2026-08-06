@@ -19,7 +19,6 @@ export const hiApp: AppTranslations = {
   sprayGuide: 'स्प्रे गाइड',
   mandiRates: 'मंडी भाव',
   nearbyPlaces: 'Mandi & Shops',
-  talkToBhuvedam: 'Matladandi 🎤',
   schemes: 'योजनाएं',
   fieldMeasure: 'खेत माप',
   cropGuide: 'फसल गाइड',

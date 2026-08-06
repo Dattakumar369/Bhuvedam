@@ -8,8 +8,6 @@ export interface FarmerCropPlanting {
   /** Month number as string "1"–"12" */
   sowingMonth: string;
   sowingYear: string;
-  /** Exact sowing date ISO — voice companion reminders use this when set */
-  sowingDate?: string;
 }
 
 export interface FarmLocation {
