@@ -13,7 +13,7 @@ interface MapErrorBoundaryState {
   hasError: boolean;
 }
 
-/** Catches react-native-maps native crashes and keeps polam koluvu usable. */
+/** Catches MapLibre native crashes and keeps polam koluvu usable. */
 export class MapErrorBoundary extends Component<MapErrorBoundaryProps, MapErrorBoundaryState> {
   state: MapErrorBoundaryState = { hasError: false };
 

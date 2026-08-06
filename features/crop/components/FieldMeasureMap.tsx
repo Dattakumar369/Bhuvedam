@@ -1,10 +1,16 @@
-import Constants from 'expo-constants';
+import type { FeatureCollection, LineString, Point, Polygon } from 'geojson';
 import { useMemo } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
+import { StyleSheet, View } from 'react-native';
+import {
+  Camera,
+  GeoJSONSource,
+  Layer,
+  Map,
+} from '@maplibre/maplibre-react-native';
 
 import { MapErrorBoundary } from '@/components/MapErrorBoundary';
 import { Caption } from '@/components/ui/Typography';
+import { MAP_ATTRIBUTION, SATELLITE_MAP_STYLE } from '@/constants/mapStyles';
 import { useTranslation } from '@/hooks/useTranslation';
 import { simplifyWalkPoints } from '@/services/location/fieldMeasureService';
 import type { Coordinates } from '@/types/location';
@@ -19,35 +25,10 @@ interface FieldMeasureMapProps {
 }
 
 const MAP_HEIGHT = 280;
-const DEFAULT_DELTA = 0.0008;
 const MAX_MAP_POINTS = 32;
 
-function regionFromPoints(points: Coordinates[], live?: Coordinates | null): Region {
-  const all = [...points];
-  if (live) all.push(live);
-  if (!all.length) {
-    return {
-      latitude: 16.5062,
-      longitude: 80.648,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    };
-  }
-
-  const lats = all.map((p) => p.latitude);
-  const lons = all.map((p) => p.longitude);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLon = Math.min(...lons);
-  const maxLon = Math.max(...lons);
-  const pad = 0.00025;
-
-  return {
-    latitude: (minLat + maxLat) / 2,
-    longitude: (minLon + maxLon) / 2,
-    latitudeDelta: Math.max(maxLat - minLat + pad, DEFAULT_DELTA),
-    longitudeDelta: Math.max(maxLon - minLon + pad, DEFAULT_DELTA),
-  };
+function toLngLat(point: Coordinates): [number, number] {
+  return [point.longitude, point.latitude];
 }
 
 function mapRenderPoints(points: Coordinates[]): Coordinates[] {
@@ -67,12 +48,23 @@ function mapRenderPoints(points: Coordinates[]): Coordinates[] {
   return sampled.length >= 2 ? sampled : simplified.slice(0, MAX_MAP_POINTS);
 }
 
-function hasGoogleMapsApiKey(): boolean {
-  const key =
-    Constants.expoConfig?.android?.config?.googleMaps?.apiKey ??
-    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ??
-    '';
-  return Boolean(String(key).trim());
+function viewStateFromCoords(points: Coordinates[], live?: Coordinates | null) {
+  const all = [...points];
+  if (live) all.push(live);
+  if (!all.length) {
+    return { center: [80.648, 16.5062] as [number, number], zoom: 14 };
+  }
+  const lats = all.map((p) => p.latitude);
+  const lons = all.map((p) => p.longitude);
+  const center: [number, number] = [
+    (Math.min(...lons) + Math.max(...lons)) / 2,
+    (Math.min(...lats) + Math.max(...lats)) / 2,
+  ];
+  const latSpan = Math.max(...lats) - Math.min(...lats);
+  const lonSpan = Math.max(...lons) - Math.min(...lons);
+  const span = Math.max(latSpan, lonSpan, 0.0008);
+  const zoom = Math.min(18, Math.max(14, 17 - Math.log2(span / 0.002)));
+  return { center, zoom };
 }
 
 function FieldMeasureMapInner({
@@ -83,105 +75,162 @@ function FieldMeasureMapInner({
   mapKey,
 }: FieldMeasureMapProps) {
   const { fm } = useTranslation();
-  const useGoogleProvider = Platform.OS === 'android' && hasGoogleMapsApiKey();
-
   const renderPoints = useMemo(() => mapRenderPoints(points), [points]);
 
-  const mapRegion = useMemo(
-    () => regionFromPoints(renderPoints, walking ? livePosition : null),
-    [renderPoints, livePosition, walking, mapKey],
-  );
-
   const pathCoords = useMemo(() => {
-    const coords = renderPoints.map((p) => ({
-      latitude: p.latitude,
-      longitude: p.longitude,
-    }));
-    if (walking && livePosition) {
-      coords.push({
-        latitude: livePosition.latitude,
-        longitude: livePosition.longitude,
-      });
-    }
+    const coords = [...renderPoints];
+    if (walking && livePosition) coords.push(livePosition);
     return coords;
   }, [renderPoints, livePosition, walking]);
 
-  const showPolygon = reviewing && !walking && renderPoints.length >= 3;
-  const polygonCoords = showPolygon
-    ? renderPoints.map((p) => ({ latitude: p.latitude, longitude: p.longitude }))
-    : [];
+  const viewState = useMemo(
+    () => viewStateFromCoords(renderPoints, walking ? livePosition : null),
+    [renderPoints, livePosition, walking, mapKey],
+  );
 
-  const startPoint = renderPoints[0] ?? null;
-  const endPoint = renderPoints.length > 1 ? renderPoints[renderPoints.length - 1] : null;
-  const showEndMarker = reviewing && !walking && endPoint != null && renderPoints.length > 1;
+  const pathGeoJson = useMemo((): FeatureCollection<LineString> => {
+    if (pathCoords.length < 2) {
+      return { type: 'FeatureCollection', features: [] };
+    }
+    return {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: pathCoords.map(toLngLat),
+          },
+        },
+      ],
+    };
+  }, [pathCoords]);
+
+  const polygonGeoJson = useMemo((): FeatureCollection<Polygon> => {
+    if (!reviewing || walking || renderPoints.length < 3) {
+      return { type: 'FeatureCollection', features: [] };
+    }
+    const ring = renderPoints.map(toLngLat);
+    const first = ring[0]!;
+    const last = ring[ring.length - 1]!;
+    if (first[0] !== last[0] || first[1] !== last[1]) {
+      ring.push(first);
+    }
+    return {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'Polygon',
+            coordinates: [ring],
+          },
+        },
+      ],
+    };
+  }, [renderPoints, reviewing, walking]);
+
+  const markerGeoJson = useMemo((): FeatureCollection<Point> => {
+    const features: FeatureCollection<Point>['features'] = [];
+    const start = renderPoints[0];
+    if (start) {
+      features.push({
+        type: 'Feature',
+        properties: { role: 'start' },
+        geometry: { type: 'Point', coordinates: toLngLat(start) },
+      });
+    }
+    if (reviewing && !walking && renderPoints.length > 1) {
+      const end = renderPoints[renderPoints.length - 1]!;
+      features.push({
+        type: 'Feature',
+        properties: { role: 'end' },
+        geometry: { type: 'Point', coordinates: toLngLat(end) },
+      });
+    }
+    if (walking && livePosition) {
+      features.push({
+        type: 'Feature',
+        properties: { role: 'live' },
+        geometry: { type: 'Point', coordinates: toLngLat(livePosition) },
+      });
+    }
+    return { type: 'FeatureCollection', features };
+  }, [renderPoints, livePosition, walking, reviewing]);
 
   return (
     <View style={styles.wrap}>
       <Caption style={styles.mapTitle}>{fm.mapTitle}</Caption>
       <View style={styles.mapBox}>
-        <MapView
-          key={mapKey}
-          style={styles.map}
-          provider={useGoogleProvider ? PROVIDER_GOOGLE : undefined}
-          mapType="satellite"
-          initialRegion={mapRegion}
-          showsUserLocation={false}
-          showsMyLocationButton={false}
-          rotateEnabled={false}
-          scrollEnabled={!walking}
-          zoomEnabled={!walking}
-          pitchEnabled={false}
-          moveOnMarkerPress={false}
-          loadingEnabled
-          cacheEnabled
-        >
-          {pathCoords.length >= 2 ? (
-            <Polyline
-              coordinates={pathCoords}
-              strokeColor={colors.primary}
-              strokeWidth={4}
-              lineCap="round"
-              lineJoin="round"
-            />
+        <Map mapStyle={SATELLITE_MAP_STYLE} style={styles.map}>
+          <Camera
+            key={mapKey}
+            initialViewState={{
+              center: viewState.center,
+              zoom: viewState.zoom,
+            }}
+          />
+
+          {polygonGeoJson.features.length > 0 ? (
+            <GeoJSONSource id="field-polygon" data={polygonGeoJson}>
+              <Layer
+                id="field-polygon-fill"
+                type="fill"
+                paint={{ 'fill-color': 'rgba(46, 125, 50, 0.35)' }}
+              />
+              <Layer
+                id="field-polygon-line"
+                type="line"
+                paint={{ 'line-color': colors.primary, 'line-width': 2 }}
+              />
+            </GeoJSONSource>
           ) : null}
 
-          {showPolygon ? (
-            <Polygon
-              coordinates={polygonCoords}
-              fillColor="rgba(46, 125, 50, 0.35)"
-              strokeColor={colors.primary}
-              strokeWidth={2}
-            />
+          {pathGeoJson.features.length > 0 ? (
+            <GeoJSONSource id="field-path" data={pathGeoJson}>
+              <Layer
+                id="field-path-line"
+                type="line"
+                paint={{
+                  'line-color': colors.primary,
+                  'line-width': 4,
+                  'line-cap': 'round',
+                  'line-join': 'round',
+                }}
+              />
+            </GeoJSONSource>
           ) : null}
 
-          {startPoint ? (
-            <Marker
-              coordinate={startPoint}
-              title={fm.mapLegendStart}
-              pinColor="green"
-              tracksViewChanges={false}
-            />
+          {markerGeoJson.features.length > 0 ? (
+            <GeoJSONSource id="field-markers" data={markerGeoJson}>
+              <Layer
+                id="field-marker-circles"
+                type="circle"
+                paint={{
+                  'circle-radius': 7,
+                  'circle-color': [
+                    'match',
+                    ['get', 'role'],
+                    'start',
+                    '#2E7D32',
+                    'end',
+                    colors.error,
+                    'live',
+                    '#1E88E5',
+                    '#2E7D32',
+                  ],
+                  'circle-stroke-width': 2,
+                  'circle-stroke-color': '#ffffff',
+                }}
+              />
+            </GeoJSONSource>
           ) : null}
-
-          {showEndMarker && endPoint ? (
-            <Marker
-              coordinate={endPoint}
-              title={fm.mapLegendEnd}
-              pinColor="red"
-              tracksViewChanges={false}
-            />
-          ) : null}
-
-          {walking && livePosition ? (
-            <Marker
-              coordinate={livePosition}
-              title={fm.mapLiveMarker}
-              pinColor="blue"
-              tracksViewChanges={false}
-            />
-          ) : null}
-        </MapView>
+        </Map>
       </View>
+
+      <Caption style={styles.attribution}>{MAP_ATTRIBUTION}</Caption>
 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
@@ -228,6 +277,11 @@ const styles = StyleSheet.create({
     borderColor: `${colors.primary}40`,
   },
   map: { flex: 1 },
+  attribution: {
+    color: colors.textTertiary,
+    fontSize: 10,
+    textAlign: 'center',
+  },
   legend: {
     gap: spacing.xxs,
     paddingHorizontal: spacing.xs,
