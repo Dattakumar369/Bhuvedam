@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,9 +9,11 @@ import { MapErrorBoundary } from '@/components/MapErrorBoundary';
 import { Card, Header } from '@/components/ui';
 import { Body, Caption } from '@/components/ui/Typography';
 import { isGoogleMapsConfigured } from '@/constants/mapsConfig';
+import { FIELD_CLOSE_DELTA, NEARBY_OVERVIEW_DELTA, regionAt } from '@/constants/mapViewConfig';
 import { NearbyPlaceCard } from '@/features/places/components/NearbyPlaceCard';
 import { useNearbyPlaces } from '@/hooks/useNearbyPlaces';
 import type { NearbyPlaceFilter } from '@/types/nearbyPlace';
+import { reverseGeocodeMapLabel } from '@/utils/mapLocationLabel';
 import { colors, layout, radius, spacing } from '@/theme';
 
 const FILTERS: { id: NearbyPlaceFilter; label: string }[] = [
@@ -24,20 +26,32 @@ function NearbyPlacesMap({
   latitude,
   longitude,
   places,
+  areaLabel,
 }: {
   latitude: number;
   longitude: number;
   places: Array<{ id: string; name: string; latitude: number; longitude: number; placeType: string }>;
+  areaLabel: string | null;
 }) {
+  const mapRef = useRef<MapView>(null);
+  const [ready, setReady] = useState(false);
+
   const region = useMemo(
-    () => ({
-      latitude,
-      longitude,
-      latitudeDelta: 0.15,
-      longitudeDelta: 0.15,
-    }),
+    () => regionAt(latitude, longitude, NEARBY_OVERVIEW_DELTA),
     [latitude, longitude],
   );
+
+  useEffect(() => {
+    if (!mapRef.current || !ready || places.length === 0) return;
+    const coords = [
+      { latitude, longitude },
+      ...places.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
+    ];
+    mapRef.current.fitToCoordinates(coords, {
+      edgePadding: { top: 48, right: 40, bottom: 40, left: 40 },
+      animated: true,
+    });
+  }, [ready, places, latitude, longitude]);
 
   if (!isGoogleMapsConfigured()) {
     return (
@@ -48,27 +62,68 @@ function NearbyPlacesMap({
   }
 
   return (
-    <MapErrorBoundary fallbackMessage="Map load avvaledu — list nunchi directions use cheyandi.">
-      <View style={styles.mapBox}>
-        <MapView
-          style={styles.map}
-          provider={PROVIDER_GOOGLE}
-          mapType="standard"
-          initialRegion={region}
-          showsUserLocation
-          rotateEnabled={false}
-        >
-          {places.map((place) => (
-            <Marker
-              key={place.id}
-              coordinate={{ latitude: place.latitude, longitude: place.longitude }}
-              title={place.name}
-              pinColor={place.placeType === 'mandi' ? 'orange' : 'green'}
-            />
-          ))}
-        </MapView>
-      </View>
-    </MapErrorBoundary>
+    <View style={styles.mapSection}>
+      {areaLabel ? (
+        <View style={styles.areaLabelBox}>
+          <MaterialCommunityIcons name="map-marker-radius" size={16} color={colors.primary} />
+          <Caption style={styles.areaLabelText} numberOfLines={2}>
+            {areaLabel}
+          </Caption>
+        </View>
+      ) : null}
+      <MapErrorBoundary fallbackMessage="Map load avvaledu — list nunchi directions use cheyandi.">
+        <View style={styles.mapBox}>
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            provider={PROVIDER_GOOGLE}
+            mapType="standard"
+            initialRegion={region}
+            onMapReady={() => setReady(true)}
+            showsUserLocation
+            rotateEnabled={false}
+            zoomEnabled
+            scrollEnabled
+            minZoomLevel={12}
+            maxZoomLevel={19}
+          >
+            {places.map((place) => (
+              <Marker
+                key={place.id}
+                coordinate={{ latitude: place.latitude, longitude: place.longitude }}
+                title={place.name}
+                description={place.placeType === 'mandi' ? 'Mandi market' : 'Ag shop'}
+                pinColor={place.placeType === 'mandi' ? 'orange' : 'green'}
+              />
+            ))}
+          </MapView>
+          <View style={styles.zoomRow}>
+            <Pressable
+              style={styles.zoomBtn}
+              onPress={() =>
+                mapRef.current?.animateToRegion(
+                  regionAt(latitude, longitude, FIELD_CLOSE_DELTA * 3),
+                  300,
+                )
+              }
+            >
+              <MaterialCommunityIcons name="plus" size={20} color={colors.primary} />
+            </Pressable>
+            <Pressable
+              style={styles.zoomBtn}
+              onPress={() =>
+                mapRef.current?.animateToRegion(
+                  regionAt(latitude, longitude, NEARBY_OVERVIEW_DELTA),
+                  300,
+                )
+              }
+            >
+              <MaterialCommunityIcons name="minus" size={20} color={colors.primary} />
+            </Pressable>
+          </View>
+        </View>
+      </MapErrorBoundary>
+    </View>
   );
 }
 
@@ -77,6 +132,18 @@ export default function NearbyPlacesScreen() {
   const { places, latitude, longitude, locationLabel, isLoading, error, filter, setFilter, refresh } =
     useNearbyPlaces();
   const [refreshing, setRefreshing] = useState(false);
+  const [areaLabel, setAreaLabel] = useState<string | null>(locationLabel);
+
+  useEffect(() => {
+    if (latitude == null || longitude == null) return;
+    void reverseGeocodeMapLabel(latitude, longitude).then((label) => {
+      if (label) setAreaLabel(label);
+    });
+  }, [latitude, longitude]);
+
+  useEffect(() => {
+    if (locationLabel) setAreaLabel(locationLabel);
+  }, [locationLabel]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -129,7 +196,12 @@ export default function NearbyPlacesScreen() {
         ) : null}
 
         {!isLoading && latitude != null && longitude != null ? (
-          <NearbyPlacesMap latitude={latitude} longitude={longitude} places={places} />
+          <NearbyPlacesMap
+            latitude={latitude}
+            longitude={longitude}
+            places={places}
+            areaLabel={areaLabel}
+          />
         ) : null}
 
         {!isLoading && places.length > 0 ? (
@@ -173,14 +245,43 @@ const styles = StyleSheet.create({
   filterTextActive: { color: colors.surface },
   loadingBox: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg },
   loadingText: { color: colors.textSecondary },
+  mapSection: { gap: spacing.xs },
+  areaLabelBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: `${colors.primary}10`,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: `${colors.primary}25`,
+  },
+  areaLabelText: { flex: 1, color: colors.textPrimary, lineHeight: 18, fontSize: 12 },
   mapBox: {
-    height: 220,
+    height: 280,
     borderRadius: radius.lg,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.border,
   },
   map: { flex: 1 },
+  zoomRow: {
+    position: 'absolute',
+    right: spacing.sm,
+    bottom: spacing.sm,
+    gap: spacing.xs,
+  },
+  zoomBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   mapPlaceholder: {
     height: 120,
     alignItems: 'center',

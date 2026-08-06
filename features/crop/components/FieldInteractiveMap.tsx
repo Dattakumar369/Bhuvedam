@@ -8,12 +8,23 @@ import { MapErrorBoundary } from '@/components/MapErrorBoundary';
 import { SearchInput } from '@/components/ui';
 import { Caption } from '@/components/ui/Typography';
 import { isGoogleMapsConfigured } from '@/constants/mapsConfig';
+import {
+  FIELD_CLOSE_DELTA,
+  FIELD_DEFAULT_REGION,
+  FIELD_MAP_MAX_ZOOM,
+  FIELD_MAP_MIN_ZOOM,
+  FIELD_SEARCH_DELTA,
+  clampRegionDelta,
+  regionAt,
+} from '@/constants/mapViewConfig';
 import { searchPlaces } from '@/services/geo/placeSearchService';
 import { requestLocationPermission } from '@/services/location/locationService';
 import type { Coordinates, PlaceSearchResult } from '@/types/location';
+import { reverseGeocodeMapLabel } from '@/utils/mapLocationLabel';
 import { colors, radius, spacing } from '@/theme';
 
 export type FieldMapMode = 'draw' | 'corner' | 'walk';
+type FieldMapLayer = 'hybrid' | 'satellite';
 
 interface FieldInteractiveMapProps {
   mode: FieldMapMode;
@@ -24,19 +35,13 @@ interface FieldInteractiveMapProps {
   onMovePoint?: (index: number, point: Coordinates) => void;
 }
 
-const MAP_HEIGHT = 360;
-const DEFAULT_REGION: Region = {
-  latitude: 16.5062,
-  longitude: 80.648,
-  latitudeDelta: 0.004,
-  longitudeDelta: 0.004,
-};
-const DEFAULT_DELTA = 0.0008;
+const MAP_HEIGHT = 420;
+const FIT_PADDING = { top: 72, right: 56, bottom: 56, left: 56 };
 
 function regionFromPoints(points: Coordinates[], live?: Coordinates | null): Region {
   const all = [...points];
   if (live) all.push(live);
-  if (!all.length) return DEFAULT_REGION;
+  if (!all.length) return FIELD_DEFAULT_REGION;
 
   const lats = all.map((p) => p.latitude);
   const lons = all.map((p) => p.longitude);
@@ -44,13 +49,13 @@ function regionFromPoints(points: Coordinates[], live?: Coordinates | null): Reg
   const maxLat = Math.max(...lats);
   const minLon = Math.min(...lons);
   const maxLon = Math.max(...lons);
-  const pad = 0.00025;
+  const pad = 0.00012;
 
   return {
     latitude: (minLat + maxLat) / 2,
     longitude: (minLon + maxLon) / 2,
-    latitudeDelta: Math.max(maxLat - minLat + pad, DEFAULT_DELTA),
-    longitudeDelta: Math.max(maxLon - minLon + pad, DEFAULT_DELTA),
+    latitudeDelta: clampRegionDelta(Math.max(maxLat - minLat + pad, FIELD_CLOSE_DELTA)),
+    longitudeDelta: clampRegionDelta(Math.max(maxLon - minLon + pad, FIELD_CLOSE_DELTA)),
   };
 }
 
@@ -63,7 +68,11 @@ function FieldInteractiveMapInner({
   onMovePoint,
 }: FieldInteractiveMapProps) {
   const mapRef = useRef<MapView>(null);
+  const labelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false);
+  const [mapLayer, setMapLayer] = useState<FieldMapLayer>('hybrid');
+  const [region, setRegion] = useState<Region>(FIELD_DEFAULT_REGION);
+  const [areaLabel, setAreaLabel] = useState<string | null>(null);
   const [placeQuery, setPlaceQuery] = useState('');
   const [placeResults, setPlaceResults] = useState<PlaceSearchResult[]>([]);
   const [placeSearching, setPlaceSearching] = useState(false);
@@ -93,12 +102,22 @@ function FieldInteractiveMapInner({
     [points, livePosition],
   );
 
-  const centerOnCoords = useCallback((coords: Coordinates, delta = 0.003) => {
-    mapRef.current?.animateToRegion(
-      { ...coords, latitudeDelta: delta, longitudeDelta: delta },
-      500,
-    );
+  const refreshAreaLabel = useCallback((lat: number, lng: number) => {
+    if (labelTimerRef.current) clearTimeout(labelTimerRef.current);
+    labelTimerRef.current = setTimeout(() => {
+      void reverseGeocodeMapLabel(lat, lng).then(setAreaLabel);
+    }, 400);
   }, []);
+
+  const centerOnCoords = useCallback(
+    (coords: Coordinates, delta = FIELD_CLOSE_DELTA) => {
+      const next = regionAt(coords.latitude, coords.longitude, delta);
+      setRegion(next);
+      mapRef.current?.animateToRegion(next, 450);
+      refreshAreaLabel(coords.latitude, coords.longitude);
+    },
+    [refreshAreaLabel],
+  );
 
   const centerOnUser = useCallback(async () => {
     try {
@@ -111,9 +130,29 @@ function FieldInteractiveMapInner({
     }
   }, [centerOnCoords]);
 
+  const zoomRegion = useCallback((factor: number) => {
+    setRegion((prev) => {
+      const nextDelta = clampRegionDelta(prev.latitudeDelta * factor, FIELD_CLOSE_DELTA * 0.5, 0.02);
+      const next: Region = {
+        latitude: prev.latitude,
+        longitude: prev.longitude,
+        latitudeDelta: nextDelta,
+        longitudeDelta: nextDelta,
+      };
+      mapRef.current?.animateToRegion(next, 220);
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     if (mode === 'draw' || mode === 'corner') void centerOnUser();
   }, [mode, centerOnUser]);
+
+  useEffect(() => {
+    return () => {
+      if (labelTimerRef.current) clearTimeout(labelTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const q = placeQuery.trim();
@@ -139,11 +178,13 @@ function FieldInteractiveMapInner({
     try {
       if (pathCoords.length >= 2) {
         mapRef.current.fitToCoordinates(pathCoords, {
-          edgePadding: { top: 56, right: 48, bottom: 48, left: 48 },
+          edgePadding: FIT_PADDING,
           animated: true,
         });
+      } else if (pathCoords.length === 1) {
+        centerOnCoords(pathCoords[0]!, FIELD_CLOSE_DELTA);
       } else if (livePosition && mode === 'walk') {
-        centerOnCoords(livePosition);
+        centerOnCoords(livePosition, FIELD_CLOSE_DELTA);
       }
     } catch {
       // ignore
@@ -154,11 +195,17 @@ function FieldInteractiveMapInner({
     if (tappable) onAddPoint?.(e.nativeEvent.coordinate);
   };
 
+  const handleRegionChangeComplete = (next: Region) => {
+    setRegion(next);
+    refreshAreaLabel(next.latitude, next.longitude);
+  };
+
   const selectPlace = (place: PlaceSearchResult) => {
     if (place.latitude == null || place.longitude == null) return;
     setPlaceQuery(place.label);
     setPlaceResults([]);
-    centerOnCoords({ latitude: place.latitude, longitude: place.longitude }, 0.004);
+    centerOnCoords({ latitude: place.latitude, longitude: place.longitude }, FIELD_SEARCH_DELTA);
+    setAreaLabel(place.label);
   };
 
   if (!isGoogleMapsConfigured()) {
@@ -173,9 +220,9 @@ function FieldInteractiveMapInner({
 
   const hintText =
     mode === 'draw'
-      ? 'Village search chesi map center cheyandi · moolalu tap · pin drag chesi adjust'
+      ? 'Hybrid lo village/road perlu kanipistayi · zoom +/- · moolalu tap · drag adjust'
       : mode === 'corner'
-        ? 'Map lo chusi GPS pin chesaka marker drag chesi exact ga adjust cheyandi'
+        ? 'Map lo perlu chusi GPS pin chesi marker drag chesi adjust cheyandi'
         : walking
           ? 'Polam chuttu tirugutunnaru — map lo live path kanipistundi'
           : 'Walk aipoyaka moolalu drag chesi adjust cheyochu';
@@ -187,7 +234,7 @@ function FieldInteractiveMapInner({
           <SearchInput
             value={placeQuery}
             onChangeText={setPlaceQuery}
-            placeholder="Village / mandal search — polam daggaraki map vellandi"
+            placeholder="Village / road / mandal search — polam daggaraki map vellandi"
           />
           {placeSearching ? (
             <Caption style={styles.searchStatus}>Searching…</Caption>
@@ -207,11 +254,44 @@ function FieldInteractiveMapInner({
         </View>
       ) : null}
 
+      {areaLabel ? (
+        <View style={styles.areaLabelBox}>
+          <MaterialCommunityIcons name="sign-real-estate" size={16} color={colors.primary} />
+          <Caption style={styles.areaLabelText} numberOfLines={2}>
+            {areaLabel}
+          </Caption>
+        </View>
+      ) : null}
+
       <View style={styles.toolbar}>
         <Caption style={styles.hint}>{hintText}</Caption>
-        <Pressable style={styles.locBtn} onPress={() => void centerOnUser()} accessibilityLabel="My location">
-          <MaterialCommunityIcons name="crosshairs-gps" size={22} color={colors.primary} />
-        </Pressable>
+        <View style={styles.toolRow}>
+          <Pressable
+            style={[styles.layerChip, mapLayer === 'hybrid' && styles.layerChipActive]}
+            onPress={() => setMapLayer('hybrid')}
+          >
+            <Caption style={[styles.layerText, mapLayer === 'hybrid' && styles.layerTextActive]}>
+              Hybrid
+            </Caption>
+          </Pressable>
+          <Pressable
+            style={[styles.layerChip, mapLayer === 'satellite' && styles.layerChipActive]}
+            onPress={() => setMapLayer('satellite')}
+          >
+            <Caption style={[styles.layerText, mapLayer === 'satellite' && styles.layerTextActive]}>
+              Satellite
+            </Caption>
+          </Pressable>
+          <Pressable style={styles.toolBtn} onPress={() => zoomRegion(0.55)} accessibilityLabel="Zoom in">
+            <MaterialCommunityIcons name="plus" size={22} color={colors.primary} />
+          </Pressable>
+          <Pressable style={styles.toolBtn} onPress={() => zoomRegion(1.8)} accessibilityLabel="Zoom out">
+            <MaterialCommunityIcons name="minus" size={22} color={colors.primary} />
+          </Pressable>
+          <Pressable style={styles.toolBtn} onPress={() => void centerOnUser()} accessibilityLabel="My location">
+            <MaterialCommunityIcons name="crosshairs-gps" size={22} color={colors.primary} />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.box}>
@@ -219,17 +299,24 @@ function FieldInteractiveMapInner({
           ref={mapRef}
           style={styles.map}
           provider={PROVIDER_GOOGLE}
-          mapType="satellite"
+          mapType={mapLayer}
           initialRegion={initialRegion}
-          onMapReady={() => setReady(true)}
+          onMapReady={() => {
+            setReady(true);
+            refreshAreaLabel(initialRegion.latitude, initialRegion.longitude);
+          }}
+          onRegionChangeComplete={handleRegionChangeComplete}
           onPress={ready && tappable ? handleMapPress : undefined}
           showsUserLocation
           showsMyLocationButton={false}
+          showsCompass={false}
           rotateEnabled={false}
           scrollEnabled
           zoomEnabled
           pitchEnabled={false}
           loadingEnabled
+          minZoomLevel={FIELD_MAP_MIN_ZOOM}
+          maxZoomLevel={FIELD_MAP_MAX_ZOOM}
         >
           {pathCoords.length >= 2 ? (
             <Polyline
@@ -256,7 +343,7 @@ function FieldInteractiveMapInner({
               coordinate={point}
               title={`Moola ${index + 1}`}
               description={editable ? 'Drag chesi adjust cheyandi' : undefined}
-              pinColor={index === 0 ? 'green' : mode === 'walk' ? 'orange' : colors.primary}
+              pinColor={index === 0 ? 'green' : mode === 'walk' ? 'orange' : 'red'}
               draggable={editable}
               onDragEnd={(e) => onMovePoint?.(index, e.nativeEvent.coordinate)}
               tracksViewChanges={false}
@@ -277,6 +364,7 @@ function FieldInteractiveMapInner({
       <Caption style={styles.footer}>
         {points.length} moolalu
         {editable ? ' · pin pattukoni drag chesi adjust cheyandi' : ''}
+        {' · Hybrid = satellite + village/road perlu'}
       </Caption>
     </View>
   );
@@ -311,12 +399,36 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   resultText: { flex: 1, color: colors.textPrimary, lineHeight: 18 },
-  toolbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  hint: { flex: 1, color: colors.textSecondary, lineHeight: 18, fontSize: 11 },
-  locBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  areaLabelBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: `${colors.primary}10`,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: `${colors.primary}25`,
+  },
+  areaLabelText: { flex: 1, color: colors.textPrimary, lineHeight: 18, fontSize: 12 },
+  toolbar: { gap: spacing.xs },
+  hint: { color: colors.textSecondary, lineHeight: 18, fontSize: 11 },
+  toolRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
+  layerChip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  layerChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  layerText: { fontFamily: 'Poppins_600SemiBold', color: colors.primary, fontSize: 11 },
+  layerTextActive: { color: colors.surface },
+  toolBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
