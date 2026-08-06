@@ -46,6 +46,8 @@ export const STORAGE_KEYS = {
   themeMode: 'bhuvedam_theme_mode',
   farmerContext: 'bhuvedam_farmer_context',
   conversations: 'bhuvedam_ai_conversations',
+  /** Last user id that wrote chat backup — used to recover orphaned scoped keys. */
+  conversationsOwner: 'bhuvedam_ai_conversations_owner',
   farmAlerts: 'bhuvedam_farm_alerts',
   mandiSnapshot: 'bhuvedam_mandi_snapshot',
   alertPrefs: 'bhuvedam_alert_prefs',

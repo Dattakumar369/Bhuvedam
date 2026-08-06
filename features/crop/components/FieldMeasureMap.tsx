@@ -11,10 +11,15 @@ interface FieldMeasureMapProps {
   points: Coordinates[];
   livePosition?: Coordinates | null;
   walking: boolean;
+  /** When false, map is not mounted (avoids native crash during walk on Android APK). */
+  enabled?: boolean;
 }
 
 const MAP_HEIGHT = 280;
 const DEFAULT_DELTA = 0.0008;
+
+const mapsNativeAvailable =
+  Platform.OS === 'ios' || Boolean(process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim());
 
 function regionFromPoints(points: Coordinates[], live?: Coordinates | null): Region {
   const all = [...points];
@@ -101,8 +106,18 @@ function FieldMeasureMapInner({ points, livePosition, walking }: FieldMeasureMap
     }
   }, [pathCoords, walking, livePosition]);
 
-  const visible = walking || points.length > 0;
-  if (!visible) return null;
+  if (!mapsNativeAvailable) {
+    return (
+      <View style={styles.wrap}>
+        <Caption style={styles.mapTitle}>GPS path record avutundi — map review taruvata chupistundi</Caption>
+        <View style={[styles.mapBox, styles.mapPlaceholder]}>
+          <Caption style={styles.placeholderText}>
+            {points.length} GPS points · satellite map taruvata chupistundi
+          </Caption>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.wrap}>
@@ -140,15 +155,6 @@ function FieldMeasureMapInner({ points, livePosition, walking }: FieldMeasureMap
             />
           ) : null}
 
-          {walking && polygonCoords.length >= 3 ? (
-            <Polygon
-              coordinates={polygonCoords}
-              fillColor="rgba(46, 125, 50, 0.2)"
-              strokeColor={`${colors.primary}99`}
-              strokeWidth={2}
-            />
-          ) : null}
-
           {startPoint ? (
             <Marker
               coordinate={startPoint}
@@ -165,16 +171,6 @@ function FieldMeasureMapInner({ points, livePosition, walking }: FieldMeasureMap
               title="Aapadam"
               description="Ekkada aaparu"
               pinColor="red"
-              tracksViewChanges={false}
-            />
-          ) : null}
-
-          {walking && livePosition ? (
-            <Marker
-              coordinate={livePosition}
-              title="Ippudu ikkada"
-              description="GPS live location"
-              pinColor="blue"
               tracksViewChanges={false}
             />
           ) : null}
@@ -199,13 +195,12 @@ function FieldMeasureMapInner({ points, livePosition, walking }: FieldMeasureMap
   );
 }
 
-export function FieldMeasureMap(props: FieldMeasureMapProps) {
-  const visible = props.walking || props.points.length > 0;
-  if (!visible) return null;
+export function FieldMeasureMap({ enabled = true, points, ...rest }: FieldMeasureMapProps) {
+  if (!enabled || points.length === 0) return null;
 
   return (
     <MapErrorBoundary fallbackMessage="Map load avvaledu — GPS tho area measure avutundi kindha.">
-      <FieldMeasureMapInner {...props} />
+      <FieldMeasureMapInner points={points} {...rest} />
     </MapErrorBoundary>
   );
 }
@@ -223,6 +218,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: `${colors.primary}40`,
+  },
+  mapPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${colors.primary}08`,
+    padding: spacing.md,
+  },
+  placeholderText: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   map: { flex: 1 },
   legend: {

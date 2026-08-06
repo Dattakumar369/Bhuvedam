@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { FlashList } from '@shopify/flash-list';
-import { router, type Href } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect, type Href } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,10 +18,14 @@ export default function AIListScreen() {
   const conversations = useAIStore((s) => s.conversations);
   const createConversation = useAIStore((s) => s.createConversation);
   const initializeConversations = useAIStore((s) => s.initializeConversations);
+  const hydrate = useAIStore((s) => s.hydrate);
 
-  useEffect(() => {
-    initializeConversations();
-  }, [initializeConversations]);
+  useFocusEffect(
+    useCallback(() => {
+      void hydrate();
+      initializeConversations();
+    }, [hydrate, initializeConversations]),
+  );
 
   const filtered = conversations.filter((c) =>
     c.title.toLowerCase().includes(search.toLowerCase()),

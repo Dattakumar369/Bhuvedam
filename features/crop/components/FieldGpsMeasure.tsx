@@ -148,8 +148,6 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
       return;
     }
 
-    setWalking(true);
-
     try {
       const session = await startFieldWalkTracking(
         (corner) => {
@@ -184,6 +182,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
         (position) => setLivePosition(position),
       );
       walkSessionRef.current = session;
+      setWalking(true);
     } catch (err) {
       setWalking(false);
       setLivePosition(null);
@@ -222,6 +221,14 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
 
   const switchMode = (next: 'walk' | 'corner') => {
     if (walking || capturing) return;
+    if (next === 'walk') {
+      walkSessionRef.current?.stop();
+      walkSessionRef.current = null;
+      setWalking(false);
+      setWalkProgress(null);
+      setLivePosition(null);
+      setPoints([]);
+    }
     setMode(next);
     setError(null);
     setWalkProgress(null);
@@ -250,6 +257,9 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
   const areaDisplay = measurement
     ? formatAreaDisplay(measurement.areaAcres, measurement.areaCents, 'gps')
     : null;
+
+  /** Walk lo map mount cheyakunda — Android APK crash fix. Map only corner mode or walk aipoyaka. */
+  const showMap = mode === 'corner' || (mode === 'walk' && !walking && points.length > 0);
 
   return (
     <View style={styles.wrap}>
@@ -295,14 +305,26 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
           : 'Open sky lo prati moola daggar 15 sec nilchondi, “add” nokki — idi kante exact. Chinna polam ki tape/patta measure best.'}
       </Caption>
 
-      {mode === 'walk' && walking && !points.length ? (
-        <Caption style={styles.mapWaiting}>Map load avutundi — GPS fix kosam 2–3 sec wait...</Caption>
+      {mode === 'walk' && walking ? (
+        <View style={styles.walkGpsBox}>
+          <MaterialCommunityIcons name="crosshairs-gps" size={28} color={colors.primary} />
+          <Caption style={styles.walkGpsTitle}>GPS recording — polam chuttu tiragandi</Caption>
+          <Caption style={styles.walkGpsHint}>
+            Map walk aipoyaka chupistundi. Ippudu GPS tho path record avutundi.
+          </Caption>
+          {livePosition ? (
+            <Caption style={styles.walkGpsCoords}>
+              {livePosition.latitude.toFixed(5)}, {livePosition.longitude.toFixed(5)}
+            </Caption>
+          ) : null}
+        </View>
       ) : null}
 
       <FieldMeasureMap
+        enabled={showMap}
         points={points}
         livePosition={livePosition}
-        walking={mode === 'walk' && walking}
+        walking={false}
       />
 
       {walking && walkProgress ? (
@@ -392,14 +414,14 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
         {mode === 'walk' ? (
           walking ? (
             <Button
-              label="Stop — polam chuttu aipoyindi (map lo aapadam chupistundi)"
+              label="Stop — polam chuttu aipoyindi"
               onPress={stopWalk}
               fullWidth
               size="md"
             />
           ) : (
             <Button
-              label="Polam chuttu tiragadam start (map open avutundi)"
+              label="Polam chuttu tiragadam start"
               onPress={() => void startWalk()}
               fullWidth
               size="md"
@@ -471,11 +493,22 @@ const styles = StyleSheet.create({
   modeChipText: { fontFamily: 'Poppins_600SemiBold', color: colors.primary },
   modeChipTextActive: { color: colors.surface },
   help: { color: colors.textSecondary, lineHeight: 20 },
-  mapWaiting: {
-    textAlign: 'center',
-    color: colors.info,
-    fontFamily: 'Poppins_600SemiBold',
+  walkGpsBox: {
+    alignItems: 'center',
+    gap: spacing.xs,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: `${colors.primary}10`,
+    borderWidth: 1,
+    borderColor: `${colors.primary}30`,
   },
+  walkGpsTitle: {
+    fontFamily: 'Poppins_600SemiBold',
+    color: colors.primary,
+    textAlign: 'center',
+  },
+  walkGpsHint: { color: colors.textSecondary, textAlign: 'center', lineHeight: 18 },
+  walkGpsCoords: { color: colors.textTertiary, fontSize: 11 },
   captureBox: {
     backgroundColor: `${colors.info}15`,
     padding: spacing.sm,

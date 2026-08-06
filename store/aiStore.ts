@@ -2,7 +2,6 @@ import { create } from 'zustand';
 
 import { getTranslations } from '@/constants/i18n/translations';
 import { resolveApiError } from '@/services/api/userFacingError';
-import { STORAGE_KEYS } from '@/constants/app';
 import { hasRealAIProvider } from '@/constants/aiConfig';
 import type { LanguageCode } from '@/constants/languages';
 import {
@@ -23,15 +22,18 @@ import { imageSessionCache } from '@/services/media/imageSessionCache';
 import { generateId } from '@/utils/format';
 import { detectQueryLanguage } from '@/utils/detectQueryLanguage';
 import { secureStorage } from '@/utils/storage';
-import { getUserScoped, loadConversationsForUser, setUserScoped } from '@/utils/userScopedStorage';
+import {
+  loadConversationsForUser,
+  persistConversationsForUser,
+} from '@/utils/userScopedStorage';
 
 const MAX_STORED_CONVERSATIONS = 15;
 const MAX_MESSAGES_PER_CONVERSATION = 60;
 const MAX_MODEL_HISTORY = 15;
 
 async function persistConversations(conversations: Conversation[]): Promise<void> {
-  const userId = useUserStore.getState().user?.id;
-  if (!userId) return;
+  const user = useUserStore.getState().user;
+  if (!user?.id) return;
 
   const trimmed = conversations.slice(0, MAX_STORED_CONVERSATIONS).map((conv) => ({
     ...conv,
@@ -40,7 +42,7 @@ async function persistConversations(conversations: Conversation[]): Promise<void
       .slice(-MAX_MESSAGES_PER_CONVERSATION)
       .map(({ imageUri: _imageUri, ...m }) => m),
   }));
-  await setUserScoped(userId, STORAGE_KEYS.conversations, JSON.stringify(trimmed));
+  await persistConversationsForUser(user.id, user.phone, trimmed);
 }
 
 interface PendingChatImage {
@@ -113,21 +115,24 @@ export const useAIStore = create<AIState>((set, get) => ({
   abortController: null,
 
   hydrate: async () => {
-    const userId = useUserStore.getState().user?.id;
+    const user = useUserStore.getState().user;
     const isAuthenticated = useUserStore.getState().isAuthenticated;
-    if (!isAuthenticated || !userId) {
+    if (!isAuthenticated || !user?.id) {
       await get().clearMemory();
       return;
     }
 
-    const raw = await loadConversationsForUser(userId);
+    const raw = await loadConversationsForUser(user.id, user.phone);
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw) as Conversation[];
-      if (parsed.length) {
+      if (!parsed.length) return;
+
+      const current = get().conversations;
+      if (parsed.length >= current.length) {
         set({
           conversations: parsed,
-          activeConversationId: parsed[0]?.id ?? null,
+          activeConversationId: get().activeConversationId ?? parsed[0]?.id ?? null,
         });
       }
     } catch {
