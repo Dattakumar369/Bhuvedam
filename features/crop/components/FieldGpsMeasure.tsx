@@ -51,6 +51,8 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
   const [walkProgress, setWalkProgress] = useState<WalkTrackProgress | null>(null);
   const [livePosition, setLivePosition] = useState<Coordinates | null>(null);
   const [walkReview, setWalkReview] = useState(false);
+  const [mapMounted, setMapMounted] = useState(false);
+  const [mapPhaseKey, setMapPhaseKey] = useState('idle');
   const [liveAccuracy, setLiveAccuracy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const walkSessionRef = useRef<WalkTrackSession | null>(null);
@@ -67,6 +69,15 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
       walkSessionRef.current?.stop();
     };
   }, []);
+
+  useEffect(() => {
+    if (!walking) {
+      setMapMounted(false);
+      return;
+    }
+    const timer = setTimeout(() => setMapMounted(true), 600);
+    return () => clearTimeout(timer);
+  }, [walking]);
 
   const avgAccuracy = useMemo(() => {
     const acc = points.map((p) => p.accuracyMeters).filter((v): v is number => v != null);
@@ -136,6 +147,8 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     setWalkReview(false);
     setWalkProgress(null);
     setLivePosition(null);
+    setMapMounted(false);
+    setMapPhaseKey(`walk-${Date.now()}`);
     lastLiveUpdateRef.current = 0;
     setPoints([]);
 
@@ -184,10 +197,10 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     walkSessionRef.current = null;
     session?.stop();
 
-    // End walk first — defer review UI so GPS teardown + map overlay changes don't race.
     setWalking(false);
     setWalkProgress(null);
     setLivePosition(null);
+    setMapMounted(false);
 
     InteractionManager.runAfterInteractions(() => {
       const currentPoints = pointsRef.current;
@@ -207,6 +220,8 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
       }
 
       setWalkReview(true);
+      setMapPhaseKey(`review-${Date.now()}`);
+      setTimeout(() => setMapMounted(true), 450);
     });
   };
 
@@ -217,6 +232,8 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     setWalkProgress(null);
     setWalkReview(false);
     setLivePosition(null);
+    setMapMounted(false);
+    setMapPhaseKey('idle');
   };
 
   const undoCorner = () => {
@@ -229,13 +246,18 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     walkSessionRef.current = null;
     setWalking(false);
     setWalkReview(false);
+    setMapMounted(false);
+    setMapPhaseKey('idle');
     setWalkProgress(null);
     setLivePosition(null);
     setPoints([]);
     setError(null);
   };
 
-  const showMap = mode === 'walk' ? walking || points.length > 0 : points.length > 0;
+  const showMap =
+    mode === 'walk'
+      ? mapMounted && (walking || (walkReview && points.length > 0))
+      : points.length > 0;
 
   const applyMeasurement = () => {
     if (!measurement) return;
@@ -298,6 +320,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
           livePosition={livePosition}
           walking={walking}
           reviewing={walkReview && !walking}
+          mapKey={mapPhaseKey}
         />
       ) : null}
 

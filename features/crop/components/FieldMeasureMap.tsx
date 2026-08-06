@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { InteractionManager, Platform, StyleSheet, View } from 'react-native';
+import Constants from 'expo-constants';
+import { useMemo } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 
+import { MapErrorBoundary } from '@/components/MapErrorBoundary';
 import { Caption } from '@/components/ui/Typography';
 import { useTranslation } from '@/hooks/useTranslation';
 import { simplifyWalkPoints } from '@/services/location/fieldMeasureService';
@@ -13,12 +15,12 @@ interface FieldMeasureMapProps {
   livePosition?: Coordinates | null;
   walking: boolean;
   reviewing?: boolean;
+  mapKey: string;
 }
 
 const MAP_HEIGHT = 280;
 const DEFAULT_DELTA = 0.0008;
-const WALK_CAMERA_INTERVAL_MS = 1000;
-const MAX_MAP_POINTS = 48;
+const MAX_MAP_POINTS = 32;
 
 function regionFromPoints(points: Coordinates[], live?: Coordinates | null): Region {
   const all = [...points];
@@ -48,10 +50,9 @@ function regionFromPoints(points: Coordinates[], live?: Coordinates | null): Reg
   };
 }
 
-/** Keep native map overlays small — large polylgons crash some Android devices on stop. */
 function mapRenderPoints(points: Coordinates[]): Coordinates[] {
   if (points.length <= MAX_MAP_POINTS) return points;
-  const simplified = simplifyWalkPoints(points, 5);
+  const simplified = simplifyWalkPoints(points, 6);
   if (simplified.length <= MAX_MAP_POINTS) return simplified;
   const step = Math.ceil(simplified.length / MAX_MAP_POINTS);
   const sampled: Coordinates[] = [];
@@ -66,69 +67,30 @@ function mapRenderPoints(points: Coordinates[]): Coordinates[] {
   return sampled.length >= 2 ? sampled : simplified.slice(0, MAX_MAP_POINTS);
 }
 
-export function FieldMeasureMap({
+function hasGoogleMapsApiKey(): boolean {
+  const key =
+    Constants.expoConfig?.android?.config?.googleMaps?.apiKey ??
+    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ??
+    '';
+  return Boolean(String(key).trim());
+}
+
+function FieldMeasureMapInner({
   points,
   livePosition,
   walking,
   reviewing = false,
+  mapKey,
 }: FieldMeasureMapProps) {
   const { fm } = useTranslation();
-  const mapRef = useRef<MapView>(null);
-  const lastCameraUpdateRef = useRef(0);
-  const mountedRef = useRef(true);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  const useGoogleProvider = Platform.OS === 'android' && hasGoogleMapsApiKey();
 
   const renderPoints = useMemo(() => mapRenderPoints(points), [points]);
 
-  const safeFitCamera = (coords: { latitude: number; longitude: number }[], force = false) => {
-    if (!mapRef.current || coords.length < 1 || reviewing) return;
-    const now = Date.now();
-    if (!force && walking && now - lastCameraUpdateRef.current < WALK_CAMERA_INTERVAL_MS) {
-      return;
-    }
-    lastCameraUpdateRef.current = now;
-    InteractionManager.runAfterInteractions(() => {
-      if (!mountedRef.current || !mapRef.current) return;
-      try {
-        if (coords.length === 1) {
-          const c = coords[0]!;
-          mapRef.current.animateToRegion(
-            {
-              latitude: c.latitude,
-              longitude: c.longitude,
-              latitudeDelta: DEFAULT_DELTA,
-              longitudeDelta: DEFAULT_DELTA,
-            },
-            300,
-          );
-          return;
-        }
-        const fitCoords =
-          coords.length > MAX_MAP_POINTS
-            ? mapRenderPoints(coords as Coordinates[]).map((p) => ({
-                latitude: p.latitude,
-                longitude: p.longitude,
-              }))
-            : coords;
-        mapRef.current.fitToCoordinates(fitCoords, {
-          edgePadding: { top: 48, right: 48, bottom: 48, left: 48 },
-          animated: true,
-        });
-      } catch {
-        // Map native calls can fail during GPS teardown — ignore
-      }
-    });
-  };
-
-  const startPoint = renderPoints[0] ?? null;
-  const endPoint = renderPoints.length > 1 ? renderPoints[renderPoints.length - 1] : null;
-  const showEndMarker = !walking && endPoint != null && renderPoints.length > 1;
+  const mapRegion = useMemo(
+    () => regionFromPoints(renderPoints, walking ? livePosition : null),
+    [renderPoints, livePosition, walking, mapKey],
+  );
 
   const pathCoords = useMemo(() => {
     const coords = renderPoints.map((p) => ({
@@ -144,58 +106,34 @@ export function FieldMeasureMap({
     return coords;
   }, [renderPoints, livePosition, walking]);
 
-  const polygonCoords = useMemo(() => {
-    if (renderPoints.length < 3) return [];
-    return renderPoints.map((p) => ({ latitude: p.latitude, longitude: p.longitude }));
-  }, [renderPoints]);
+  const showPolygon = reviewing && !walking && renderPoints.length >= 3;
+  const polygonCoords = showPolygon
+    ? renderPoints.map((p) => ({ latitude: p.latitude, longitude: p.longitude }))
+    : [];
 
-  const initialRegion = useMemo(
-    () => regionFromPoints(renderPoints, livePosition),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only set map region on first mount
-    [],
-  );
-
-  // Camera follow only while walking — never refit on Stop (that was crashing native map).
-  useEffect(() => {
-    if (!walking || reviewing) return;
-    if (!pathCoords.length && !livePosition) return;
-    const coords =
-      pathCoords.length > 0
-        ? pathCoords
-        : livePosition
-          ? [{ latitude: livePosition.latitude, longitude: livePosition.longitude }]
-          : [];
-    safeFitCamera(coords);
-  }, [pathCoords, livePosition, walking, reviewing]);
-
-  useEffect(() => {
-    if (renderPoints.length === 1 && walking) {
-      safeFitCamera(
-        [{ latitude: renderPoints[0]!.latitude, longitude: renderPoints[0]!.longitude }],
-        true,
-      );
-    }
-  }, [renderPoints.length, walking]);
-
-  const visible = walking || points.length > 0;
-
-  if (!visible) return null;
+  const startPoint = renderPoints[0] ?? null;
+  const endPoint = renderPoints.length > 1 ? renderPoints[renderPoints.length - 1] : null;
+  const showEndMarker = reviewing && !walking && endPoint != null && renderPoints.length > 1;
 
   return (
     <View style={styles.wrap}>
       <Caption style={styles.mapTitle}>{fm.mapTitle}</Caption>
       <View style={styles.mapBox}>
         <MapView
-          ref={mapRef}
+          key={mapKey}
           style={styles.map}
-          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+          provider={useGoogleProvider ? PROVIDER_GOOGLE : undefined}
           mapType="satellite"
-          initialRegion={initialRegion}
+          initialRegion={mapRegion}
           showsUserLocation={false}
           showsMyLocationButton={false}
           rotateEnabled={false}
+          scrollEnabled={!walking}
+          zoomEnabled={!walking}
+          pitchEnabled={false}
           moveOnMarkerPress={false}
           loadingEnabled
+          cacheEnabled
         >
           {pathCoords.length >= 2 ? (
             <Polyline
@@ -207,11 +145,11 @@ export function FieldMeasureMap({
             />
           ) : null}
 
-          {polygonCoords.length >= 3 ? (
+          {showPolygon ? (
             <Polygon
               coordinates={polygonCoords}
-              fillColor={walking ? 'rgba(46, 125, 50, 0.2)' : 'rgba(46, 125, 50, 0.35)'}
-              strokeColor={walking ? `${colors.primary}99` : colors.primary}
+              fillColor="rgba(46, 125, 50, 0.35)"
+              strokeColor={colors.primary}
               strokeWidth={2}
             />
           ) : null}
@@ -260,6 +198,18 @@ export function FieldMeasureMap({
         </View>
       </View>
     </View>
+  );
+}
+
+export function FieldMeasureMap(props: FieldMeasureMapProps) {
+  const { fm } = useTranslation();
+  const visible = props.walking || props.points.length > 0;
+  if (!visible) return null;
+
+  return (
+    <MapErrorBoundary fallbackMessage={fm.mapFallback}>
+      <FieldMeasureMapInner {...props} />
+    </MapErrorBoundary>
   );
 }
 

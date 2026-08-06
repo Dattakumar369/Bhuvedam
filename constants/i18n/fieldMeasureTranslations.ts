@@ -67,6 +67,7 @@ export interface FieldMeasureMessages {
   mapLegendEnd: string;
   mapLegendArea: string;
   mapLiveMarker: string;
+  mapFallback: string;
   adjustTitle: string;
   adjustHint: string;
   btnWalkAgain: string;
@@ -143,6 +144,7 @@ const en: FieldMeasureMessages = {
   mapLegendEnd: 'Stop point',
   mapLegendArea: 'Green = covered land area',
   mapLiveMarker: 'You are here (live GPS)',
+  mapFallback: 'Map unavailable — GPS path and area still work. Try again.',
   adjustTitle: 'Adjust path',
   adjustHint: 'Undo wrong points or walk again if the border looks wrong on the map.',
   btnWalkAgain: 'Walk again',
@@ -207,6 +209,7 @@ const te: FieldMeasureMessages = {
   measureIntroBody:
     'Moolalu pin (★) — prati corner daggar “add” nokki, 3–5 sec nilchondi (stable ayyaka auto save). Walk mode — border tirigi start daggaraki Stop.',
   measureIntroNote: 'GPS ±2–5m error — exact size ki patta/tape measure use cheyandi. Open sky must.',
+  mapFallback: 'Map load avvaledu — GPS path & area inka work avutundi. Malli try cheyandi.',
   mapTitle: 'Satellite map — mee polam chuttu tirigina path',
   mapLegendStart: 'Modalupettadam (start)',
   mapLegendEnd: 'Aapadam (stop)',
