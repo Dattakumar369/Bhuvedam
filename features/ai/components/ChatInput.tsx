@@ -33,6 +33,9 @@ interface ChatInputProps {
   editingLabel?: string;
   onCancelEdit?: () => void;
   cancelEditLabel?: string;
+  voiceDraft?: boolean;
+  voiceDraftLabel?: string;
+  onCancelVoiceDraft?: () => void;
   pendingImageUri?: string | null;
   onAttachImage?: () => void;
   onRemoveImage?: () => void;
@@ -60,6 +63,9 @@ export function ChatInput({
   editingLabel = 'Editing message',
   onCancelEdit,
   cancelEditLabel = 'Cancel',
+  voiceDraft = false,
+  voiceDraftLabel = 'Review your message — edit if needed, then tap Send',
+  onCancelVoiceDraft,
   pendingImageUri,
   onAttachImage,
   onRemoveImage,
@@ -113,6 +119,16 @@ export function ChatInput({
           <Caption style={styles.editBannerText}>{editingLabel}</Caption>
           {onCancelEdit ? (
             <Pressable onPress={onCancelEdit} hitSlop={8}>
+              <Caption style={styles.cancelEdit}>{cancelEditLabel}</Caption>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : voiceDraft ? (
+        <View style={styles.voiceDraftBanner}>
+          <MaterialCommunityIcons name="microphone-outline" size={16} color={colors.primary} />
+          <Caption style={styles.voiceDraftBannerText}>{voiceDraftLabel}</Caption>
+          {onCancelVoiceDraft ? (
+            <Pressable onPress={onCancelVoiceDraft} hitSlop={8}>
               <Caption style={styles.cancelEdit}>{cancelEditLabel}</Caption>
             </Pressable>
           ) : null}
@@ -244,6 +260,17 @@ const styles = StyleSheet.create({
     backgroundColor: `${colors.primary}10`,
   },
   editBannerText: { flex: 1, color: colors.primary, fontFamily: 'Poppins_600SemiBold' },
+  voiceDraftBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+    backgroundColor: `${colors.primary}10`,
+  },
+  voiceDraftBannerText: { flex: 1, color: colors.textSecondary, fontSize: 11 },
   cancelEdit: { color: colors.error, fontFamily: 'Poppins_600SemiBold' },
   listeningBanner: {
     flexDirection: 'row',

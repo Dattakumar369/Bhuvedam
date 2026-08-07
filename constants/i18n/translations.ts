@@ -31,6 +31,7 @@ export interface Translations {
   voiceCancelListening: string;
   voiceConfirmListening: string;
   voiceListeningHint: string;
+  voiceDraftReview: string;
   voiceBarThinking: string;
   voiceBarSpeaking: string;
   typingIndicator: string;
@@ -89,11 +90,12 @@ const en: Translations = {
   voiceModeOn: 'Voice mode on — type or tap mic',
   voiceModeOff: 'Voice mode off',
   voiceBarListening: 'Listening... speak now',
-  voiceBarStopHint: 'Done sends your message · Cancel discards',
+  voiceBarStopHint: 'Done when finished · edit & Send · Cancel discards',
   voiceStopListening: 'Done',
   voiceCancelListening: 'Cancel',
-  voiceConfirmListening: 'Send',
-  voiceListeningHint: 'Tap Done when finished, or Cancel to discard',
+  voiceConfirmListening: 'Done',
+  voiceListeningHint: 'Pause while speaking is OK — tap Done when finished, then edit and Send',
+  voiceDraftReview: 'Review your message — edit if needed, then tap Send',
   voiceBarThinking: 'Bhuvedam AI is thinking...',
   voiceBarSpeaking: 'Speaking...',
   typingIndicator: 'Bhuvedam AI is thinking...',
@@ -390,6 +392,11 @@ const te: Translations = {
   messageDeleteConfirmAssistant: 'ఈ సమాధానం తొలగించబడుతుంది.',
   editingMessage: 'సందేశం మారుస్తున్నారు',
   cancelEdit: 'రద్దు',
+  voiceConfirmListening: 'Done',
+  voiceCancelListening: 'Cancel',
+  voiceListeningHint: 'మధ్యలో ఆగినా సరే — Done నొక్కి, మార్చి, Send చేయండి',
+  voiceDraftReview: 'మీ సందేశం చూడండి — అవసరమైతే మార్చి Send నొక్కండి',
+  voiceBarStopHint: 'Done → మార్చి Send · Cancel రద్దు',
   chatAttachImage: 'Photo upload',
   chatImageDefaultPrompt:
     'Ee photo chusi crop, rogam/tegu/poshak samasya em kanipistundo cheppandi — practical solution ivvandi.',
@@ -500,5 +507,6 @@ export function getTranslations(language: LanguageCode = DEFAULT_LANGUAGE): Tran
     voiceCancelListening: base.voiceCancelListening ?? translations.en.voiceCancelListening,
     voiceConfirmListening: base.voiceConfirmListening ?? translations.en.voiceConfirmListening,
     voiceListeningHint: base.voiceListeningHint ?? translations.en.voiceListeningHint,
+    voiceDraftReview: base.voiceDraftReview ?? translations.en.voiceDraftReview,
   };
 }

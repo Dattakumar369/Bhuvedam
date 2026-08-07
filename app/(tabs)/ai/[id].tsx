@@ -38,6 +38,7 @@ export default function ChatScreen() {
   const [actionMessage, setActionMessage] = useState<ChatMessage | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ChatMessage | null>(null);
   const [pendingImage, setPendingImage] = useState<PickedChatImage | null>(null);
+  const [voiceDraftReady, setVoiceDraftReady] = useState(false);
   const { t, language } = useTranslation();
   const languageLabel = LANGUAGES.find((l) => l.code === language)?.nativeName ?? language;
   const { conversation, isTyping, voiceModeEnabled, send, stop, removeMessage, toggleVoiceMode } =
@@ -82,22 +83,13 @@ export default function ChatScreen() {
   const handleVoiceResult = useCallback(
     (transcript: string) => {
       const text = transcript.trim();
-      if (!text || !id || isTyping || isSpeaking) return;
+      if (!text || isTyping || isSpeaking) return;
       clearResumeListenTimer();
-      stopListeningRef.current();
       stopSpeakingNow();
-      setInput('');
-      void send(text, handleVoiceComplete);
+      setInput(text);
+      setVoiceDraftReady(true);
     },
-    [
-      id,
-      send,
-      handleVoiceComplete,
-      stopSpeakingNow,
-      isTyping,
-      isSpeaking,
-      clearResumeListenTimer,
-    ],
+    [stopSpeakingNow, isTyping, isSpeaking, clearResumeListenTimer],
   );
 
   const { isListening, transcript, startListening, confirmListening, cancelListening } =
@@ -114,6 +106,7 @@ export default function ChatScreen() {
     clearResumeListenTimer();
     cancelListening();
     setInput('');
+    setVoiceDraftReady(false);
   }, [cancelListening, clearResumeListenTimer]);
 
   useEffect(() => {
@@ -151,6 +144,7 @@ export default function ChatScreen() {
     setInput('');
     setPendingImage(null);
     setEditingMessageId(null);
+    setVoiceDraftReady(false);
     await send(
       text,
       handleVoiceComplete,
@@ -184,6 +178,7 @@ export default function ChatScreen() {
     setEditingMessageId(null);
     setInput('');
     setPendingImage(null);
+    setVoiceDraftReady(false);
   }, []);
 
   const confirmDeleteMessage = useCallback(() => {
@@ -316,6 +311,7 @@ export default function ChatScreen() {
         onSend={() => void handleSend()}
         onVoicePress={() => {
           clearResumeListenTimer();
+          setVoiceDraftReady(false);
           if (isTyping) {
             stop();
             return;
@@ -338,6 +334,12 @@ export default function ChatScreen() {
         editingLabel={t.editingMessage}
         cancelEditLabel={t.cancelEdit}
         onCancelEdit={cancelEdit}
+        voiceDraft={voiceDraftReady && !editingMessageId}
+        voiceDraftLabel={t.voiceDraftReview}
+        onCancelVoiceDraft={() => {
+          setVoiceDraftReady(false);
+          setInput('');
+        }}
         pendingImageUri={FEATURES.chatImageUploadEnabled ? pendingImage?.uri : undefined}
         onAttachImage={
           FEATURES.chatImageUploadEnabled ? () => void handleAttachImage() : undefined

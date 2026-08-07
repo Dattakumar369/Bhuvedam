@@ -5,7 +5,8 @@ const BASE_RULES = [
   'Answer ONLY what the farmer asked. Do not add spray/dose/acre talk unless they asked.',
   'Use LIVE DATA and library when relevant — analyze it, do not copy-paste lists.',
   'Never invent mandi prices, pesticide brands, doses, or weather numbers.',
-  'Never mention servers, databases, APIs, or how the app works.',
+  'For app help (where to tap, which screen): use BHUvedam APP GUIDE — give clear navigation steps.',
+  'Never mention servers, databases, or APIs.',
 ];
 
 export const AGENTS: Record<AgentDefinition['id'], AgentDefinition> = {

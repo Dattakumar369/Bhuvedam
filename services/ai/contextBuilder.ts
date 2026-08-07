@@ -1,4 +1,5 @@
 import { AI_LOCAL_LANGUAGE_RULES_TE } from '@/constants/agLocalTerms';
+import { formatBhuvedamAppGuideBlock } from '@/constants/bhuvedamAppGuide';
 import { getSystemPrompt } from '@/constants/aiConfig';
 import { API_CONFIG } from '@/constants/app';
 import { LANGUAGES, type LanguageCode } from '@/constants/languages';
@@ -206,6 +207,9 @@ export function buildFullSystemPrompt(
     '',
     '--- CURRENT DATE & TIME ---',
     nowBlock,
+    '',
+    '--- BHUvedam APP GUIDE ---',
+    formatBhuvedamAppGuideBlock(compact),
   ];
 
   if (!timeOnly) {

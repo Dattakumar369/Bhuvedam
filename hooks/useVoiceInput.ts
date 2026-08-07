@@ -64,6 +64,17 @@ export function useVoiceInput({
     onPartialResultRef.current?.(live);
   }, []);
 
+  /** Preserve words spoken before a silence pause (Android restarts recognition and drops interim). */
+  const commitInterimToFinal = useCallback(() => {
+    const interim = interimTranscriptRef.current.trim();
+    if (!interim) return;
+    finalTranscriptRef.current = finalTranscriptRef.current
+      ? `${finalTranscriptRef.current} ${interim}`
+      : interim;
+    interimTranscriptRef.current = '';
+    updateLiveTranscript();
+  }, [updateLiveTranscript]);
+
   const resetSessionTranscript = useCallback(() => {
     finalTranscriptRef.current = '';
     interimTranscriptRef.current = '';
@@ -129,8 +140,9 @@ export function useVoiceInput({
           return;
         }
 
-        // Platform ended early (silence timeout) — keep mic open until farmer taps Stop.
+        // Platform ended early (silence timeout) — keep mic open until farmer taps Done.
         if (isListeningRef.current && !blockedRef.current) {
+          commitInterimToFinal();
           try {
             module.start(getStartOptions());
           } catch {
@@ -177,6 +189,7 @@ export function useVoiceInput({
         // Silence / no-speech — do not end session; farmer may still be thinking.
         if (payload.error === 'no-speech' || payload.error === 'speech-timeout') {
           if (isListeningRef.current && !userStopRequestedRef.current && !blockedRef.current) {
+            commitInterimToFinal();
             try {
               module.start(getStartOptions());
             } catch {
@@ -199,7 +212,7 @@ export function useVoiceInput({
         module.abort();
       }
     };
-  }, [finalizeListening, getStartOptions, updateLiveTranscript]);
+  }, [commitInterimToFinal, finalizeListening, getStartOptions, updateLiveTranscript]);
 
   const showDevBuildAlert = useCallback(() => {
     Alert.alert(strings.voiceInputTitle, strings.voiceInputMessage, [
