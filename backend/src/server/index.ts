@@ -81,6 +81,8 @@ import {
     getFertilizerProductById,
     searchFertilizerProducts,
 } from '../services/fertilizerProductSearch';
+import { enrichProductsWithImages, resolveProductImageUrlAsync } from '../services/productImageResolver';
+import { mergeManufacturerSourceUrl } from '../data/manufacturerProductPages';
 import { buildKnowledgeContextForAI, formatKnowledgeForAI, searchKnowledge } from '../services/knowledgeSearch';
 import {
     createAndPushNotification,
@@ -839,13 +841,48 @@ app.get('/api/ag-products', async (c) => {
     conditions.length > 0
       ? await db.select().from(agProducts).where(and(...conditions)).limit(limit)
       : await db.select().from(agProducts).limit(limit);
-  return c.json({ data: rows, count: rows.length });
+  const data = enrichProductsWithImages(
+    rows.map((r) => ({
+      ...r,
+      type: r.type,
+      category: r.subType,
+      activeIngredient: r.activeIngredient,
+      sourceUrl: r.sourceUrl,
+    })),
+  );
+  return c.json({ data, count: data.length });
 });
 
 app.get('/api/ag-products/:id', async (c) => {
   const [row] = await db.select().from(agProducts).where(eq(agProducts.id, c.req.param('id'))).limit(1);
   if (!row) return appError(c, 'PRODUCT_NOT_FOUND');
-  return c.json({ data: row });
+  const [data] = enrichProductsWithImages([
+    {
+      ...row,
+      type: row.type,
+      category: row.subType,
+      activeIngredient: row.activeIngredient,
+      sourceUrl: row.sourceUrl,
+    },
+  ]);
+  return c.json({ data });
+});
+
+/** Resolve product pack image — curated URL or live og:image from manufacturer page */
+app.get('/api/product-image/resolve', async (c) => {
+  const productId = c.req.query('id');
+  const sourceUrl =
+    mergeManufacturerSourceUrl(productId ?? '', c.req.query('sourceUrl')) ?? c.req.query('sourceUrl');
+  const url = await resolveProductImageUrlAsync({
+    id: productId,
+    image: c.req.query('image'),
+    type: c.req.query('type') ?? 'fertilizer',
+    category: c.req.query('category'),
+    activeIngredient: c.req.query('activeIngredient'),
+    sourceUrl,
+  });
+  if (!url) return appError(c, 'NOT_FOUND');
+  return c.json({ url });
 });
 
 /** Expanded disease catalog (2000+) */

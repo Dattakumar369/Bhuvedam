@@ -15,6 +15,8 @@ import { ICAR_GUIDELINES } from '../data/icarGuidelines';
 import { INDIAN_FERTILIZER_CATALOG } from '../data/indianFertilizerCatalog';
 import { PLANT_VILLAGE_DISEASES } from '../data/plantVillageDiseases';
 import { SOIL_HEALTH_RECOMMENDATIONS } from '../data/soilHealthRecommendations';
+import { mergeManufacturerSourceUrl } from '../../data/manufacturerProductPages';
+import { resolveProductImageUrlAsync } from '../../services/productImageResolver';
 
 function cropLabel(crops: string[]): string {
   return crops.slice(0, 4).join(', ');
@@ -30,6 +32,14 @@ export async function syncIndianFertilizerCatalog(): Promise<{ fetched: number; 
 
   for (const item of INDIAN_FERTILIZER_CATALOG) {
     const price = item.price ?? item.mrp ?? null;
+    const sourceUrl = mergeManufacturerSourceUrl(item.id, item.sourceUrl) ?? null;
+    const image = await resolveProductImageUrlAsync({
+      id: item.id,
+      image: item.image,
+      type: 'fertilizer',
+      category: item.category,
+      sourceUrl,
+    });
     await db
       .insert(fertilizerProducts)
       .values({
@@ -55,9 +65,9 @@ export async function syncIndianFertilizerCatalog(): Promise<{ fetched: number; 
         mrp: item.mrp ?? null,
         price,
         packSize: item.packSize ?? null,
-        image: item.image ?? null,
+        image: image ?? item.image ?? null,
         source: item.source,
-        sourceUrl: item.sourceUrl ?? null,
+        sourceUrl,
         isSubsidized: item.isSubsidized ?? true,
         metadata: item.metadata ?? {},
         lastSyncedAt: now,
@@ -87,9 +97,9 @@ export async function syncIndianFertilizerCatalog(): Promise<{ fetched: number; 
           mrp: item.mrp ?? null,
           price,
           packSize: item.packSize ?? null,
-          image: item.image ?? null,
+          image: image ?? item.image ?? null,
           source: item.source,
-          sourceUrl: item.sourceUrl ?? null,
+          sourceUrl,
           isSubsidized: item.isSubsidized ?? true,
           metadata: item.metadata ?? {},
           lastSyncedAt: now,

@@ -20,7 +20,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '45 kg',
     image: 'nagarjuna-urea.png',
     source: 'nagarjuna',
-    sourceUrl: 'https://www.nagarjunafertilizers.com/',
+    sourceUrl: 'https://www.nagarjunafertilizers.com/products/urea/',
     soilType: ['alluvial', 'black_cotton', 'red', 'laterite'],
   },
   {
@@ -40,6 +40,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'nagarjuna-dap.png',
     source: 'nagarjuna',
+    sourceUrl: 'https://www.nagarjunafertilizers.com/products/dap/',
     soilType: ['red', 'alluvial', 'black_cotton'],
   },
   {
@@ -59,6 +60,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '25 kg',
     image: 'nagarjuna-map.png',
     source: 'nagarjuna',
+    sourceUrl: 'https://www.nagarjunafertilizers.com/products/map-12-61-00/',
     soilType: ['alluvial', 'sandy'],
   },
   {
@@ -78,6 +80,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '25 kg',
     image: 'polyfeed-19-19-19.png',
     source: 'nagarjuna',
+    sourceUrl: 'https://www.nagarjunafertilizers.com/products/poly-feed-19-19-19/',
     soilType: ['alluvial', 'sandy', 'red'],
   },
   {
@@ -97,6 +100,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '25 kg',
     image: 'mkp.png',
     source: 'nagarjuna',
+    sourceUrl: 'https://www.nagarjunafertilizers.com/products/mkp-00-52-34/',
   },
   {
     id: 'nagarjuna-multi-k',
@@ -115,6 +119,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '25 kg',
     image: 'multi-k.png',
     source: 'nagarjuna',
+    sourceUrl: 'https://www.nagarjunafertilizers.com/products/multi-k-13-0-46/',
   },
   {
     id: 'nagarjuna-zinc-sulphate',
@@ -133,6 +138,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '25 kg',
     image: 'nagarjuna-zinc.png',
     source: 'nagarjuna',
+    sourceUrl: 'https://www.nagarjunafertilizers.com/products/zinc-sulphate/',
     soilType: ['black_cotton', 'alkaline', 'alluvial'],
   },
   {
@@ -152,6 +158,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '10 kg',
     image: 'borovin.png',
     source: 'nagarjuna',
+    sourceUrl: 'https://www.nagarjunafertilizers.com/products/borovin/',
   },
 
   // ── Deepak Fertilisers (Mahadhan) ──
@@ -172,7 +179,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'mahadhan-12-32-16.png',
     source: 'deepak',
-    sourceUrl: 'https://www.deepakfertiliser.com/',
+    sourceUrl: 'https://www.deepakfertiliser.com/mahadhan/mahadhan-12-32-16/',
     soilType: ['red', 'black_cotton', 'alluvial'],
   },
   {
@@ -191,6 +198,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'mahadhan-10-26-26.png',
     source: 'deepak',
+    sourceUrl: 'https://www.deepakfertiliser.com/mahadhan/mahadhan-10-26-26/',
     soilType: ['red', 'laterite', 'sandy'],
   },
   {
@@ -209,6 +217,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'mahadhan-20-20-0-13.png',
     source: 'deepak',
+    sourceUrl: 'https://www.deepakfertiliser.com/mahadhan/mahadhan-20-20-0-13/',
     soilType: ['alluvial', 'black_cotton'],
   },
   {
@@ -228,6 +237,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'mahadhan-sop.png',
     source: 'deepak',
+    sourceUrl: 'https://www.deepakfertiliser.com/mahadhan/mahadhan-sop/',
   },
   {
     id: 'deepak-mahadhan-amruta-cn',
@@ -246,6 +256,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '25 kg',
     image: 'amruta-calcium-nitrate.png',
     source: 'deepak',
+    sourceUrl: 'https://www.deepakfertiliser.com/mahadhan/amruta-calcium-nitrate/',
     soilType: ['sandy', 'red', 'alluvial'],
   },
   {
@@ -265,6 +276,7 @@ export const NAGARJUNA_DEEPAK_FERTILIZERS: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'sulphur-bentonite.png',
     source: 'deepak',
+    sourceUrl: 'https://www.deepakfertiliser.com/mahadhan/mahadhan-bentonite-sulphur/',
     soilType: ['alluvial', 'red', 'black_cotton'],
   },
 ];

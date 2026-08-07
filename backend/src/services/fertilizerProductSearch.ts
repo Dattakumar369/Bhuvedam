@@ -2,6 +2,8 @@ import { and, eq, ilike, or, sql } from 'drizzle-orm';
 
 import { db } from '../db';
 import { fertilizerProducts } from '../db/schema/fertilizerProducts';
+import { enrichProductsWithImages, enrichProductImageAsync } from './productImageResolver';
+import { mergeManufacturerSourceUrl } from '../data/manufacturerProductPages';
 
 export interface FertilizerProductQuery {
   search?: string;
@@ -49,11 +51,25 @@ export async function searchFertilizerProducts(query: FertilizerProductQuery) {
         .limit(limit)
     : await db.select().from(fertilizerProducts).limit(limit);
 
-  return rows;
+  return enrichProductsWithImages(
+    rows.map((r) => ({
+      ...r,
+      type: 'fertilizer',
+      category: r.category,
+      sourceUrl: mergeManufacturerSourceUrl(r.id, r.sourceUrl) ?? r.sourceUrl,
+    })),
+  );
 }
 
 export async function getFertilizerProductById(id: string) {
-  return db.query.fertilizerProducts.findFirst({
+  const row = await db.query.fertilizerProducts.findFirst({
     where: eq(fertilizerProducts.id, id),
+  });
+  if (!row) return null;
+  return enrichProductImageAsync({
+    ...row,
+    type: 'fertilizer',
+    category: row.category,
+    sourceUrl: mergeManufacturerSourceUrl(row.id, row.sourceUrl) ?? row.sourceUrl,
   });
 }

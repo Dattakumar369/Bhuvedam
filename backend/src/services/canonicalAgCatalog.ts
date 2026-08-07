@@ -2,6 +2,7 @@ import {
   FUNGICIDE_ACTIVES,
   INSECTICIDE_ACTIVES,
 } from '../ingestion/data/bulkMasters';
+import { resolveProductImageUrl } from './productImageResolver';
 
 const PPQS_URL = 'https://www.ppqs.gov.in/divisions/cib-rc/registered-products';
 
@@ -52,7 +53,11 @@ function buildPesticides(): CanonicalAgProduct[] {
       'Label dose follow cheyandi. PHI (pre-harvest interval) label chudandi. PPE (gloves, mask) vadandi. Same chemical group rotate cheyandi.',
     description: `CIB&RC registered active ingredient. Targets: ${active.targets.join(', ')}. Crops: ${active.crops.join(', ')}.`,
     price: null,
-    image: null,
+    image: resolveProductImageUrl({
+      id: `ref-pest-${slug(active.name)}`,
+      type: 'pesticide',
+      activeIngredient: active.name,
+    }),
     source: 'cibrc_reference',
     sourceUrl: PPQS_URL,
   }));
@@ -76,7 +81,11 @@ function buildFungicides(): CanonicalAgProduct[] {
       'Alkaline products tho kalipi vadhu. PHI label chudandi. Fungicide group rotate cheyandi — resistance taggutundi.',
     description: `CIB&RC registered fungicide. Diseases: ${active.targets.join(', ')}. Crops: ${active.crops.join(', ')}.`,
     price: null,
-    image: null,
+    image: resolveProductImageUrl({
+      id: `ref-fung-${slug(active.name)}`,
+      type: 'fungicide',
+      activeIngredient: active.name,
+    }),
     source: 'cibrc_reference',
     sourceUrl: PPQS_URL,
   }));

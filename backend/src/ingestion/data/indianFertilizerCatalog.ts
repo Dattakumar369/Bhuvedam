@@ -124,7 +124,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'npk-12-32-16.png',
     source: 'iffco',
-    sourceUrl: 'https://www.iffco.in/en/npk-10-26-26',
+    sourceUrl: 'https://www.iffco.in/en/npk-12-32-16',
   },
   {
     id: 'iffco-np-20-20-0-13',
@@ -145,6 +145,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'np-20-20-0-13.png',
     source: 'iffco',
+    sourceUrl: 'https://www.iffco.in/en/np-20-20',
   },
   {
     id: 'iffco-npk-15-15-15',
@@ -164,6 +165,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'npk-15-15-15.png',
     source: 'iffco',
+    sourceUrl: 'https://www.iffco.in/en/npk-15-15-15',
   },
   {
     id: 'iffco-np-28-28-0',
@@ -183,6 +185,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'np-28-28-0.png',
     source: 'iffco',
+    sourceUrl: 'https://www.iffco.in/en/np-28-28-0',
   },
   {
     id: 'iffco-nano-urea',
@@ -203,6 +206,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     image: 'nano-urea.png',
     source: 'iffco',
     isSubsidized: true,
+    sourceUrl: 'https://www.iffco.in/en/nano-urea-liquid-fertilizer',
   },
   {
     id: 'iffco-nano-dap',
@@ -222,6 +226,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '500 ml',
     image: 'nano-dap.png',
     source: 'iffco',
+    sourceUrl: 'https://www.iffco.in/en/nano-dap-liquid',
   },
   {
     id: 'iffco-nano-zinc',
@@ -241,6 +246,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '100 ml',
     image: 'nano-zinc.png',
     source: 'iffco',
+    sourceUrl: 'https://www.iffco.in/en/nano-fertilisers',
   },
 
   // ── Coromandel (Gromor) ────────────────────────────────────────────────
@@ -262,7 +268,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '45 kg',
     image: 'gromor-urea.png',
     source: 'coromandel',
-    sourceUrl: 'https://www.coromandel.biz/products-services/complex/',
+    sourceUrl: 'https://www.coromandel.biz/gromor-urea/',
   },
   {
     id: 'coromandel-gromor-dap',
@@ -281,6 +287,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'gromor-dap.png',
     source: 'coromandel',
+    sourceUrl: 'https://www.coromandel.biz/gromor-godavari-dap/',
   },
   {
     id: 'coromandel-gromor-mop',
@@ -299,7 +306,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'gromor-mop.png',
     source: 'coromandel',
-    sourceUrl: 'https://www.coromandel.biz/products-services/complex/',
+    sourceUrl: 'https://www.coromandel.biz/gromor-mop/',
   },
   {
     id: 'coromandel-gromor-ssp',
@@ -318,6 +325,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'gromor-ssp.png',
     source: 'coromandel',
+    sourceUrl: 'https://www.coromandel.biz/gromor-ssp/',
   },
   {
     id: 'coromandel-gromor-28-28-0',
@@ -412,6 +420,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'gromor-10-26-26.png',
     source: 'coromandel',
+    sourceUrl: 'https://www.coromandel.biz/gromor-10-26-26/',
   },
   {
     id: 'coromandel-gromor-ultra-10-26-26',
@@ -430,6 +439,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'gromor-ultra-10-26-26.png',
     source: 'coromandel',
+    sourceUrl: 'https://www.coromandel.biz/gromor-ultra-10--26-26/',
   },
   {
     id: 'coromandel-paramfos',
@@ -448,6 +458,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '50 kg',
     image: 'paramfos.png',
     source: 'coromandel',
+    sourceUrl: 'https://www.coromandel.biz/paramfos/',
   },
 
   // ── NFL (National Fertilizers Limited) ───────────────────────────────────
@@ -468,7 +479,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '45 kg',
     image: 'nfl-urea.png',
     source: 'nfl',
-    sourceUrl: 'https://www.nationalfertilizers.com/',
+    sourceUrl: 'https://www.nationalfertilizers.com/product/neem-coated-urea/',
   },
   {
     id: 'nfl-neem-urea',
@@ -487,6 +498,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '45 kg',
     image: 'nfl-neem-urea.png',
     source: 'nfl',
+    sourceUrl: 'https://www.nationalfertilizers.com/product/neem-coated-urea/',
   },
   {
     id: 'nfl-bio-rhizobium',
@@ -507,6 +519,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '200 g',
     image: 'nfl-rhizobium.png',
     source: 'nfl',
+    sourceUrl: 'https://www.nationalfertilizers.com/product/rhizobium/',
   },
   {
     id: 'nfl-bio-azotobacter',
@@ -525,6 +538,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '200 g',
     image: 'nfl-azotobacter.png',
     source: 'nfl',
+    sourceUrl: 'https://www.nationalfertilizers.com/product/azotobacter/',
   },
   {
     id: 'nfl-bio-psb',
@@ -543,6 +557,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '200 g',
     image: 'nfl-psb.png',
     source: 'nfl',
+    sourceUrl: 'https://www.nationalfertilizers.com/product/phosphate-solubilizing-bacteria/',
   },
   {
     id: 'nfl-zinc-sulphate',
@@ -561,6 +576,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '25 kg',
     image: 'zinc-sulphate.png',
     source: 'nfl',
+    sourceUrl: 'https://www.nationalfertilizers.com/product/zinc-sulphate/',
   },
   {
     id: 'nfl-ferrous-sulphate',
@@ -579,6 +595,7 @@ export const INDIAN_FERTILIZER_CATALOG: FertilizerCatalogEntry[] = [
     packSize: '25 kg',
     image: 'ferrous-sulphate.png',
     source: 'nfl',
+    sourceUrl: 'https://www.nationalfertilizers.com/product/ferrous-sulphate/',
   },
 
   // ── DoF / India standard grades ────────────────────────────────────────

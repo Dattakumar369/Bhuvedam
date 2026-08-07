@@ -13,6 +13,7 @@ import {
   NUTRIENT_DEFICIENCY_SYMPTOMS,
   SOIL_TYPES,
 } from '../data/bulkMasters';
+import { imageUrlForActive, resolveProductImageUrl } from '../../services/productImageResolver';
 
 const BATCH = 200;
 
@@ -30,8 +31,20 @@ function slug(s: string): string {
     .slice(0, 100);
 }
 
-function imageFor(type: string, id: string): string {
-  return `ag/${type}/${id}.png`;
+function imageFor(type: string, activeName: string, category?: string): string {
+  if (type === 'pesticide' || type === 'fungicide') {
+    return imageUrlForActive(type, activeName);
+  }
+  if (type === 'fertilizer') {
+    return (
+      resolveProductImageUrl({
+        type: 'fertilizer',
+        category,
+        image: `${activeName}.png`,
+      }) ?? ''
+    );
+  }
+  return '';
 }
 
 async function getTargetCrops(limit = 280): Promise<string[]> {
@@ -87,7 +100,7 @@ function generatePesticides(): Array<typeof agProducts.$inferInsert> {
           precautions: 'Observe PHI on label; wear PPE; rotate chemical groups.',
           description: `CIB&RC-style ${active.name} for ${active.targets.join(', ')} on ${active.crops.join(', ')}.`,
           price: '₹350–1200 per pack',
-          image: imageFor('pesticide', slug(active.name)),
+          image: imageFor('pesticide', active.name),
           source: 'cibrc_catalog',
           sourceUrl: 'https://www.ppqs.gov.in/divisions/cib-rc/registered-products',
         });
@@ -122,7 +135,7 @@ function generateFungicides(): Array<typeof agProducts.$inferInsert> {
           precautions: 'Do not mix with alkaline products; observe PHI.',
           description: `${active.name} for ${active.targets.join(', ')}.`,
           price: '₹400–1500 per pack',
-          image: imageFor('fungicide', slug(active.name)),
+          image: imageFor('fungicide', active.name),
           source: 'cibrc_catalog',
           sourceUrl: 'https://www.ppqs.gov.in/divisions/cib-rc/registered-products',
         });
@@ -167,7 +180,7 @@ function generateFertilizers(cropIds: string[]): Array<typeof agProducts.$inferI
           applicationMethod: `${base.application.join(' / ')} — adjust by soil test & growth stage.`,
           description: `${base.name} for ${cropId}. NPK ${base.npk}. ${base.nutrient}.`,
           price: '₹250–1800 per bag',
-          image: imageFor('fertilizer', base.id),
+          image: imageFor('fertilizer', base.id, base.type),
           source: 'icar_dof_catalog',
         });
       }
