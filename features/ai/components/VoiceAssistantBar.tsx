@@ -106,7 +106,7 @@ export function VoiceAssistantBar({
         <View style={styles.statusCol}>
           <Caption style={styles.status}>{statusText}</Caption>
           {transcript && isListening ? (
-            <Caption style={styles.transcript} numberOfLines={2}>
+            <Caption style={styles.transcript} numberOfLines={6}>
               "{transcript}"
             </Caption>
           ) : null}

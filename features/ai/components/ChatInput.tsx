@@ -33,14 +33,10 @@ interface ChatInputProps {
   editingLabel?: string;
   onCancelEdit?: () => void;
   cancelEditLabel?: string;
-  voiceDraft?: boolean;
-  voiceDraftLabel?: string;
-  onCancelVoiceDraft?: () => void;
   pendingImageUri?: string | null;
   onAttachImage?: () => void;
   onRemoveImage?: () => void;
   attachImageLabel?: string;
-  listeningHint?: string;
   cancelListeningLabel?: string;
   confirmListeningLabel?: string;
 }
@@ -63,14 +59,10 @@ export function ChatInput({
   editingLabel = 'Editing message',
   onCancelEdit,
   cancelEditLabel = 'Cancel',
-  voiceDraft = false,
-  voiceDraftLabel = 'Review your message — edit if needed, then tap Send',
-  onCancelVoiceDraft,
   pendingImageUri,
   onAttachImage,
   onRemoveImage,
   attachImageLabel = 'Upload photo',
-  listeningHint = 'Tap Done when finished, or Cancel to discard',
   cancelListeningLabel = 'Cancel',
   confirmListeningLabel = 'Done',
 }: ChatInputProps) {
@@ -123,16 +115,6 @@ export function ChatInput({
             </Pressable>
           ) : null}
         </View>
-      ) : voiceDraft ? (
-        <View style={styles.voiceDraftBanner}>
-          <MaterialCommunityIcons name="microphone-outline" size={16} color={colors.primary} />
-          <Caption style={styles.voiceDraftBannerText}>{voiceDraftLabel}</Caption>
-          {onCancelVoiceDraft ? (
-            <Pressable onPress={onCancelVoiceDraft} hitSlop={8}>
-              <Caption style={styles.cancelEdit}>{cancelEditLabel}</Caption>
-            </Pressable>
-          ) : null}
-        </View>
       ) : null}
 
       {hasImage && pendingImageUri ? (
@@ -141,18 +123,6 @@ export function ChatInput({
           {onRemoveImage ? (
             <Pressable onPress={onRemoveImage} style={styles.removeImageBtn} hitSlop={8}>
               <MaterialCommunityIcons name="close-circle" size={22} color={colors.error} />
-            </Pressable>
-          ) : null}
-        </View>
-      ) : null}
-
-      {isListening ? (
-        <View style={styles.listeningBanner}>
-          <MaterialCommunityIcons name="microphone" size={16} color={colors.error} />
-          <Caption style={styles.listeningBannerText}>{listeningHint}</Caption>
-          {onCancelListening ? (
-            <Pressable onPress={onCancelListening} hitSlop={8}>
-              <Caption style={styles.cancelListening}>{cancelListeningLabel}</Caption>
             </Pressable>
           ) : null}
         </View>
@@ -202,7 +172,7 @@ export function ChatInput({
           placeholderTextColor={colors.textTertiary}
           style={styles.input}
           multiline
-          maxLength={2000}
+          maxLength={isListening ? undefined : 2000}
           editable={!disabled && !isListening}
           returnKeyType="send"
           blurOnSubmit={false}
@@ -260,30 +230,7 @@ const styles = StyleSheet.create({
     backgroundColor: `${colors.primary}10`,
   },
   editBannerText: { flex: 1, color: colors.primary, fontFamily: 'Poppins_600SemiBold' },
-  voiceDraftBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginBottom: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.md,
-    backgroundColor: `${colors.primary}10`,
-  },
-  voiceDraftBannerText: { flex: 1, color: colors.textSecondary, fontSize: 11 },
   cancelEdit: { color: colors.error, fontFamily: 'Poppins_600SemiBold' },
-  listeningBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginBottom: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.md,
-    backgroundColor: `${colors.error}10`,
-  },
-  listeningBannerText: { flex: 1, color: colors.textSecondary, fontSize: 11 },
-  cancelListening: { color: colors.error, fontFamily: 'Poppins_600SemiBold', fontSize: 12 },
   imagePreviewWrap: {
     marginBottom: spacing.sm,
     alignSelf: 'flex-start',

@@ -16,6 +16,7 @@ import { useLanguageStore } from '@/store/languageStore';
 
 interface UseVoiceInputOptions {
   onResult: (transcript: string) => void;
+  /** @deprecated Live transcript is exposed via `transcript` — do not mirror into TextInput (maxLength truncates). */
   onPartialResult?: (transcript: string) => void;
   language?: LanguageCode;
   enabled?: boolean;
@@ -23,8 +24,16 @@ interface UseVoiceInputOptions {
   blocked?: boolean;
 }
 
-function mergeTranscript(finalParts: string, interim: string): string {
-  return [finalParts, interim].filter(Boolean).join(' ').trim();
+/** Long pauses while thinking — Android default ~5s ends the session too early. */
+const ANDROID_SILENCE_MS = 60_000;
+
+function joinSegments(committed: string, segment: string): string {
+  const next = segment.trim();
+  if (!next) return committed;
+  if (!committed) return next;
+  if (committed.endsWith(next)) return committed;
+  if (next.startsWith(committed)) return next;
+  return `${committed} ${next}`;
 }
 
 export function useVoiceInput({
@@ -49,8 +58,10 @@ export function useVoiceInput({
   const blockedRef = useRef(blocked);
   const userStopRequestedRef = useRef(false);
   const discardSessionRef = useRef(false);
-  const finalTranscriptRef = useRef('');
-  const interimTranscriptRef = useRef('');
+  /** Committed text from prior Android segments / finals. */
+  const transcriptTallyRef = useRef('');
+  /** Current segment partial hypothesis (replaced each interim event). */
+  const sessionInterimRef = useRef('');
   const speechLangRef = useRef(speechRecognition);
 
   onResultRef.current = onResult;
@@ -59,35 +70,34 @@ export function useVoiceInput({
   speechLangRef.current = speechRecognition;
 
   const updateLiveTranscript = useCallback(() => {
-    const live = mergeTranscript(finalTranscriptRef.current, interimTranscriptRef.current);
+    const live = joinSegments(transcriptTallyRef.current, sessionInterimRef.current);
     setTranscript(live);
     onPartialResultRef.current?.(live);
   }, []);
 
-  /** Preserve words spoken before a silence pause (Android restarts recognition and drops interim). */
-  const commitInterimToFinal = useCallback(() => {
-    const interim = interimTranscriptRef.current.trim();
+  /** Save in-progress words before Android restarts a segmented session. */
+  const commitInterimToTally = useCallback(() => {
+    const interim = sessionInterimRef.current.trim();
     if (!interim) return;
-    finalTranscriptRef.current = finalTranscriptRef.current
-      ? `${finalTranscriptRef.current} ${interim}`
-      : interim;
-    interimTranscriptRef.current = '';
+    transcriptTallyRef.current = joinSegments(transcriptTallyRef.current, interim);
+    sessionInterimRef.current = '';
     updateLiveTranscript();
   }, [updateLiveTranscript]);
 
   const resetSessionTranscript = useCallback(() => {
-    finalTranscriptRef.current = '';
-    interimTranscriptRef.current = '';
+    transcriptTallyRef.current = '';
+    sessionInterimRef.current = '';
     setTranscript('');
   }, []);
 
   const finalizeListening = useCallback(() => {
-    const text = mergeTranscript(finalTranscriptRef.current, interimTranscriptRef.current);
+    commitInterimToTally();
+    const text = transcriptTallyRef.current.trim();
     resetSessionTranscript();
     if (text && !blockedRef.current) {
       onResultRef.current(text);
     }
-  }, [resetSessionTranscript]);
+  }, [commitInterimToTally, resetSessionTranscript]);
 
   const getStartOptions = useCallback(
     () => ({
@@ -95,11 +105,28 @@ export function useVoiceInput({
       interimResults: true,
       continuous: true,
       maxAlternatives: 1,
+      iosTaskHint: 'dictation' as const,
       androidIntentOptions: {
         EXTRA_LANGUAGE_MODEL: 'free_form',
+        EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS: ANDROID_SILENCE_MS,
+        EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS: ANDROID_SILENCE_MS,
+        EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS: ANDROID_SILENCE_MS,
       },
     }),
     [],
+  );
+
+  const restartRecognition = useCallback(
+    (module: NonNullable<ReturnType<typeof getNativeSpeechRecognition>>) => {
+      commitInterimToTally();
+      try {
+        module.start(getStartOptions());
+      } catch {
+        isListeningRef.current = false;
+        setIsListening(false);
+      }
+    },
+    [commitInterimToTally, getStartOptions],
   );
 
   useEffect(() => {
@@ -140,15 +167,9 @@ export function useVoiceInput({
           return;
         }
 
-        // Platform ended early (silence timeout) — keep mic open until farmer taps Done.
+        // Platform ended early (silence) — keep listening until farmer taps Done.
         if (isListeningRef.current && !blockedRef.current) {
-          commitInterimToFinal();
-          try {
-            module.start(getStartOptions());
-          } catch {
-            isListeningRef.current = false;
-            setIsListening(false);
-          }
+          restartRecognition(module);
           return;
         }
 
@@ -163,13 +184,11 @@ export function useVoiceInput({
 
         if (payload.isFinal) {
           if (segment.trim()) {
-            finalTranscriptRef.current = finalTranscriptRef.current
-              ? `${finalTranscriptRef.current} ${segment.trim()}`
-              : segment.trim();
+            transcriptTallyRef.current = joinSegments(transcriptTallyRef.current, segment);
           }
-          interimTranscriptRef.current = '';
+          sessionInterimRef.current = '';
         } else {
-          interimTranscriptRef.current = segment;
+          sessionInterimRef.current = segment;
         }
 
         updateLiveTranscript();
@@ -186,15 +205,9 @@ export function useVoiceInput({
           return;
         }
 
-        // Silence / no-speech — do not end session; farmer may still be thinking.
         if (payload.error === 'no-speech' || payload.error === 'speech-timeout') {
           if (isListeningRef.current && !userStopRequestedRef.current && !blockedRef.current) {
-            commitInterimToFinal();
-            try {
-              module.start(getStartOptions());
-            } catch {
-              /* ignore */
-            }
+            restartRecognition(module);
           }
           return;
         }
@@ -212,7 +225,7 @@ export function useVoiceInput({
         module.abort();
       }
     };
-  }, [commitInterimToFinal, finalizeListening, getStartOptions, updateLiveTranscript]);
+  }, [finalizeListening, getStartOptions, restartRecognition, resetSessionTranscript, updateLiveTranscript]);
 
   const showDevBuildAlert = useCallback(() => {
     Alert.alert(strings.voiceInputTitle, strings.voiceInputMessage, [

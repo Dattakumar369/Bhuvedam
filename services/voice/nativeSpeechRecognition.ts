@@ -17,7 +17,9 @@ export interface NativeSpeechRecognitionModule {
     interimResults?: boolean;
     continuous?: boolean;
     maxAlternatives?: number;
-    androidIntentOptions?: { EXTRA_LANGUAGE_MODEL: string };
+    iosTaskHint?: 'unspecified' | 'dictation' | 'search' | 'confirmation';
+    androidIntentOptions?: Record<string, string | number | boolean>;
+    androidRecognitionServicePackage?: string;
   }) => void;
   stop: () => void;
   abort: () => void;

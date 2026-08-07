@@ -38,7 +38,6 @@ export default function ChatScreen() {
   const [actionMessage, setActionMessage] = useState<ChatMessage | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ChatMessage | null>(null);
   const [pendingImage, setPendingImage] = useState<PickedChatImage | null>(null);
-  const [voiceDraftReady, setVoiceDraftReady] = useState(false);
   const { t, language } = useTranslation();
   const languageLabel = LANGUAGES.find((l) => l.code === language)?.nativeName ?? language;
   const { conversation, isTyping, voiceModeEnabled, send, stop, removeMessage, toggleVoiceMode } =
@@ -87,7 +86,6 @@ export default function ChatScreen() {
       clearResumeListenTimer();
       stopSpeakingNow();
       setInput(text);
-      setVoiceDraftReady(true);
     },
     [stopSpeakingNow, isTyping, isSpeaking, clearResumeListenTimer],
   );
@@ -95,7 +93,6 @@ export default function ChatScreen() {
   const { isListening, transcript, startListening, confirmListening, cancelListening } =
     useVoiceInput({
     onResult: handleVoiceResult,
-    onPartialResult: setInput,
     blocked: isSpeaking || isTyping,
   });
 
@@ -106,7 +103,6 @@ export default function ChatScreen() {
     clearResumeListenTimer();
     cancelListening();
     setInput('');
-    setVoiceDraftReady(false);
   }, [cancelListening, clearResumeListenTimer]);
 
   useEffect(() => {
@@ -144,7 +140,6 @@ export default function ChatScreen() {
     setInput('');
     setPendingImage(null);
     setEditingMessageId(null);
-    setVoiceDraftReady(false);
     await send(
       text,
       handleVoiceComplete,
@@ -178,7 +173,6 @@ export default function ChatScreen() {
     setEditingMessageId(null);
     setInput('');
     setPendingImage(null);
-    setVoiceDraftReady(false);
   }, []);
 
   const confirmDeleteMessage = useCallback(() => {
@@ -306,12 +300,11 @@ export default function ChatScreen() {
       ) : null}
 
       <ChatInput
-        value={input}
+        value={isListening ? transcript : input}
         onChangeText={setInput}
         onSend={() => void handleSend()}
         onVoicePress={() => {
           clearResumeListenTimer();
-          setVoiceDraftReady(false);
           if (isTyping) {
             stop();
             return;
@@ -325,7 +318,6 @@ export default function ChatScreen() {
         onCancelListening={handleCancelListening}
         confirmListeningLabel={t.voiceConfirmListening}
         cancelListeningLabel={t.voiceCancelListening}
-        listeningHint={t.voiceListeningHint}
         isListening={isListening}
         disabled={isTyping}
         placeholder={t.chatPlaceholder}
@@ -334,12 +326,6 @@ export default function ChatScreen() {
         editingLabel={t.editingMessage}
         cancelEditLabel={t.cancelEdit}
         onCancelEdit={cancelEdit}
-        voiceDraft={voiceDraftReady && !editingMessageId}
-        voiceDraftLabel={t.voiceDraftReview}
-        onCancelVoiceDraft={() => {
-          setVoiceDraftReady(false);
-          setInput('');
-        }}
         pendingImageUri={FEATURES.chatImageUploadEnabled ? pendingImage?.uri : undefined}
         onAttachImage={
           FEATURES.chatImageUploadEnabled ? () => void handleAttachImage() : undefined
