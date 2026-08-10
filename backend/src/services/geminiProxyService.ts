@@ -72,7 +72,7 @@ export async function completeGeminiChat(
   const systemInstruction = extractSystemInstruction(messages);
   const useVision = historyHasVisionImage(messages);
   const temperature = useVision
-    ? 0.1
+    ? (opts.temperature ?? 0.25)
     : (opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15));
   const maxOutputTokens = opts.voiceMode ? 768 : 2048;
 

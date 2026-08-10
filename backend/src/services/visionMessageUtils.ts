@@ -85,7 +85,8 @@ export function toOllamaVisionMessages(messages: ProxyChatMessage[]): OllamaVisi
     if (message.role === 'user' && images.length) {
       return {
         role: 'user',
-        content: text,
+        // Ollama vision needs non-empty content; not shown in the app chat bubble.
+        content: text || 'Analyze this image.',
         images: images.map((img) => img.data),
       };
     }

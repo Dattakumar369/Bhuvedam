@@ -68,7 +68,7 @@ async function requestOllamaChat(
   const activeModel = useVision ? visionModel : model;
   const think = ollamaThinkParam(activeModel);
   const temperature = useVision
-    ? 0.1
+    ? (opts.temperature ?? 0.25)
     : (opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15));
   const trimmed = trimMessagesForOllama(messages);
   const payload: Record<string, unknown> = {
