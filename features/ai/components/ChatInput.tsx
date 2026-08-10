@@ -121,7 +121,12 @@ export function ChatInput({
         <View style={styles.imagePreviewWrap}>
           <Image source={{ uri: pendingImageUri }} style={styles.imagePreview} />
           {onRemoveImage ? (
-            <Pressable onPress={onRemoveImage} style={styles.removeImageBtn} hitSlop={8}>
+            <Pressable
+              onPress={onRemoveImage}
+              style={styles.removeImageBtn}
+              hitSlop={8}
+              accessibilityLabel="Remove photo"
+            >
               <MaterialCommunityIcons name="close-circle" size={22} color={colors.error} />
             </Pressable>
           ) : null}
@@ -237,8 +242,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   imagePreview: {
-    width: 88,
-    height: 88,
+    width: 72,
+    height: 72,
     borderRadius: radius.md,
     backgroundColor: colors.surfaceVariant,
   },

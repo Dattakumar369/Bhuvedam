@@ -72,13 +72,13 @@ async function launchPicker(
     source === 'camera'
       ? await ImagePicker.launchCameraAsync({
           mediaTypes: ['images'],
-          allowsEditing: true,
+          allowsEditing: false,
           quality: 0.7,
           base64: true,
         })
       : await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ['images'],
-          allowsEditing: true,
+          allowsEditing: false,
           quality: 0.7,
           base64: true,
         });

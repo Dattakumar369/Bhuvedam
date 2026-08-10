@@ -46,6 +46,7 @@ import {
     type ProxyChatMessage,
 } from '../services/aiChatService';
 import { cacheAiKnowledgeAnswer } from '../services/aiKnowledgeCache';
+import { isValidChatMessage } from '../services/visionMessageUtils';
 import {
     canonicalAgStats,
     getCanonicalAgProductById,
@@ -1167,7 +1168,7 @@ app.post('/api/ai/chat', farmerAuthMiddleware, async (c) => {
     cropIds?: string[];
   };
 
-  const messages = body.messages?.filter((m) => m.role && m.content) ?? [];
+  const messages = body.messages?.filter(isValidChatMessage) ?? [];
   if (!messages.length) return appError(c, 'AI_MESSAGES_REQUIRED');
 
   try {
@@ -1201,7 +1202,7 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
     cropIds?: string[];
   };
 
-  const messages = body.messages?.filter((m) => m.role && m.content) ?? [];
+  const messages = body.messages?.filter(isValidChatMessage) ?? [];
   if (!messages.length) return appError(c, 'AI_MESSAGES_REQUIRED');
 
   try {

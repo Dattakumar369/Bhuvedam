@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 
 import { MapErrorBoundary } from '@/components/MapErrorBoundary';
@@ -32,8 +32,11 @@ interface FieldInteractiveMapProps {
   points: Coordinates[];
   livePosition?: Coordinates | null;
   walking?: boolean;
+  selectedPointIndex?: number | null;
   onAddPoint?: (point: Coordinates) => void;
   onMovePoint?: (index: number, point: Coordinates) => void;
+  onSelectPoint?: (index: number | null) => void;
+  onRemovePoint?: (index: number) => void;
 }
 
 const MAP_HEIGHT = 420;
@@ -65,11 +68,15 @@ function FieldInteractiveMapInner({
   points,
   livePosition,
   walking = false,
+  selectedPointIndex = null,
   onAddPoint,
   onMovePoint,
+  onSelectPoint,
+  onRemovePoint,
 }: FieldInteractiveMapProps) {
   const mapRef = useRef<MapView>(null);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draggingRef = useRef(false);
   const [ready, setReady] = useState(false);
   const [mapLayer, setMapLayer] = useState<FieldMapLayer>('hybrid');
   const [region, setRegion] = useState<Region>(FIELD_DEFAULT_REGION);
@@ -187,7 +194,9 @@ function FieldInteractiveMapInner({
   }, [pathCoords, ready, livePosition, mode, centerOnCoords]);
 
   const handleMapPress = (e: { nativeEvent: { coordinate: Coordinates } }) => {
-    if (tappable) onAddPoint?.(e.nativeEvent.coordinate);
+    if (draggingRef.current || !tappable) return;
+    onSelectPoint?.(null);
+    onAddPoint?.(e.nativeEvent.coordinate);
   };
 
   const handleRegionChangeComplete = (next: Region) => {
@@ -215,9 +224,9 @@ function FieldInteractiveMapInner({
 
   const hintText =
     mode === 'draw'
-      ? 'Hybrid + Ultra zoom (24) · +/- · moolalu tap · drag adjust'
+      ? 'Map tap = moola add · line meeda tap = madhya moola · pin drag = adjust'
       : mode === 'corner'
-        ? 'Map lo perlu chusi GPS pin chesi marker drag chesi adjust cheyandi'
+        ? 'GPS pin chesi marker drag chesi adjust cheyandi'
         : walking
           ? 'Polam chuttu tirugutunnaru — map lo live path kanipistundi'
           : 'Walk aipoyaka moolalu drag chesi adjust cheyochu';
@@ -339,18 +348,45 @@ function FieldInteractiveMapInner({
             />
           ) : null}
 
-          {points.map((point, index) => (
-            <Marker
-              key={`pt-${index}-${point.latitude.toFixed(6)}-${point.longitude.toFixed(6)}`}
-              coordinate={point}
-              title={`Moola ${index + 1}`}
-              description={editable ? 'Drag chesi adjust cheyandi' : undefined}
-              pinColor={index === 0 ? 'green' : mode === 'walk' ? 'orange' : 'red'}
-              draggable={editable}
-              onDragEnd={(e) => onMovePoint?.(index, e.nativeEvent.coordinate)}
-              tracksViewChanges={false}
-            />
-          ))}
+          {points.map((point, index) => {
+            const selected = selectedPointIndex === index;
+            return (
+              <Marker
+                key={`pt-${index}`}
+                coordinate={point}
+                anchor={{ x: 0.5, y: 0.5 }}
+                draggable={editable}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  onSelectPoint?.(index);
+                }}
+                onDragStart={() => {
+                  draggingRef.current = true;
+                  onSelectPoint?.(index);
+                }}
+                onDrag={(e) => onMovePoint?.(index, e.nativeEvent.coordinate)}
+                onDragEnd={(e) => {
+                  draggingRef.current = false;
+                  onMovePoint?.(index, e.nativeEvent.coordinate);
+                }}
+                onLongPress={() => {
+                  if (editable && onRemovePoint) onRemovePoint(index);
+                }}
+                tracksViewChanges={selected}
+                zIndex={selected ? 999 : index + 1}
+              >
+                <View
+                  style={[
+                    styles.vertexOuter,
+                    index === 0 && styles.vertexFirst,
+                    selected && styles.vertexSelected,
+                  ]}
+                >
+                  <Text style={styles.vertexLabel}>{index + 1}</Text>
+                </View>
+              </Marker>
+            );
+          })}
 
           {mode === 'walk' && walking && livePosition ? (
             <Marker
@@ -365,8 +401,7 @@ function FieldInteractiveMapInner({
 
       <Caption style={styles.footer}>
         {points.length} moolalu
-        {editable ? ' · pin pattukoni drag chesi adjust cheyandi' : ''}
-        {' · Ultra 🔍 = zoom 24 (max close)'}
+        {editable ? ' · drag adjust · long-press delete' : ''}
       </Caption>
     </View>
   );
@@ -446,6 +481,34 @@ const styles = StyleSheet.create({
     borderColor: `${colors.primary}40`,
   },
   map: { flex: 1 },
+  vertexOuter: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.error,
+    borderWidth: 3,
+    borderColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 4,
+  },
+  vertexFirst: {
+    backgroundColor: colors.success,
+  },
+  vertexSelected: {
+    borderColor: colors.warning,
+    borderWidth: 4,
+    transform: [{ scale: 1.15 }],
+  },
+  vertexLabel: {
+    color: colors.surface,
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 13,
+  },
   placeholder: {
     height: MAP_HEIGHT,
     alignItems: 'center',

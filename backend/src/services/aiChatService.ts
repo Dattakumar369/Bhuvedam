@@ -5,6 +5,7 @@ import {
 } from './aiProxyService';
 import {
   completeGeminiChat,
+  getGeminiConfigIssue,
   isGeminiConfigured,
 } from './geminiProxyService';
 import { resolveAgentTemperature } from './agents/agentTemperature';
@@ -51,6 +52,57 @@ function resolveTemperature(opts: AiChatOptions): number {
 }
 
 const GEMINI_ATTEMPT_MS = 12000;
+const GEMINI_VISION_ATTEMPT_MS = 45000;
+
+function isGeminiAuthError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /401|UNAUTHENTICATED|invalid authentication|API key/i.test(msg);
+}
+
+async function tryVisionLlmProviders(
+  messages: ProxyChatMessage[],
+  chatOpts: AiChatOptions & { temperature: number },
+): Promise<{ text: string | null; configIssue: string | null; authFailed: boolean }> {
+  const geminiIssue = getGeminiConfigIssue();
+  if (geminiIssue) {
+    return { text: null, configIssue: geminiIssue, authFailed: false };
+  }
+
+  let authFailed = false;
+
+  if (isGeminiConfigured()) {
+    try {
+      const text = (
+        await withTimeout(
+          completeGeminiChat(messages, chatOpts),
+          GEMINI_VISION_ATTEMPT_MS,
+          'GEMINI_VISION',
+        )
+      ).trim();
+      if (text.length >= 10) return { text, configIssue: null, authFailed: false };
+    } catch (err) {
+      authFailed = isGeminiAuthError(err);
+      console.error('[ai/vision] Gemini failed:', (err instanceof Error ? err.message : err).slice(0, 300));
+    }
+  }
+
+  if (isOllamaConfigured()) {
+    try {
+      const text = (await completeOllamaChat(messages, chatOpts)).trim();
+      if (text.length >= 10) return { text, configIssue: null, authFailed: false };
+    } catch (err) {
+      console.error('[ai/vision] Ollama vision failed:', err instanceof Error ? err.message : err);
+    }
+  }
+
+  if (authFailed) {
+    console.error(
+      '[ai/vision] Gemini key rejected (401). Regenerate at https://aistudio.google.com/apikey — check key is not Blocked.',
+    );
+  }
+
+  return { text: null, configIssue: null, authFailed };
+}
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
@@ -243,13 +295,22 @@ async function completeWithResearchFallback(
 ): Promise<{ answer: string; provider: string; research: WebResearchResult }> {
   const { query, correction, correctionNote } = extractResearchQuery(messages);
 
-  // Photo attached — vision model analyzes the image directly.
+  // Photo attached — vision model analyzes the image directly (Gemini 2.5 Flash).
   if (historyHasVisionImage(messages)) {
     const visionOpts = { ...opts, temperature: 0.25 };
-    const answer = (await tryAllLlmProviders(messages, visionOpts))?.trim();
-    if (answer && answer.length >= 10) {
-      return { answer, provider: getAiProvider(), research: emptyResearch(query) };
+    const { text: answer, configIssue, authFailed } = await tryVisionLlmProviders(messages, visionOpts);
+    if (answer) {
+      return { answer, provider: 'gemini', research: emptyResearch(query) };
     }
+
+    if (configIssue || authFailed) {
+      console.error('[ai/vision] Photo scan unavailable:', configIssue ?? 'Gemini auth failed');
+      const fallback = opts.voiceMode
+        ? 'Photo scan ippudu panicheyatledu. Konni nimishalu tarvata malli try cheyandi.'
+        : '**Photo scan ippudu panicheyatledu**\n\nKonni nimishalu tarvata malli try cheyandi. Problem continue aithe app team ki cheppandi.';
+      return { answer: fallback, provider: 'vision_unavailable', research: emptyResearch(query) };
+    }
+
     const fallback = opts.voiceMode
       ? 'Photo analyse cheyalekapoyindi. Manchamaina light lo malli try cheyandi.'
       : '**Photo analyse cheyalekapoyindi**\n\nManchamaina light lo clear photo malli pampandi.';

@@ -39,8 +39,8 @@ export default function MeasureFieldScreen() {
         <Card variant="elevated" style={styles.intro}>
           <Title style={styles.introTitle}>GPS tho polam kolavandi</Title>
           <Body style={styles.introBody}>
-            Map draw — village search chesi inti nunchi polam map lo chusi measure cheyochu. Moolalu
-            tap chesi pin drag chesi adjust cheyandi. GPS pin / Tiragandi kuda map open lo untayi.
+            Map draw — village search chesi polam boundary giyandi. Prati moola tap chesi, pin drag
+            chesi exact shape cover cheyandi. Line madhya tap cheste extra moola add avutundi.
           </Body>
           <Caption style={styles.introNote}>
             GPS ±2–5m error untundi — exact size ki patta/tape measure use cheyandi. Open sky must.

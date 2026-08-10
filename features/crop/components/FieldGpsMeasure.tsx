@@ -12,7 +12,6 @@ import {
   formatAccuracyHint,
   isWalkLoopClosed,
   MAX_APPLY_AVG_ACCURACY_M,
-  distanceMeters,
   simplifyWalkPoints,
   startFieldWalkTracking,
   validateCornerPoints,
@@ -25,6 +24,10 @@ import {
 import type { FieldCorner, FieldMeasurement } from '@/types/fieldMeasure';
 import type { Coordinates } from '@/types/location';
 import { formatAreaDisplay, measurePolygon } from '@/utils/geoArea';
+import {
+  nearestEdgeInsertAfterIndex,
+  nearestVertexIndex,
+} from '@/utils/fieldPolygonEdit';
 import { colors, radius, spacing } from '@/theme';
 
 interface FieldGpsMeasureProps {
@@ -54,6 +57,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
   const [livePosition, setLivePosition] = useState<Coordinates | null>(null);
   const [liveAccuracy, setLiveAccuracy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
   const walkSessionRef = useRef<WalkTrackSession | null>(null);
   const lastLiveUpdateRef = useRef(0);
   const pointsRef = useRef<FieldCorner[]>(initialPoints);
@@ -233,31 +237,51 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     setWalking(false);
     setWalkProgress(null);
     setLivePosition(null);
-    if (next !== mode) setPoints([]);
+    if (next !== mode) {
+      setPoints([]);
+      setSelectedPointIndex(null);
+    }
     setMode(next);
     setError(null);
   };
 
+  const makeDrawCorner = (coord: Coordinates): FieldCorner => ({
+    latitude: coord.latitude,
+    longitude: coord.longitude,
+    accuracyMeters: drawAccuracyEstimate,
+    quality: 'good' as const,
+    sampleCount: 1,
+  });
+
   const addDrawPoint = (coord: Coordinates) => {
-    if (points.length >= 2) {
-      const last = points[points.length - 1]!;
-      const dist = distanceMeters(last, coord);
-      if (dist < 2) {
-        setError('Previous point ki chaala daggaraga undi — zoom chesi next moola tap cheyandi.');
-        return;
-      }
+    const existing = nearestVertexIndex(coord, points as Coordinates[], 1.5);
+    if (existing != null) {
+      setSelectedPointIndex(existing);
+      return;
     }
+
     setError(null);
-    setPoints((prev) => [
-      ...prev,
-      {
-        latitude: coord.latitude,
-        longitude: coord.longitude,
-        accuracyMeters: drawAccuracyEstimate,
-        quality: 'good' as const,
-        sampleCount: 1,
-      },
-    ]);
+    const insertAfter = nearestEdgeInsertAfterIndex(coord, points as Coordinates[], 8);
+    const corner = makeDrawCorner(coord);
+
+    if (insertAfter != null) {
+      setPoints((prev) => {
+        const next = [...prev];
+        next.splice(insertAfter + 1, 0, corner);
+        return next;
+      });
+      setSelectedPointIndex(insertAfter + 1);
+      return;
+    }
+
+    setPoints((prev) => [...prev, corner]);
+    setSelectedPointIndex(points.length);
+  };
+
+  const removePoint = (index: number) => {
+    setPoints((prev) => prev.filter((_, i) => i !== index));
+    setSelectedPointIndex(null);
+    setError(null);
   };
 
   const movePoint = (index: number, coord: Coordinates) => {
@@ -280,6 +304,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
 
   const undoCorner = () => {
     setPoints((prev) => prev.slice(0, -1));
+    setSelectedPointIndex(null);
     setError(null);
   };
 
@@ -290,6 +315,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
     setWalkProgress(null);
     setLivePosition(null);
     setPoints([]);
+    setSelectedPointIndex(null);
     setError(null);
   };
 
@@ -372,7 +398,7 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
 
       <Caption style={styles.help}>
         {mode === 'draw'
-          ? 'Village search chesi mee polam daggaraki vellandi — map lo moolalu tap chesi, pin drag chesi adjust cheyandi. Polam ki vellalsina avasaram ledu.'
+          ? 'Satellite map lo polam moolalu tap chesi boundary giyandi — prati moola drag chesi exact ga adjust cheyochu. Line madhya tap cheste akkada kuda moola add avutundi.'
           : mode === 'corner'
             ? 'Map open lo undi — GPS pin chesaka marker drag chesi satellite prakaram adjust cheyandi.'
             : 'Map lo live path kanipistundi — aipoyaka moolalu drag chesi adjust cheyochu.'}
@@ -384,8 +410,11 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
           points={points}
           livePosition={livePosition}
           walking={walking}
+          selectedPointIndex={selectedPointIndex}
           onAddPoint={mode === 'draw' ? addDrawPoint : undefined}
           onMovePoint={movePoint}
+          onSelectPoint={mode === 'draw' ? setSelectedPointIndex : undefined}
+          onRemovePoint={mode === 'draw' ? removePoint : undefined}
         />
       ) : null}
 
@@ -513,11 +542,22 @@ export function FieldGpsMeasure({ initialPoints = [], onApply }: FieldGpsMeasure
             size="md"
           />
         ) : (
-          <Caption style={styles.drawHint}>
-            {mode === 'draw'
-              ? 'Map lo moolalu tap cheyandi · pin drag chesi adjust ↑'
-              : 'Map lo chusi GPS pin / walk use cheyandi ↑'}
-          </Caption>
+          <View style={styles.drawActions}>
+            <Caption style={styles.drawHint}>
+              Map lo moolalu tap · numbered pin drag · line meeda tap = extra moola
+            </Caption>
+            {selectedPointIndex != null ? (
+              <Pressable
+                style={styles.deletePointBtn}
+                onPress={() => removePoint(selectedPointIndex)}
+              >
+                <MaterialCommunityIcons name="map-marker-remove" size={18} color={colors.error} />
+                <Caption style={styles.deletePointText}>
+                  Moola {selectedPointIndex + 1} delete
+                </Caption>
+              </Pressable>
+            ) : null}
+          </View>
         )}
         <View style={styles.secondaryRow}>
           <Pressable
@@ -577,6 +617,19 @@ const styles = StyleSheet.create({
   modeChipText: { fontFamily: 'Poppins_600SemiBold', color: colors.primary, fontSize: 10 },
   modeChipTextActive: { color: colors.surface },
   drawHint: { textAlign: 'center', color: colors.textSecondary, fontStyle: 'italic' },
+  drawActions: { gap: spacing.xs, alignItems: 'center' },
+  deletePointBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: `${colors.error}50`,
+    backgroundColor: `${colors.error}08`,
+  },
+  deletePointText: { color: colors.error, fontFamily: 'Poppins_600SemiBold' },
   help: { color: colors.textSecondary, lineHeight: 20 },
   walkGpsBox: {
     alignItems: 'center',

@@ -41,6 +41,18 @@ export function historyHasVisionImage(messages: ProxyChatMessage[]): boolean {
   return messages.some((m) => m.role === 'user' && messageHasVisionContent(m.content));
 }
 
+export function isValidChatMessage(message: ProxyChatMessage): boolean {
+  if (!message.role) return false;
+  if (typeof message.content === 'string') return message.content.trim().length > 0;
+  if (Array.isArray(message.content)) {
+    return (
+      message.content.length > 0 &&
+      (messageText(message.content).length > 0 || messageHasVisionContent(message.content))
+    );
+  }
+  return false;
+}
+
 export type GeminiPart =
   | { text: string }
   | { inlineData: { mimeType: string; data: string } };

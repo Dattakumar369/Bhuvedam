@@ -5,7 +5,10 @@ import {
   buildGeminiContents,
   historyHasVisionImage,
   messageText,
+  type GeminiPart,
 } from './visionMessageUtils';
+
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
 function geminiConfig() {
   return {
@@ -15,16 +18,32 @@ function geminiConfig() {
 }
 
 let client: GoogleGenAI | null = null;
+let clientKey = '';
 
 function getClient(): GoogleGenAI {
   const { key } = geminiConfig();
   if (!key) throw new Error('GEMINI_API_KEY not configured on server');
-  if (!client) client = new GoogleGenAI({ apiKey: key });
+  if (!client || clientKey !== key) {
+    client = new GoogleGenAI({ apiKey: key });
+    clientKey = key;
+  }
   return client;
 }
 
 export function isGeminiConfigured(): boolean {
-  return Boolean(geminiConfig().key.trim());
+  return getGeminiConfigIssue() === null;
+}
+
+/** Returns null when Gemini is ready; otherwise a short reason for logs. */
+export function getGeminiConfigIssue(): string | null {
+  const key = geminiConfig().key.trim();
+  if (!key) return 'GEMINI_API_KEY missing';
+  // Standard (AIza…) and auth (AQ.…) keys from Google AI Studio.
+  if (!key.startsWith('AIza') && !key.startsWith('AQ.')) {
+    return 'GEMINI_API_KEY unrecognized — create one at https://aistudio.google.com/apikey';
+  }
+  if (key.length < 20) return 'GEMINI_API_KEY too short';
+  return null;
 }
 
 function trimSystemText(text: string, maxChars = 10000): string {
@@ -63,24 +82,92 @@ function buildTextPrompt(messages: ProxyChatMessage[]): string {
   return `${turns.join('\n')}\nAssistant:`;
 }
 
-export async function completeGeminiChat(
+function partsToRest(parts: GeminiPart[]): Array<Record<string, unknown>> {
+  return parts.map((part) => {
+    if ('text' in part) return { text: part.text };
+    return {
+      inlineData: {
+        mimeType: part.inlineData.mimeType,
+        data: part.inlineData.data,
+      },
+    };
+  });
+}
+
+/** Native REST — recommended for AIza and AQ auth keys (x-goog-api-key header). */
+async function completeGeminiChatViaRest(
   messages: ProxyChatMessage[],
-  opts: { voiceMode?: boolean; signal?: AbortSignal; temperature?: number } = {},
+  opts: { voiceMode?: boolean; signal?: AbortSignal; temperature?: number },
+  useVision: boolean,
+  systemInstruction: string,
+  temperature: number,
+  maxOutputTokens: number,
+): Promise<string> {
+  const { key, model } = geminiConfig();
+  const url = `${GEMINI_API_BASE}/models/${model}:generateContent`;
+
+  let contents: Array<{ role: string; parts: Array<Record<string, unknown>> }>;
+
+  if (useVision) {
+    const built = buildGeminiContents(messages);
+    if (!built.length) throw new Error('No vision content for Gemini');
+    contents = built.map((turn) => ({
+      role: turn.role,
+      parts: partsToRest(turn.parts),
+    }));
+  } else {
+    contents = [{ role: 'user', parts: [{ text: buildTextPrompt(messages) }] }];
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': key,
+    },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: systemInstruction }] },
+      contents,
+      generationConfig: {
+        temperature,
+        maxOutputTokens,
+      },
+    }),
+    signal: opts.signal,
+  });
+
+  const raw = await response.text();
+  if (!response.ok) {
+    throw new Error(`Gemini REST ${response.status}: ${raw.slice(0, 400)}`);
+  }
+
+  const data = JSON.parse(raw) as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  };
+  const text =
+    data.candidates?.[0]?.content?.parts
+      ?.map((p) => p.text ?? '')
+      .join('')
+      .trim() ?? '';
+
+  if (text) return text;
+  throw new Error('Gemini returned an empty response');
+}
+
+async function completeGeminiChatViaSdk(
+  messages: ProxyChatMessage[],
+  opts: { voiceMode?: boolean; signal?: AbortSignal; temperature?: number },
+  useVision: boolean,
+  systemInstruction: string,
+  temperature: number,
+  maxOutputTokens: number,
 ): Promise<string> {
   const { model } = geminiConfig();
   const ai = getClient();
-  const systemInstruction = extractSystemInstruction(messages);
-  const useVision = historyHasVisionImage(messages);
-  const temperature = useVision
-    ? (opts.temperature ?? 0.25)
-    : (opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15));
-  const maxOutputTokens = opts.voiceMode ? 768 : 2048;
 
   if (useVision) {
     const contents = buildGeminiContents(messages);
-    if (!contents.length) {
-      throw new Error('No vision content for Gemini');
-    }
+    if (!contents.length) throw new Error('No vision content for Gemini');
 
     const response = await ai.models.generateContent({
       model,
@@ -113,6 +200,47 @@ export async function completeGeminiChat(
   const text = response.text?.trim() ?? '';
   if (text) return text;
   throw new Error('Gemini returned an empty response');
+}
+
+export async function completeGeminiChat(
+  messages: ProxyChatMessage[],
+  opts: { voiceMode?: boolean; signal?: AbortSignal; temperature?: number } = {},
+): Promise<string> {
+  const configIssue = getGeminiConfigIssue();
+  if (configIssue) throw new Error(configIssue);
+
+  const systemInstruction = extractSystemInstruction(messages);
+  const useVision = historyHasVisionImage(messages);
+  const temperature = useVision
+    ? (opts.temperature ?? 0.25)
+    : (opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15));
+  const maxOutputTokens = opts.voiceMode ? 768 : 2048;
+
+  // REST first — native x-goog-api-key works for both AIza and AQ auth keys.
+  try {
+    return await completeGeminiChatViaRest(
+      messages,
+      opts,
+      useVision,
+      systemInstruction,
+      temperature,
+      maxOutputTokens,
+    );
+  } catch (restErr) {
+    console.warn(
+      '[gemini] REST failed, trying SDK:',
+      restErr instanceof Error ? restErr.message.slice(0, 200) : restErr,
+    );
+  }
+
+  return completeGeminiChatViaSdk(
+    messages,
+    opts,
+    useVision,
+    systemInstruction,
+    temperature,
+    maxOutputTokens,
+  );
 }
 
 export async function streamGeminiChat(
