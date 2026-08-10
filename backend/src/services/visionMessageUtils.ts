@@ -85,7 +85,7 @@ export function toOllamaVisionMessages(messages: ProxyChatMessage[]): OllamaVisi
     if (message.role === 'user' && images.length) {
       return {
         role: 'user',
-        content: text || 'Analyze this farm photo.',
+        content: text,
         images: images.map((img) => img.data),
       };
     }

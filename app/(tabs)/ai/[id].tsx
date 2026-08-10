@@ -147,7 +147,6 @@ export default function ChatScreen() {
       {
         editMessageId: editId ?? undefined,
         image: image ?? undefined,
-        defaultImagePrompt: t.chatImageDefaultPrompt,
       },
     );
   };
@@ -159,7 +158,7 @@ export default function ChatScreen() {
   }, [isTyping, editingMessageId, language]);
 
   const openMessageActions = useCallback((message: ChatMessage) => {
-    if (message.isStreaming || !message.content.trim()) return;
+    if (message.isStreaming || (!message.content.trim() && !message.imageUri)) return;
     setActionMessage(message);
   }, []);
 

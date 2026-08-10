@@ -2,8 +2,9 @@ import { create } from 'zustand';
 
 import { getTranslations } from '@/constants/i18n/translations';
 import { resolveApiError } from '@/services/api/userFacingError';
-import { hasRealAIProvider } from '@/constants/aiConfig';
+import { getSystemPrompt, hasRealAIProvider } from '@/constants/aiConfig';
 import type { LanguageCode } from '@/constants/languages';
+import { LANGUAGES } from '@/constants/languages';
 import {
   buildFullSystemPromptAsync,
   prepareContextBeforeChat,
@@ -52,7 +53,6 @@ interface PendingChatImage {
 interface SendMessageOptions {
   editMessageId?: string;
   image?: PendingChatImage;
-  defaultImagePrompt?: string;
 }
 
 interface AIState {
@@ -200,10 +200,7 @@ export const useAIStore = create<AIState>((set, get) => ({
     const pendingImage = options?.image;
     if (!trimmed && !pendingImage) return;
 
-    const messageText =
-      trimmed ||
-      options?.defaultImagePrompt ||
-      'Analyze this farm photo — identify crop, disease/pest if visible, and suggest practical solutions.';
+    const messageText = trimmed;
 
     if (get().isTyping) {
       get().stopGeneration();
@@ -315,18 +312,35 @@ export const useAIStore = create<AIState>((set, get) => ({
           : detectQueryLanguage(messageText, language);
       let spokeEarly = false;
 
-      await prepareContextBeforeChat(messageText);
-      const { prompt: baseSystemPrompt, dbContext, cropIds, agentId } = await buildFullSystemPromptAsync(
-        language,
-        get().conversations,
-        conversationId,
-        voiceMode,
-        messageText,
-      );
+      let systemPrompt: string;
+      let dbContext = '';
+      let cropIds: string[] = [];
+      let agentId = 'general';
 
-      const systemPrompt = visionMode
-        ? `${baseSystemPrompt}\n\n${VISION_SYSTEM_ADDON}`
-        : baseSystemPrompt;
+      if (visionMode) {
+        const langLabel =
+          LANGUAGES.find((l) => l.code === replyLanguage)?.nativeName ?? replyLanguage;
+        systemPrompt = [
+          getSystemPrompt(replyLanguage, voiceMode),
+          '',
+          `Language: ${langLabel}`,
+          '',
+          VISION_SYSTEM_ADDON,
+        ].join('\n');
+      } else {
+        await prepareContextBeforeChat(messageText);
+        const built = await buildFullSystemPromptAsync(
+          language,
+          get().conversations,
+          conversationId,
+          voiceMode,
+          messageText,
+        );
+        systemPrompt = built.prompt;
+        dbContext = built.dbContext;
+        cropIds = built.cropIds;
+        agentId = built.agentId;
+      }
 
       const fullResponse = await streamAIResponse({
         messages: history,
@@ -378,7 +392,7 @@ export const useAIStore = create<AIState>((set, get) => ({
 
       void persistConversations(get().conversations);
 
-      if (isThinDbContext(dbContext) && fullResponse.trim().length >= 80) {
+      if (isThinDbContext(dbContext) && fullResponse.trim().length >= 80 && messageText.trim()) {
         void cacheAiKnowledgeAnswer(messageText, fullResponse, { cropIds, dbContext });
       }
 

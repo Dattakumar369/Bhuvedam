@@ -27,6 +27,7 @@ import {
   polishConversationalReply,
   synthesizeFarmerAnswer,
 } from './synthesizeFarmerAnswer';
+import { historyHasVisionImage } from './visionMessageUtils';
 
 const CATALOG_AGENTS = new Set(['pest', 'fertilizer', 'crop', 'scheme']);
 
@@ -241,6 +242,20 @@ async function completeWithResearchFallback(
   opts: AiChatOptions,
 ): Promise<{ answer: string; provider: string; research: WebResearchResult }> {
   const { query, correction, correctionNote } = extractResearchQuery(messages);
+
+  // Photo scan: vision model only — no web/library enrichment (reduces false crop guesses).
+  if (historyHasVisionImage(messages)) {
+    const visionOpts = { ...opts, temperature: 0.1 };
+    const answer = (await tryAllLlmProviders(messages, { ...visionOpts, temperature: 0.1 }))?.trim();
+    if (answer && answer.length >= 10) {
+      return { answer, provider: getAiProvider(), research: emptyResearch(query) };
+    }
+    const fallback = opts.voiceMode
+      ? 'Photo clear ga kanipinchaledu. Daylight lo crop aku photo malli pampandi.'
+      : '**Photo scan failed**\n\nClear ga crop aku, stem, leda tegu photo teesi malli pampandi — laptop lanti photos scan cheyamu.';
+    return { answer: fallback, provider: 'vision_fallback', research: emptyResearch(query) };
+  }
+
   const chatOpts = { ...opts, temperature: resolveTemperature(opts) };
 
   let research = emptyResearch(query);

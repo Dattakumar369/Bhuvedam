@@ -67,7 +67,9 @@ async function requestOllamaChat(
   const useVision = historyHasVisionImage(messages);
   const activeModel = useVision ? visionModel : model;
   const think = ollamaThinkParam(activeModel);
-  const temperature = opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15);
+  const temperature = useVision
+    ? 0.1
+    : (opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15));
   const trimmed = trimMessagesForOllama(messages);
   const payload: Record<string, unknown> = {
     model: activeModel,

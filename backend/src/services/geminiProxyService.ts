@@ -70,10 +70,11 @@ export async function completeGeminiChat(
   const { model } = geminiConfig();
   const ai = getClient();
   const systemInstruction = extractSystemInstruction(messages);
-  const temperature = opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15);
-  const maxOutputTokens = opts.voiceMode ? 768 : 2048;
-
   const useVision = historyHasVisionImage(messages);
+  const temperature = useVision
+    ? 0.1
+    : (opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15));
+  const maxOutputTokens = opts.voiceMode ? 768 : 2048;
 
   if (useVision) {
     const contents = buildGeminiContents(messages);

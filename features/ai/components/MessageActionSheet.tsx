@@ -30,7 +30,8 @@ export function MessageActionSheet({
   if (!message) return null;
 
   const isUser = message.role === 'user';
-  const preview = message.content.trim().slice(0, 120);
+  const preview =
+    message.content.trim().slice(0, 120) || (message.imageUri ? '📷 Photo' : '');
 
   return (
     <BottomSheet visible={visible} onDismiss={onDismiss} title={title}>

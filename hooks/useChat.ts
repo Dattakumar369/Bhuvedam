@@ -5,7 +5,6 @@ import { useAIStore } from '@/store/aiStore';
 interface SendOptions {
   editMessageId?: string;
   image?: { uri: string; base64: string };
-  defaultImagePrompt?: string;
 }
 
 export function useChat(conversationId?: string) {
