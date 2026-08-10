@@ -1,6 +1,11 @@
 import { GoogleGenAI } from '@google/genai';
 
 import type { ProxyChatMessage } from './aiProxyService';
+import {
+  buildGeminiContents,
+  historyHasVisionImage,
+  messageText,
+} from './visionMessageUtils';
 
 function geminiConfig() {
   return {
@@ -22,29 +27,31 @@ export function isGeminiConfigured(): boolean {
   return Boolean(geminiConfig().key.trim());
 }
 
-function messageText(content: ProxyChatMessage['content']): string {
-  if (typeof content === 'string') return content;
-  return content.map((part) => part.text ?? '').join(' ').trim();
-}
-
 function trimSystemText(text: string, maxChars = 10000): string {
   if (text.length <= maxChars) return text;
   return `${text.slice(-maxChars)}\n\n[Earlier context trimmed for speed.]`;
 }
 
-function buildPrompt(messages: ProxyChatMessage[], voiceMode: boolean) {
-  let systemText = '';
+function extractSystemInstruction(messages: ProxyChatMessage[]): string {
+  const parts = messages
+    .filter((m) => m.role === 'system')
+    .map((m) => messageText(m.content))
+    .filter(Boolean);
+
+  const merged = parts.join('\n\n').trim();
+  return trimSystemText(
+    merged ||
+      'You are Bhuvedam AI — a Telugu-speaking agriculture assistant for Indian farmers.',
+  );
+}
+
+function buildTextPrompt(messages: ProxyChatMessage[]): string {
   const turns: string[] = [];
 
   for (const message of messages) {
+    if (message.role === 'system') continue;
     const text = messageText(message.content);
     if (!text) continue;
-
-    if (message.role === 'system') {
-      systemText = systemText ? `${systemText}\n\n${text}` : text;
-      continue;
-    }
-
     const label = message.role === 'assistant' ? 'Assistant' : 'Farmer';
     turns.push(`${label}: ${text}`);
   }
@@ -53,17 +60,7 @@ function buildPrompt(messages: ProxyChatMessage[], voiceMode: boolean) {
     throw new Error('No user messages for Gemini');
   }
 
-  const conversation = turns.join('\n');
-  const instruction = trimSystemText(
-    systemText ||
-      'You are Bhuvedam AI — a Telugu-speaking agriculture assistant for Indian farmers.',
-  );
-
-  return {
-    systemInstruction: instruction,
-    userPrompt: `${conversation}\nAssistant:`,
-    voiceMode,
-  };
+  return `${turns.join('\n')}\nAssistant:`;
 }
 
 export async function completeGeminiChat(
@@ -72,15 +69,41 @@ export async function completeGeminiChat(
 ): Promise<string> {
   const { model } = geminiConfig();
   const ai = getClient();
-  const { systemInstruction, userPrompt, voiceMode } = buildPrompt(messages, opts.voiceMode ?? false);
-  const temperature = opts.temperature ?? (voiceMode ? 0.25 : 0.15);
+  const systemInstruction = extractSystemInstruction(messages);
+  const temperature = opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15);
+  const maxOutputTokens = opts.voiceMode ? 768 : 2048;
 
+  const useVision = historyHasVisionImage(messages);
+
+  if (useVision) {
+    const contents = buildGeminiContents(messages);
+    if (!contents.length) {
+      throw new Error('No vision content for Gemini');
+    }
+
+    const response = await ai.models.generateContent({
+      model,
+      contents,
+      config: {
+        systemInstruction,
+        maxOutputTokens,
+        temperature,
+        abortSignal: opts.signal,
+      },
+    });
+
+    const text = response.text?.trim() ?? '';
+    if (text) return text;
+    throw new Error('Gemini returned an empty response');
+  }
+
+  const userPrompt = buildTextPrompt(messages);
   const response = await ai.models.generateContent({
     model,
     contents: userPrompt,
     config: {
       systemInstruction,
-      maxOutputTokens: voiceMode ? 768 : 2048,
+      maxOutputTokens,
       temperature,
       abortSignal: opts.signal,
     },

@@ -1,41 +1,71 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Linking, Platform } from 'react-native';
 
+import type { LanguageCode } from '@/constants/languages';
+import { getTranslations } from '@/constants/i18n/translations';
+
 export interface PickedChatImage {
   uri: string;
   base64: string;
 }
 
-async function ensurePermission(source: 'camera' | 'library'): Promise<boolean> {
+export interface ChatImagePickerStrings {
+  pickerTitle: string;
+  pickerMessage: string;
+  cameraOption: string;
+  libraryOption: string;
+  cancelOption: string;
+  cameraPermissionTitle: string;
+  cameraPermissionMessage: string;
+  libraryPermissionTitle: string;
+  libraryPermissionMessage: string;
+  settingsLabel: string;
+}
+
+export function getChatImagePickerStrings(language: LanguageCode = 'te'): ChatImagePickerStrings {
+  const t = getTranslations(language);
+  return {
+    pickerTitle: t.chatImagePickerTitle,
+    pickerMessage: t.chatImagePickerMessage,
+    cameraOption: t.chatImageCamera,
+    libraryOption: t.chatImageLibrary,
+    cancelOption: t.cancelEdit,
+    cameraPermissionTitle: t.chatImageCameraPermissionTitle,
+    cameraPermissionMessage: t.chatImageCameraPermissionMessage,
+    libraryPermissionTitle: t.chatImageLibraryPermissionTitle,
+    libraryPermissionMessage: t.chatImageLibraryPermissionMessage,
+    settingsLabel: t.chatImageOpenSettings,
+  };
+}
+
+async function ensurePermission(
+  source: 'camera' | 'library',
+  strings: ChatImagePickerStrings,
+): Promise<boolean> {
   if (source === 'camera') {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status === 'granted') return true;
-    Alert.alert(
-      'Camera permission',
-      'Camera access is needed to photograph your crop or field.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Settings', onPress: () => void Linking.openSettings() },
-      ],
-    );
+    Alert.alert(strings.cameraPermissionTitle, strings.cameraPermissionMessage, [
+      { text: strings.cancelOption, style: 'cancel' },
+      { text: strings.settingsLabel, onPress: () => void Linking.openSettings() },
+    ]);
     return false;
   }
 
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (status === 'granted') return true;
-  Alert.alert(
-    'Photo library permission',
-    'Photo access is needed to upload a farm image for AI analysis.',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Settings', onPress: () => void Linking.openSettings() },
-    ],
-  );
+  Alert.alert(strings.libraryPermissionTitle, strings.libraryPermissionMessage, [
+    { text: strings.cancelOption, style: 'cancel' },
+    { text: strings.settingsLabel, onPress: () => void Linking.openSettings() },
+  ]);
   return false;
 }
 
-async function launchPicker(source: 'camera' | 'library'): Promise<PickedChatImage | null> {
-  const allowed = await ensurePermission(source);
+async function launchPicker(
+  source: 'camera' | 'library',
+  strings: ChatImagePickerStrings,
+): Promise<PickedChatImage | null> {
+  const allowed = await ensurePermission(source, strings);
   if (!allowed) return null;
 
   const result =
@@ -43,13 +73,13 @@ async function launchPicker(source: 'camera' | 'library'): Promise<PickedChatIma
       ? await ImagePicker.launchCameraAsync({
           mediaTypes: ['images'],
           allowsEditing: true,
-          quality: 0.65,
+          quality: 0.7,
           base64: true,
         })
       : await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ['images'],
           allowsEditing: true,
-          quality: 0.65,
+          quality: 0.7,
           base64: true,
         });
 
@@ -61,18 +91,21 @@ async function launchPicker(source: 'camera' | 'library'): Promise<PickedChatIma
   return { uri: asset.uri, base64: asset.base64 };
 }
 
-export async function pickChatImage(): Promise<PickedChatImage | null> {
-  return new Promise((resolve) => {
-    const options = [
-      { text: 'Camera', onPress: () => void launchPicker('camera').then(resolve) },
-      { text: 'Photo library', onPress: () => void launchPicker('library').then(resolve) },
-      { text: 'Cancel', style: 'cancel' as const, onPress: () => resolve(null) },
-    ];
+export async function pickChatImage(
+  language: LanguageCode = 'te',
+): Promise<PickedChatImage | null> {
+  const strings = getChatImagePickerStrings(language);
 
-    if (Platform.OS === 'ios') {
-      Alert.alert('Upload photo', 'Crop, pest, or field photo — AI will analyze it.', options);
-    } else {
-      Alert.alert('Upload photo', 'Crop, pest, or field photo — AI will analyze it.', options);
+  return new Promise((resolve) => {
+    Alert.alert(strings.pickerTitle, strings.pickerMessage, [
+      { text: strings.cameraOption, onPress: () => void launchPicker('camera', strings).then(resolve) },
+      { text: strings.libraryOption, onPress: () => void launchPicker('library', strings).then(resolve) },
+      { text: strings.cancelOption, style: 'cancel', onPress: () => resolve(null) },
+    ]);
+
+    if (Platform.OS === 'web') {
+      void launchPicker('library', strings).then(resolve);
+      return;
     }
   });
 }

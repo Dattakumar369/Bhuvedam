@@ -1,13 +1,18 @@
 import type { ChatMessage } from '@/types/ai';
 import { imageSessionCache } from '@/services/media/imageSessionCache';
 
-export const VISION_SYSTEM_ADDON = `IMAGE ANALYSIS MODE:
-The farmer uploaded a photo of crop, leaf, pest, soil, or field condition.
-- Describe what you can clearly see in the image.
-- Identify likely crop, disease, pest, nutrient issue, or weed if visible.
-- Give practical next steps (spray, fertilizer, irrigation, when to consult local ag officer).
-- If the photo is blurry or unclear, say so — do not guess details you cannot see.
-- Label advice as general suggestion when not from LIVE DATA.`;
+export const VISION_SYSTEM_ADDON = `IMAGE SCAN MODE (farmer uploaded a crop/field photo):
+Reply in a CLEAR, CLEAN structure — simple language, no jargon dump.
+
+**What I see** — crop/plant part in photo, visible symptoms (spots, yellowing, holes, wilt, pest, etc.)
+**Likely problem** — best guess: disease / pest / nutrient / weed / healthy / unclear
+**What to do** — 2–4 practical steps (field check, irrigation, safe spray only if needed)
+**Important** — confirm with local agriculture officer before buying spray; say if photo is blurry or not enough to judge
+
+Rules:
+- Do NOT invent product brands or exact doses unless FARMING LIBRARY in context supports it.
+- If unsure, say "photo alone is not enough" and ask crop name + village.
+- Never claim 100% diagnosis from one photo.`;
 
 export function messageHasVisionImage(message: ChatMessage): boolean {
   return message.role === 'user' && Boolean(message.imageUri || imageSessionCache.has(message.id));

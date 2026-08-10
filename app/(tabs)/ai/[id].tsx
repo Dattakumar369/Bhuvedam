@@ -154,9 +154,9 @@ export default function ChatScreen() {
 
   const handleAttachImage = useCallback(async () => {
     if (isTyping || editingMessageId) return;
-    const picked = await pickChatImage();
+    const picked = await pickChatImage(language);
     if (picked) setPendingImage(picked);
-  }, [isTyping, editingMessageId]);
+  }, [isTyping, editingMessageId, language]);
 
   const openMessageActions = useCallback((message: ChatMessage) => {
     if (message.isStreaming || !message.content.trim()) return;
@@ -241,7 +241,7 @@ export default function ChatScreen() {
       {FEATURES.chatImageUploadEnabled ? (
         <View style={styles.imageNoteBar}>
           <MaterialCommunityIcons name="camera-outline" size={14} color={colors.textTertiary} />
-          <Caption style={styles.imageNoteText}>{t.chatImageSessionNote}</Caption>
+          <Caption style={styles.imageNoteText}>{t.chatImageScanHint}</Caption>
         </View>
       ) : null}
 

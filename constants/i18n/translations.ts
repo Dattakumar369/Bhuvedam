@@ -51,6 +51,16 @@ export interface Translations {
   chatAttachImage: string;
   chatImageDefaultPrompt: string;
   chatImageSessionNote: string;
+  chatImageScanHint: string;
+  chatImagePickerTitle: string;
+  chatImagePickerMessage: string;
+  chatImageCamera: string;
+  chatImageLibrary: string;
+  chatImageCameraPermissionTitle: string;
+  chatImageCameraPermissionMessage: string;
+  chatImageLibraryPermissionTitle: string;
+  chatImageLibraryPermissionMessage: string;
+  chatImageOpenSettings: string;
   mockResponses: {
     default: string;
     crop: string;
@@ -113,10 +123,20 @@ const en: Translations = {
   messageDeleteConfirmAssistant: 'This reply will be removed.',
   editingMessage: 'Editing message',
   cancelEdit: 'Cancel',
-  chatAttachImage: 'Upload photo',
+  chatAttachImage: 'Scan photo',
   chatImageDefaultPrompt:
-    'Analyze this farm photo — identify the crop, any disease/pest/nutrient problem visible, and suggest practical solutions.',
-  chatImageSessionNote: 'Photos stay in this chat only — not saved online.',
+    'Analyze this farm photo — identify the crop, any visible disease, pest, or nutrient problem, and give clear practical steps.',
+  chatImageSessionNote: 'Photos stay on your phone only — not saved to server.',
+  chatImageScanHint: 'Tap camera to scan crop leaf or pest photo — AI gives clear disease/pest advice.',
+  chatImagePickerTitle: 'Scan farm photo',
+  chatImagePickerMessage: 'Take a clear close-up of the affected leaf, stem, or pest. Good light helps.',
+  chatImageCamera: 'Take photo',
+  chatImageLibrary: 'Choose from gallery',
+  chatImageCameraPermissionTitle: 'Camera permission',
+  chatImageCameraPermissionMessage: 'Camera access is needed to photograph your crop or field.',
+  chatImageLibraryPermissionTitle: 'Photo access',
+  chatImageLibraryPermissionMessage: 'Photo access is needed to upload a crop image for AI analysis.',
+  chatImageOpenSettings: 'Settings',
   mockResponses: {
     default:
       'Based on current agricultural best practices, I recommend monitoring soil moisture levels regularly and adjusting irrigation based on crop growth stage. Would you like specific advice for a particular crop?',
@@ -397,10 +417,20 @@ const te: Translations = {
   voiceListeningHint: 'మధ్యలో ఆగినా సరే — Done నొక్కి, మార్చి, Send చేయండి',
   voiceDraftReview: 'మీ సందేశం చూడండి — అవసరమైతే మార్చి Send నొక్కండి',
   voiceBarStopHint: 'Done → మార్చి Send · Cancel రద్దు',
-  chatAttachImage: 'Photo upload',
+  chatAttachImage: 'Photo scan',
   chatImageDefaultPrompt:
-    'Ee photo chusi crop, rogam/tegu/poshak samasya em kanipistundo cheppandi — practical solution ivvandi.',
-  chatImageSessionNote: 'Photos ee session lo matrame untayi — server lo save avvavu.',
+    'Ee photo chusi crop emo, rogam/tegu/poshak samasya em kanipistundo cheppandi — practical steps ivvandi.',
+  chatImageSessionNote: 'Photos ee chat lo matrame untayi — server ki save avvavu.',
+  chatImageScanHint: '📷 Camera nokki crop aku / rogam / tegu photo pampandi — AI clear ga cheptundi.',
+  chatImagePickerTitle: 'Panta photo scan',
+  chatImagePickerMessage: 'Rogam unna aku, tegu leda stem close-up photo teeyandi — manchamaina light lo.',
+  chatImageCamera: 'Photo teeyandi',
+  chatImageLibrary: 'Gallery nundi',
+  chatImageCameraPermissionTitle: 'Camera permission',
+  chatImageCameraPermissionMessage: 'Crop photo teeyadaniki camera access kavali.',
+  chatImageLibraryPermissionTitle: 'Photo access',
+  chatImageLibraryPermissionMessage: 'Photo upload cheyadaniki gallery access kavali.',
+  chatImageOpenSettings: 'Settings',
   mockResponses: {
     default:
       'ప్రస్తుత వ్యవసాయ ఉత్తమ పద్ధతుల ఆధారంగా, మట్టి తేమ స్థాయులను క్రమం తప్పకుండా పర్యవేక్షించి, పంట పెరుగుదల దశకు అనుగుణంగా నీటిపారుదలను సర్దుబాటు చేయమని సిఫారసు చేస్తున్నాను. నిర్దిష్ట పంటకు సలహా కావాలా?',
@@ -508,5 +538,19 @@ export function getTranslations(language: LanguageCode = DEFAULT_LANGUAGE): Tran
     voiceConfirmListening: base.voiceConfirmListening ?? translations.en.voiceConfirmListening,
     voiceListeningHint: base.voiceListeningHint ?? translations.en.voiceListeningHint,
     voiceDraftReview: base.voiceDraftReview ?? translations.en.voiceDraftReview,
+    chatImageScanHint: base.chatImageScanHint ?? translations.en.chatImageScanHint,
+    chatImagePickerTitle: base.chatImagePickerTitle ?? translations.en.chatImagePickerTitle,
+    chatImagePickerMessage: base.chatImagePickerMessage ?? translations.en.chatImagePickerMessage,
+    chatImageCamera: base.chatImageCamera ?? translations.en.chatImageCamera,
+    chatImageLibrary: base.chatImageLibrary ?? translations.en.chatImageLibrary,
+    chatImageCameraPermissionTitle:
+      base.chatImageCameraPermissionTitle ?? translations.en.chatImageCameraPermissionTitle,
+    chatImageCameraPermissionMessage:
+      base.chatImageCameraPermissionMessage ?? translations.en.chatImageCameraPermissionMessage,
+    chatImageLibraryPermissionTitle:
+      base.chatImageLibraryPermissionTitle ?? translations.en.chatImageLibraryPermissionTitle,
+    chatImageLibraryPermissionMessage:
+      base.chatImageLibraryPermissionMessage ?? translations.en.chatImageLibraryPermissionMessage,
+    chatImageOpenSettings: base.chatImageOpenSettings ?? translations.en.chatImageOpenSettings,
   };
 }

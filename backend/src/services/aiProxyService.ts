@@ -1,3 +1,9 @@
+import {
+  historyHasVisionImage,
+  messageText,
+  toOllamaVisionMessages,
+} from './visionMessageUtils';
+
 type ChatRole = 'system' | 'user' | 'assistant';
 
 export interface ProxyChatMessage {
@@ -15,6 +21,8 @@ function ollamaConfig() {
     ),
     key: process.env.OLLAMA_API_KEY ?? process.env.EXPO_PUBLIC_OLLAMA_API_KEY ?? '',
     model: process.env.OLLAMA_MODEL ?? process.env.EXPO_PUBLIC_OLLAMA_MODEL ?? 'gpt-oss:20b',
+    visionModel:
+      process.env.OLLAMA_VISION_MODEL ?? process.env.EXPO_PUBLIC_OLLAMA_VISION_MODEL ?? 'llama3.2-vision',
   };
 }
 
@@ -25,11 +33,6 @@ export function isOllamaConfigured(): boolean {
 function ollamaThinkParam(model: string): string | undefined {
   if (model.includes('gpt-oss')) return 'low';
   return undefined;
-}
-
-function messageText(content: ProxyChatMessage['content']): string {
-  if (typeof content === 'string') return content;
-  return content.map((part) => part.text ?? '').join(' ').trim();
 }
 
 /** Reasoning models can exceed context — keep system prompt bounded. */
@@ -56,16 +59,19 @@ async function requestOllamaChat(
   messages: ProxyChatMessage[],
   opts: { voiceMode?: boolean; signal?: AbortSignal; stream: boolean; temperature?: number },
 ) {
-  const { url, key, model } = ollamaConfig();
+  const { url, key, model, visionModel } = ollamaConfig();
   if (!key) {
     throw new Error('OLLAMA_API_KEY not configured on server');
   }
 
-  const think = ollamaThinkParam(model);
+  const useVision = historyHasVisionImage(messages);
+  const activeModel = useVision ? visionModel : model;
+  const think = ollamaThinkParam(activeModel);
   const temperature = opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15);
+  const trimmed = trimMessagesForOllama(messages);
   const payload: Record<string, unknown> = {
-    model,
-    messages: trimMessagesForOllama(messages),
+    model: activeModel,
+    messages: useVision ? toOllamaVisionMessages(trimmed) : trimmed,
     stream: opts.stream,
     options: {
       temperature,

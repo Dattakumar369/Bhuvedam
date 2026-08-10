@@ -7,7 +7,7 @@ export function formatBhuvedamAppGuideBlock(compact = false): string {
     return [
       'Bhuvedam = Telugu/English farming app. Bottom tabs: Home | Crop (farm profile) | AI chat | Profile.',
       'Home: Weather, AI, Fertilizers, Pesticides, Fungicides, Spray guide, Mandi rates, Nearby shops, Schemes, Field measure, Crop guide.',
-      'AI chat: type or mic; pause while speaking is OK; tap Done then edit & Send; voice mode reads replies aloud; long-press messages to edit/delete.',
+      'AI chat: type or mic; tap camera to scan crop/pest photo; voice mode reads replies; long-press to edit/delete.',
       'Crop tab: save village, soil, field area, crops — unlocks personalized AI advice.',
       'Profile: language, dark mode, settings, logout.',
     ].join('\n');
@@ -43,7 +43,7 @@ export function formatBhuvedamAppGuideBlock(compact = false): string {
     '- Voice mode (speaker icon): AI reads answers aloud; mic re-opens after reply.',
     '- Suggested questions on new chats; topic categories on AI home.',
     '- Long-press any message → Edit or Delete.',
-    '- Optional photo attach: analyze crop disease/pest from farm photo (session only).',
+    '- Photo scan (camera icon): upload crop leaf / pest / disease photo — AI analyzes and gives clear steps (What I see, Likely problem, What to do). Photo stays on phone only.',
     '',
     'HOW TO GUIDE FARMERS:',
     '- Give simple steps: "Home tab → Mandi rates" or "Crop tab → complete farm setup".',
