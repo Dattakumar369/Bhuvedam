@@ -2,12 +2,17 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
+import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, UrlTile, type Region } from 'react-native-maps';
 
 import { MapErrorBoundary } from '@/components/MapErrorBoundary';
 import { SearchInput } from '@/components/ui';
 import { Caption } from '@/components/ui/Typography';
 import { isGoogleMapsConfigured } from '@/constants/mapsConfig';
+import {
+  FIELD_BASEMAP_LAYERS,
+  getFieldBasemap,
+  type FieldBasemapId,
+} from '@/constants/mapStyles';
 import {
   FIELD_CLOSE_DELTA,
   FIELD_DEFAULT_REGION,
@@ -25,7 +30,6 @@ import { reverseGeocodeMapLabel } from '@/utils/mapLocationLabel';
 import { colors, radius, spacing } from '@/theme';
 
 export type FieldMapMode = 'draw' | 'corner' | 'walk';
-type FieldMapLayer = 'hybrid' | 'satellite';
 
 interface FieldInteractiveMapProps {
   mode: FieldMapMode;
@@ -78,8 +82,10 @@ function FieldInteractiveMapInner({
   const labelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const draggingRef = useRef(false);
   const [ready, setReady] = useState(false);
-  const [mapLayer, setMapLayer] = useState<FieldMapLayer>('hybrid');
+  const [mapLayer, setMapLayer] = useState<FieldBasemapId>('recent');
   const [region, setRegion] = useState<Region>(FIELD_DEFAULT_REGION);
+  const basemap = getFieldBasemap(mapLayer);
+  const usesCustomTiles = Boolean(basemap.urlTemplate);
   const [areaLabel, setAreaLabel] = useState<string | null>(null);
   const [placeQuery, setPlaceQuery] = useState('');
   const [placeResults, setPlaceResults] = useState<PlaceSearchResult[]>([]);
@@ -270,22 +276,20 @@ function FieldInteractiveMapInner({
       <View style={styles.toolbar}>
         <Caption style={styles.hint}>{hintText}</Caption>
         <View style={styles.toolRow}>
-          <Pressable
-            style={[styles.layerChip, mapLayer === 'hybrid' && styles.layerChipActive]}
-            onPress={() => setMapLayer('hybrid')}
-          >
-            <Caption style={[styles.layerText, mapLayer === 'hybrid' && styles.layerTextActive]}>
-              Hybrid
-            </Caption>
-          </Pressable>
-          <Pressable
-            style={[styles.layerChip, mapLayer === 'satellite' && styles.layerChipActive]}
-            onPress={() => setMapLayer('satellite')}
-          >
-            <Caption style={[styles.layerText, mapLayer === 'satellite' && styles.layerTextActive]}>
-              Satellite
-            </Caption>
-          </Pressable>
+          {FIELD_BASEMAP_LAYERS.map((layer) => {
+            const active = mapLayer === layer.id;
+            return (
+              <Pressable
+                key={layer.id}
+                style={[styles.layerChip, active && styles.layerChipActive]}
+                onPress={() => setMapLayer(layer.id)}
+              >
+                <Caption style={[styles.layerText, active && styles.layerTextActive]}>
+                  {layer.label}
+                </Caption>
+              </Pressable>
+            );
+          })}
           <Pressable style={styles.toolBtn} onPress={() => handleZoom('in')} accessibilityLabel="Zoom in">
             <MaterialCommunityIcons name="plus" size={22} color={colors.primary} />
           </Pressable>
@@ -303,6 +307,7 @@ function FieldInteractiveMapInner({
             <MaterialCommunityIcons name="crosshairs-gps" size={22} color={colors.primary} />
           </Pressable>
         </View>
+        <Caption style={styles.layerHint}>{basemap.hint}</Caption>
       </View>
 
       <View style={styles.box}>
@@ -310,7 +315,7 @@ function FieldInteractiveMapInner({
           ref={mapRef}
           style={styles.map}
           provider={PROVIDER_GOOGLE}
-          mapType={mapLayer}
+          mapType={basemap.googleMapType ?? 'hybrid'}
           initialRegion={initialRegion}
           onMapReady={() => {
             setReady(true);
@@ -327,8 +332,19 @@ function FieldInteractiveMapInner({
           pitchEnabled={false}
           loadingEnabled
           minZoomLevel={FIELD_MAP_MIN_ZOOM}
-          maxZoomLevel={FIELD_MAP_MAX_ZOOM}
+          maxZoomLevel={usesCustomTiles ? Math.min(FIELD_MAP_MAX_ZOOM, basemap.maxZoom + 2) : FIELD_MAP_MAX_ZOOM}
         >
+          {usesCustomTiles && basemap.urlTemplate ? (
+            <UrlTile
+              key={basemap.id}
+              urlTemplate={basemap.urlTemplate}
+              maximumZ={basemap.maxZoom}
+              flipY={false}
+              zIndex={-1}
+              shouldReplaceMapContent
+            />
+          ) : null}
+
           {pathCoords.length >= 2 ? (
             <Polyline
               coordinates={pathCoords}
@@ -402,6 +418,8 @@ function FieldInteractiveMapInner({
       <Caption style={styles.footer}>
         {points.length} moolalu
         {editable ? ' · drag adjust · long-press delete' : ''}
+        {' · '}
+        {basemap.attribution}
       </Caption>
     </View>
   );
@@ -462,6 +480,7 @@ const styles = StyleSheet.create({
   layerChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   layerText: { fontFamily: 'Poppins_600SemiBold', color: colors.primary, fontSize: 11 },
   layerTextActive: { color: colors.surface },
+  layerHint: { color: colors.textTertiary, fontSize: 10, lineHeight: 14 },
   ultraBtn: { backgroundColor: colors.primary, borderColor: colors.primary },
   toolBtn: {
     width: 36,
