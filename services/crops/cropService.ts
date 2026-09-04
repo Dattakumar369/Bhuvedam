@@ -96,10 +96,11 @@ export async function fetchCropsFromBackend(
         params: {
           search: search?.trim() || undefined,
           lang: language,
-          localize: 'names',
-          limit: 2000,
+          // Catalog hydrate must stay fast — DB names only (app merges local Telugu CROPS)
+          localize: 'none',
+          limit: 500,
         },
-        timeout: language === 'te' || language === 'en' ? 12000 : 25000,
+        timeout: 15000,
       },
     );
     const mapped = (response.data.data ?? []).map(mapDbCrop);

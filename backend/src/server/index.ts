@@ -912,8 +912,14 @@ app.get('/api/soils', async (c) => {
   const lon = Number(c.req.query('lon'));
   if (!lat || !lon) return appError(c, 'LOCATION_REQUIRED');
 
-  await syncSoilAtPoint(lat, lon);
   const key = geoKey(lat, lon);
+  const [cached] = await db.select().from(soils).where(eq(soils.geoKey, key)).limit(1);
+  if (cached) {
+    return c.json({ data: cached, source: 'soilgrids' });
+  }
+
+  // Cold miss: fetch without 13s rate-limit sleeps (batch sync still uses them)
+  await syncSoilAtPoint(lat, lon, { respectRateLimit: false });
   const [row] = await db.select().from(soils).where(eq(soils.geoKey, key)).limit(1);
 
   return c.json({ data: row ?? null, source: 'soilgrids' });

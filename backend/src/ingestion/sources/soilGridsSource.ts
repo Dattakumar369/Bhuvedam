@@ -59,15 +59,21 @@ async function fetchSingleProperty(lat: number, lon: number, property: string): 
 }
 
 /** Fetch & cache soil data for a coordinate from SoilGrids */
-export async function syncSoilAtPoint(lat: number, lon: number): Promise<boolean> {
+export async function syncSoilAtPoint(
+  lat: number,
+  lon: number,
+  options?: { respectRateLimit?: boolean },
+): Promise<boolean> {
   const key = geoKey(lat, lon);
   const layers: SoilLayer[] = [];
+  const respectRateLimit = options?.respectRateLimit !== false;
 
-  // SoilGrids fair use: max 5 calls/min — fetch key properties sequentially
+  // SoilGrids fair use: max 5 calls/min — fetch key properties sequentially when batching.
+  // On-demand API requests skip the long sleep so /api/soils does not time out.
   for (const prop of ['phh2o', 'clay', 'sand', 'nitrogen', 'ocd'] as const) {
     const layer = await fetchSingleProperty(lat, lon, prop);
     if (layer) layers.push({ ...layer, name: prop });
-    await sleep(13000);
+    if (respectRateLimit) await sleep(13000);
   }
 
   const parsed = parseLayers(layers);

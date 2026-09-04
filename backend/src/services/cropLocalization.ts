@@ -268,25 +268,17 @@ export async function localizeCropsForFarmer(
   }
 
   if (lang === 'te' && mode === 'names') {
-    const needsAi = rows.filter((r) => !r.nameTe);
-    const aiById = new Map<string, string>();
-
-    if (needsAi.length && hasOllama()) {
-      const batchSize = 8;
-      for (let i = 0; i < needsAi.length; i += batchSize) {
-        const chunk = needsAi.slice(i, i + batchSize);
-        await Promise.all(
-          chunk.map(async (row) => {
-            const name = await translateNameWithAi(row, 'te');
-            aiById.set(row.id, name);
-            await persistLocalization(row, 'te', name);
-          }),
-        );
-      }
-    }
-
+    // Never bulk-translate list endpoints — Vercel times out (thousands of GBIF rows).
+    // Use stored Telugu / English names only; single-crop detail can still AI-translate.
     return rows.map((row) =>
-      withDisplayFields(row, {}, aiById.get(row.id) ?? row.nameTe ?? row.name),
+      withDisplayFields(row, {}, row.nameTe ?? row.name),
+    );
+  }
+
+  // Large list requests: skip AI to keep /api/crops fast
+  if (mode === 'names' && rows.length > 40) {
+    return rows.map((row) =>
+      withDisplayFields(row, {}, pickStaticName(row, lang) ?? row.name),
     );
   }
 
