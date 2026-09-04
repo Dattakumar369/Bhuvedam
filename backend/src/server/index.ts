@@ -918,10 +918,19 @@ app.get('/api/soils', async (c) => {
     return c.json({ data: cached, source: 'soilgrids' });
   }
 
-  // Cold miss: fetch without 13s rate-limit sleeps (batch sync still uses them)
-  await syncSoilAtPoint(lat, lon, { respectRateLimit: false });
-  const [row] = await db.select().from(soils).where(eq(soils.geoKey, key)).limit(1);
+  try {
+    // SoilGrids is often slow/unreliable — hard-cap so the app never NETWORK_ERROR hangs
+    await Promise.race([
+      syncSoilAtPoint(lat, lon, { respectRateLimit: false }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('soilgrids_timeout')), 12000),
+      ),
+    ]);
+  } catch {
+    return c.json({ data: null, source: 'soilgrids', warning: 'upstream_unavailable' });
+  }
 
+  const [row] = await db.select().from(soils).where(eq(soils.geoKey, key)).limit(1);
   return c.json({ data: row ?? null, source: 'soilgrids' });
 });
 

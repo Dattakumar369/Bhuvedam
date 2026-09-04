@@ -51,7 +51,9 @@ function parseLayers(layers: SoilLayer[] | undefined): Record<string, string | n
 async function fetchSingleProperty(lat: number, lon: number, property: string): Promise<SoilLayer | null> {
   const url = `${SOILGRIDS_URL}?lat=${lat}&lon=${lon}&property=${property}&depth=0-5cm&value=mean`;
   try {
-    const json = await fetchJson<SoilResponse>(url);
+    const json = await fetchJson<SoilResponse>(url, {
+      signal: AbortSignal.timeout(4000),
+    });
     return json.properties?.layers?.[0] ?? null;
   } catch {
     return null;
