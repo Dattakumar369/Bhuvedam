@@ -1,11 +1,12 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, PrimaryInput, SearchInput } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
 import { CROP_CATEGORY_EN, CROP_CATEGORY_TELUGU, CROPS } from '@/constants/crops';
 import { cropLabelForLanguage, soilLabelForLanguage } from '@/constants/i18n/farmTranslations';
+import { MEEBHOOMI_URL } from '@/constants/meebhoomi';
 import { useTranslation } from '@/hooks/useTranslation';
 import { searchPlaces } from '@/services/geo/placeSearchService';
 import { getCurrentLocation } from '@/services/location/locationService';
@@ -25,6 +26,9 @@ export interface FarmSetupWizardValues {
   villageInput: string;
   stateInput: string;
   selectedSoil: string;
+  surveyNumber: string;
+  khataNumber: string;
+  landExtentAcres: string;
 }
 
 interface FarmSetupWizardProps {
@@ -54,6 +58,9 @@ export function FarmSetupWizard({
   const [villageInput, setVillageInput] = useState(initial.villageInput);
   const [stateInput, setStateInput] = useState(initial.stateInput);
   const [selectedSoil, setSelectedSoil] = useState(initial.selectedSoil);
+  const [surveyNumber, setSurveyNumber] = useState(initial.surveyNumber);
+  const [khataNumber, setKhataNumber] = useState(initial.khataNumber);
+  const [landExtentAcres, setLandExtentAcres] = useState(initial.landExtentAcres);
   const [cropSearch, setCropSearch] = useState('');
   const [gpsLoading, setGpsLoading] = useState(false);
   const [placeQuery, setPlaceQuery] = useState('');
@@ -171,7 +178,14 @@ export function FarmSetupWizard({
       villageInput,
       stateInput,
       selectedSoil,
+      surveyNumber,
+      khataNumber,
+      landExtentAcres,
     });
+  };
+
+  const openMeebhoomi = () => {
+    void Linking.openURL(MEEBHOOMI_URL);
   };
 
   return (
@@ -311,6 +325,38 @@ export function FarmSetupWizard({
           />
           <Caption style={styles.requiredHint}>{farm.addressRequiredHint}</Caption>
           {addressHint ? <Caption style={styles.addressError}>{addressHint}</Caption> : null}
+
+          <View style={styles.landRecordsBlock}>
+            <Body style={styles.landRecordsTitle}>{farm.landRecordsTitle}</Body>
+            <Caption style={styles.landRecordsHint}>{farm.landRecordsHint}</Caption>
+            <Button
+              label={farm.meebhoomiLookup}
+              onPress={openMeebhoomi}
+              fullWidth
+              size="md"
+              variant="outline"
+            />
+            <Caption style={styles.meebhoomiHint}>{farm.meebhoomiLookupHint}</Caption>
+            <PrimaryInput
+              label={farm.surveyNumber}
+              value={surveyNumber}
+              onChangeText={setSurveyNumber}
+              placeholder={farm.surveyNumberPh}
+            />
+            <PrimaryInput
+              label={farm.khataNumber}
+              value={khataNumber}
+              onChangeText={setKhataNumber}
+              placeholder={farm.khataNumberPh}
+            />
+            <PrimaryInput
+              label={farm.landExtent}
+              value={landExtentAcres}
+              onChangeText={setLandExtentAcres}
+              placeholder={farm.landExtentPh}
+              keyboardType="numeric"
+            />
+          </View>
         </View>
       ) : null}
 
@@ -451,6 +497,22 @@ const styles = StyleSheet.create({
   },
   placeRowText: { flex: 1, color: colors.textPrimary, lineHeight: 18 },
   addressError: { color: colors.error, textAlign: 'center', lineHeight: 18 },
+  landRecordsBlock: {
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: `${colors.primary}30`,
+    backgroundColor: `${colors.primary}08`,
+  },
+  landRecordsTitle: {
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 15,
+    color: colors.primary,
+  },
+  landRecordsHint: { color: colors.textSecondary, lineHeight: 18, fontSize: 12 },
+  meebhoomiHint: { color: colors.textTertiary, lineHeight: 16, fontSize: 11 },
   soilGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   soilTile: {
     paddingHorizontal: spacing.md,

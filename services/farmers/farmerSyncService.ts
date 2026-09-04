@@ -13,6 +13,9 @@ export interface FarmerSyncPayload {
   village?: string;
   state?: string;
   soilType?: string;
+  surveyNumber?: string;
+  khataNumber?: string;
+  landExtentAcres?: string;
   farmSize?: string;
   areaAcres?: number;
   areaCents?: number;
@@ -38,6 +41,9 @@ export function buildFarmerSyncPayload(
     village: context.village,
     state: context.state,
     soilType: context.soilType,
+    surveyNumber: context.surveyNumber,
+    khataNumber: context.khataNumber,
+    landExtentAcres: context.landExtentAcres,
     farmSize: context.farmSize,
     areaAcres: context.areaAcres,
     areaCents: context.areaCents,
@@ -62,6 +68,9 @@ export interface FarmerServerProfile {
   village?: string;
   state?: string;
   soilType?: string;
+  surveyNumber?: string;
+  khataNumber?: string;
+  landExtentAcres?: string;
   areaAcres?: number;
   notes?: string[];
   setupComplete?: boolean;

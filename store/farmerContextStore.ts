@@ -41,6 +41,12 @@ export interface FarmerContext {
   mandal?: string;
   village?: string;
   state?: string;
+  /** Revenue survey number from MeeBhoomi */
+  surveyNumber?: string;
+  /** Khata / account number from MeeBhoomi */
+  khataNumber?: string;
+  /** Official land extent in acres (MeeBhoomi) */
+  landExtentAcres?: string;
   soilType?: string;
   setupComplete: boolean;
   soilProfile?: FarmerSoilProfile | null;
@@ -80,6 +86,9 @@ interface FarmerContextState extends FarmerContext {
     village?: string;
     state?: string;
     soilType?: string;
+    surveyNumber?: string;
+    khataNumber?: string;
+    landExtentAcres?: string;
   }) => Promise<void>;
   setFieldMeasurement: (measurement: FieldMeasurement | null) => Promise<void>;
   fetchSoilFromLocation: (lat: number, lon: number) => Promise<void>;
@@ -232,6 +241,9 @@ export const useFarmerContextStore = create<FarmerContextState>((set, get) => ({
     village,
     state,
     soilType,
+    surveyNumber,
+    khataNumber,
+    landExtentAcres,
   }) => {
     const plantings = cropPlantings ?? get().cropPlantings;
     const fromPlantings = totalAreaFromPlantings(plantings);
@@ -251,6 +263,10 @@ export const useFarmerContextStore = create<FarmerContextState>((set, get) => ({
       village: village?.trim() || get().village,
       state: state?.trim() || get().state,
       soilType: soilType || get().soilType,
+      surveyNumber: surveyNumber !== undefined ? surveyNumber.trim() : get().surveyNumber,
+      khataNumber: khataNumber !== undefined ? khataNumber.trim() : get().khataNumber,
+      landExtentAcres:
+        landExtentAcres !== undefined ? landExtentAcres.trim() : get().landExtentAcres,
       setupComplete:
         crops.length > 0 &&
         plantings.length >= crops.length &&
@@ -376,6 +392,9 @@ export const useFarmerContextStore = create<FarmerContextState>((set, get) => ({
       mandal,
       village,
       state,
+      surveyNumber,
+      khataNumber,
+      landExtentAcres,
       soilType,
       soilProfile,
       fieldMeasurement,
@@ -429,6 +448,9 @@ export const useFarmerContextStore = create<FarmerContextState>((set, get) => ({
     if (locationParts.length) {
       lines.push(`Farm location: ${locationParts.join(', ')} (village, mandal, district, state)`);
     }
+    if (surveyNumber?.trim()) lines.push(`Survey number: ${surveyNumber.trim()}`);
+    if (khataNumber?.trim()) lines.push(`Khata / account number: ${khataNumber.trim()}`);
+    if (landExtentAcres?.trim()) lines.push(`Official land extent: ${landExtentAcres.trim()} acres`);
     if (soilType) lines.push(`Farmer-reported soil type: ${getSoilTypeLabel(soilType)}`);
     if (soilProfile?.ph != null) {
       lines.push(
@@ -466,6 +488,9 @@ export const useFarmerContextStore = create<FarmerContextState>((set, get) => ({
       village: profile.village,
       state: profile.state,
       soilType: profile.soilType,
+      surveyNumber: profile.surveyNumber,
+      khataNumber: profile.khataNumber,
+      landExtentAcres: profile.landExtentAcres,
       farmSize: profile.farmSize,
       areaAcres: profile.areaAcres,
       notes: profile.notes ?? [],

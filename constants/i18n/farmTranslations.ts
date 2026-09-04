@@ -57,6 +57,16 @@ export interface FarmTranslations {
   placeSearchLoading: string;
   placeSearchNoResults: string;
   placeSearchHint: string;
+  landRecordsTitle: string;
+  landRecordsHint: string;
+  surveyNumber: string;
+  surveyNumberPh: string;
+  khataNumber: string;
+  khataNumberPh: string;
+  landExtent: string;
+  landExtentPh: string;
+  meebhoomiLookup: string;
+  meebhoomiLookupHint: string;
   acres: string;
   cents: string;
   centsOptional: string;
@@ -124,6 +134,16 @@ const enFarm: FarmTranslations = {
   placeSearchLoading: 'Searching places…',
   placeSearchNoResults: 'No places found — try another spelling',
   placeSearchHint: 'Type village name and pick from the list',
+  landRecordsTitle: 'Land records (optional)',
+  landRecordsHint: 'From MeeBhoomi Adangal / 1-B — helps schemes & loans',
+  surveyNumber: 'Survey number',
+  surveyNumberPh: 'e.g. 123/2A',
+  khataNumber: 'Khata / account number',
+  khataNumberPh: 'e.g. 456',
+  landExtent: 'Extent (acres)',
+  landExtentPh: 'e.g. 2.50',
+  meebhoomiLookup: 'Lookup on MeeBhoomi',
+  meebhoomiLookupHint: 'Opens meebhoomi.ap.gov.in — copy survey / khata / extent here after you check',
   acres: 'Acres *',
   cents: 'Cents (optional)',
   centsOptional: 'Cents (optional)',
@@ -191,6 +211,16 @@ const teFarm: FarmTranslations = {
   placeSearchLoading: 'Places search…',
   placeSearchNoResults: 'ఏ place కనిపించలేదు — spelling మార్చండి',
   placeSearchHint: 'Gramam peru type chesi list nundi select cheyandi',
+  landRecordsTitle: 'భూమి రికార్డులు (ఐచ్ఛికం)',
+  landRecordsHint: 'MeeBhoomi Adangal / 1-B నుండి — పథకాలు & రుణాలకు ఉపయోగం',
+  surveyNumber: 'సర్వే నంబర్',
+  surveyNumberPh: 'ఉదా: 123/2A',
+  khataNumber: 'ఖాతా / అకౌంట్ నంబర్',
+  khataNumberPh: 'ఉదా: 456',
+  landExtent: 'విస్తీర్ణం (ఎకరాలు)',
+  landExtentPh: 'ఉదా: 2.50',
+  meebhoomiLookup: 'MeeBhoomi లో చూడండి',
+  meebhoomiLookupHint: 'meebhoomi.ap.gov.in తెరుస్తుంది — చూసిన తర్వాత సర్వే / ఖాతా / విస్తీర్ణం ఇక్కడ రాయండి',
   acres: 'ఎకరాలు *',
   cents: 'సెంట్లు (ఐచ్ఛికం)',
   centsOptional: 'సెంట్లు (ఐచ్ఛికం)',

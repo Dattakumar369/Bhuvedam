@@ -31,6 +31,9 @@ export function FarmerFarmSetup({ onWizardActiveChange }: FarmerFarmSetupProps =
   const village = useFarmerContextStore((s) => s.village);
   const state = useFarmerContextStore((s) => s.state);
   const soilType = useFarmerContextStore((s) => s.soilType);
+  const surveyNumber = useFarmerContextStore((s) => s.surveyNumber);
+  const khataNumber = useFarmerContextStore((s) => s.khataNumber);
+  const landExtentAcres = useFarmerContextStore((s) => s.landExtentAcres);
   const soilProfile = useFarmerContextStore((s) => s.soilProfile);
   const soilLoading = useFarmerContextStore((s) => s.soilLoading);
   const setupComplete = useFarmerContextStore((s) => s.setupComplete);
@@ -74,6 +77,9 @@ export function FarmerFarmSetup({ onWizardActiveChange }: FarmerFarmSetupProps =
     villageInput: village ?? '',
     stateInput: state ?? '',
     selectedSoil: soilType ?? '',
+    surveyNumber: surveyNumber ?? '',
+    khataNumber: khataNumber ?? '',
+    landExtentAcres: landExtentAcres ?? '',
   };
 
   const handleSave = async (values: FarmSetupWizardValues) => {
@@ -89,6 +95,9 @@ export function FarmerFarmSetup({ onWizardActiveChange }: FarmerFarmSetupProps =
         village: values.villageInput.trim(),
         state: values.stateInput.trim(),
         soilType: values.selectedSoil || undefined,
+        surveyNumber: values.surveyNumber.trim(),
+        khataNumber: values.khataNumber.trim(),
+        landExtentAcres: values.landExtentAcres.trim(),
       });
       setEditing(false);
     } finally {
@@ -120,6 +129,13 @@ export function FarmerFarmSetup({ onWizardActiveChange }: FarmerFarmSetupProps =
           .join(', ');
 
   const locationLabel = [village, mandal, district, state].filter(Boolean).join(', ');
+  const landRecordLabel = [
+    surveyNumber ? `${farm.surveyNumber}: ${surveyNumber}` : null,
+    khataNumber ? `${farm.khataNumber}: ${khataNumber}` : null,
+    landExtentAcres ? `${farm.landExtent}: ${landExtentAcres}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
   const soilLabel = getSoilTypeLabel(soilType, language);
 
   if (!showForm && setupComplete) {
@@ -137,6 +153,9 @@ export function FarmerFarmSetup({ onWizardActiveChange }: FarmerFarmSetupProps =
         <SummaryTile icon="sprout" label={farm.crops} value={cropSummary} />
         {locationLabel ? (
           <SummaryTile icon="map-marker" label={farm.address} value={locationLabel} />
+        ) : null}
+        {landRecordLabel ? (
+          <SummaryTile icon="file-document-outline" label={farm.landRecordsTitle} value={landRecordLabel} />
         ) : null}
         {soilLabel ? <SummaryTile icon="terrain" label={farm.soil} value={soilLabel} /> : null}
         {soilProfile?.ph != null ? (

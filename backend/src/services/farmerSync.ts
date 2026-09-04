@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { cropCalendar } from '../db/schema/cropCalendar';
 import { crops } from '../db/schema/crops';
-import { farmers, lands } from '../db/schema/farmers';
+import { farmers, lands, surveyNumbers } from '../db/schema/farmers';
 
 export interface CropPlantingInput {
   cropId: string;
@@ -22,6 +22,9 @@ export interface FarmerSyncInput {
   village?: string;
   state?: string;
   soilType?: string;
+  surveyNumber?: string;
+  khataNumber?: string;
+  landExtentAcres?: string;
   farmSize?: string;
   areaAcres?: number;
   areaCents?: number;
@@ -89,6 +92,43 @@ function resolveAreaAcres(input: FarmerSyncInput): string | null {
     return String(input.fieldMeasurement.areaAcres);
   }
   return null;
+}
+
+function resolveExtentAcres(input: FarmerSyncInput): string | null {
+  const raw = input.landExtentAcres?.trim();
+  if (raw) {
+    const n = Number(raw.replace(/,/g, ''));
+    if (Number.isFinite(n) && n > 0) return String(n);
+  }
+  return null;
+}
+
+async function syncSurveyRecord(landId: string, input: FarmerSyncInput) {
+  // Skip if client did not send land-record fields (older clients / partial sync)
+  if (
+    input.surveyNumber === undefined &&
+    input.khataNumber === undefined &&
+    input.landExtentAcres === undefined
+  ) {
+    return;
+  }
+
+  const survey = input.surveyNumber?.trim() || '';
+  const khata = input.khataNumber?.trim() || null;
+  const extent = resolveExtentAcres(input);
+  const revenueVillage = input.village?.trim() || null;
+
+  await db.delete(surveyNumbers).where(eq(surveyNumbers.landId, landId));
+
+  if (!survey && !khata) return;
+
+  await db.insert(surveyNumbers).values({
+    landId,
+    surveyNumber: survey || '—',
+    khataNumber: khata,
+    extentAcres: extent,
+    revenueVillage,
+  });
 }
 
 export async function upsertFarmerByPhone(
@@ -171,6 +211,8 @@ export async function syncFarmerProfile(farmerId: string, input: FarmerSyncInput
     landId = inserted.id;
   }
 
+  await syncSurveyRecord(landId, input);
+
   await db.delete(cropCalendar).where(eq(cropCalendar.farmerId, farmerId));
 
   const plantings: CropPlantingInput[] = input.cropPlantings?.length
@@ -199,7 +241,9 @@ export async function syncFarmerProfile(farmerId: string, input: FarmerSyncInput
   return db.query.farmers.findFirst({
     where: eq(farmers.id, farmerId),
     with: {
-      lands: true,
+      lands: {
+        with: { surveyNumbers: true },
+      },
       cropCalendars: true,
     },
   });
@@ -207,6 +251,7 @@ export async function syncFarmerProfile(farmerId: string, input: FarmerSyncInput
 
 export function formatFarmerProfileForApp(profile: NonNullable<Awaited<ReturnType<typeof getFarmerProfile>>>) {
   const land = profile.lands?.[0];
+  const survey = land?.surveyNumbers?.[0];
   const landAcres = land?.areaAcres ? String(land.areaAcres) : '';
 
   const cropPlantings = (profile.cropCalendars ?? []).map((cal) => {
@@ -239,6 +284,11 @@ export function formatFarmerProfileForApp(profile: NonNullable<Awaited<ReturnTyp
         Boolean(p.areaAcres.trim() || p.areaCents.trim()),
     );
 
+  const surveyNumber =
+    survey?.surveyNumber && survey.surveyNumber !== '—'
+      ? survey.surveyNumber
+      : undefined;
+
   return {
     name: profile.name,
     language: profile.language,
@@ -251,6 +301,9 @@ export function formatFarmerProfileForApp(profile: NonNullable<Awaited<ReturnTyp
     village: land?.village ?? undefined,
     state: land?.state ?? undefined,
     soilType: land?.soilType ?? undefined,
+    surveyNumber,
+    khataNumber: survey?.khataNumber ?? undefined,
+    landExtentAcres: survey?.extentAcres ? String(survey.extentAcres) : undefined,
     areaAcres: land?.areaAcres ? Number(land.areaAcres) : undefined,
     notes: (profile.notes as string[] | null) ?? [],
     setupComplete: locationReady && plantingsReady,
@@ -261,7 +314,9 @@ export async function getFarmerProfile(farmerId: string) {
   return db.query.farmers.findFirst({
     where: and(eq(farmers.id, farmerId), eq(farmers.isActive, true)),
     with: {
-      lands: true,
+      lands: {
+        with: { surveyNumbers: true },
+      },
       cropCalendars: true,
     },
   });

@@ -67,6 +67,8 @@ export const surveyNumbers = pgTable(
       .references(() => lands.id, { onDelete: 'cascade' }),
     surveyNumber: varchar('survey_number', { length: 60 }).notNull(),
     subDivision: varchar('sub_division', { length: 30 }),
+    /** Khata / account number from MeeBhoomi (Adangal / 1-B) */
+    khataNumber: varchar('khata_number', { length: 60 }),
     extentAcres: decimal('extent_acres', { precision: 10, scale: 4 }),
     revenueVillage: varchar('revenue_village', { length: 120 }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
