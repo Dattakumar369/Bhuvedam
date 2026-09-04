@@ -31,7 +31,6 @@ import { appError, parseOtpWaitSeconds } from '../errors/appError';
 import { syncBulkAgCatalog } from '../ingestion/sources/bulkAgCatalogSource';
 import { syncIndianAgCatalog, syncIndianFertilizerCatalog } from '../ingestion/sources/indianAgCatalogSource';
 import { syncAllPublications } from '../ingestion/sources/publicationKnowledgeSource';
-import { syncSoilAtPoint } from '../ingestion/sources/soilGridsSource';
 import { runFullSync } from '../ingestion/syncAll';
 import { geoKey } from '../ingestion/utils';
 import { log, maskPhone } from '../logging/logger';
