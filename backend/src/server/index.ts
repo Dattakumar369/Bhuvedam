@@ -918,20 +918,9 @@ app.get('/api/soils', async (c) => {
     return c.json({ data: cached, source: 'soilgrids' });
   }
 
-  try {
-    // SoilGrids is often slow/unreliable — hard-cap so the app never NETWORK_ERROR hangs
-    await Promise.race([
-      syncSoilAtPoint(lat, lon, { respectRateLimit: false }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('soilgrids_timeout')), 12000),
-      ),
-    ]);
-  } catch {
-    return c.json({ data: null, source: 'soilgrids', warning: 'upstream_unavailable' });
-  }
-
-  const [row] = await db.select().from(soils).where(eq(soils.geoKey, key)).limit(1);
-  return c.json({ data: row ?? null, source: 'soilgrids' });
+  // Cold miss: do not await SoilGrids here — ISRIC often hangs and keeps the
+  // serverless request open even with Promise.race. Return null; batch sync fills cache.
+  return c.json({ data: null, source: 'soilgrids', warning: 'cache_miss' });
 });
 
 /** Latest weather snapshots */
