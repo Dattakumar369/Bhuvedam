@@ -179,6 +179,35 @@ app.get('/api/auth/ping', async (c) => {
   }
 });
 
+/** POST probe: parse JSON + lookup farmer by phone (same path as login) */
+app.post('/api/auth/ping', async (c) => {
+  const started = Date.now();
+  try {
+    const body = (await c.req.json()) as { phone?: string };
+    const phone = formatPhone((body.phone ?? '6111111111').trim());
+    const rows = await Promise.race([
+      db.select({ id: farmers.id }).from(farmers).where(eq(farmers.phone, phone)).limit(1),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('FARMERS_TIMEOUT')), 5000),
+      ),
+    ]);
+    return c.json({
+      ok: true,
+      ms: Date.now() - started,
+      found: rows.length > 0,
+    });
+  } catch (err) {
+    return c.json(
+      {
+        ok: false,
+        ms: Date.now() - started,
+        error: err instanceof Error ? err.message : 'unknown',
+      },
+      503,
+    );
+  }
+});
+
 /** Legacy login — disabled in production (use OTP only) */
 app.post('/api/auth/login', async (c) => {
   if (process.env.NODE_ENV === 'production' && process.env.ALLOW_LEGACY_LOGIN !== 'true') {

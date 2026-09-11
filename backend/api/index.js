@@ -12713,6 +12713,33 @@ app.get("/api/auth/ping", async (c) => {
     );
   }
 });
+app.post("/api/auth/ping", async (c) => {
+  const started = Date.now();
+  try {
+    const body = await c.req.json();
+    const phone = formatPhone((body.phone ?? "6111111111").trim());
+    const rows = await Promise.race([
+      db.select({ id: farmers.id }).from(farmers).where((0, import_drizzle_orm25.eq)(farmers.phone, phone)).limit(1),
+      new Promise(
+        (_, reject) => setTimeout(() => reject(new Error("FARMERS_TIMEOUT")), 5e3)
+      )
+    ]);
+    return c.json({
+      ok: true,
+      ms: Date.now() - started,
+      found: rows.length > 0
+    });
+  } catch (err) {
+    return c.json(
+      {
+        ok: false,
+        ms: Date.now() - started,
+        error: err instanceof Error ? err.message : "unknown"
+      },
+      503
+    );
+  }
+});
 app.post("/api/auth/login", async (c) => {
   if (process.env.NODE_ENV === "production" && process.env.ALLOW_LEGACY_LOGIN !== "true") {
     return appError(c, "LEGACY_LOGIN_DISABLED");
