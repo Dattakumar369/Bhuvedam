@@ -1,6 +1,5 @@
 node_modules/
 dist/
-api/index.js
 api/index.cjs
 .env
 .drizzle/
