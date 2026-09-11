@@ -82,7 +82,7 @@ async function tryVisionLlmProviders(
       if (text.length >= 10) return { text, configIssue: null, authFailed: false };
     } catch (err) {
       authFailed = isGeminiAuthError(err);
-      console.error('[ai/vision] Gemini failed:', (err instanceof Error ? err.message : err).slice(0, 300));
+      console.error('[ai/vision] Gemini failed:', String(err instanceof Error ? err.message : err).slice(0, 300));
     }
   }
 
