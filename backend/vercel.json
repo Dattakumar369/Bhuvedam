@@ -9,6 +9,9 @@
       "maxDuration": 60
     }
   },
+  "env": {
+    "NODEJS_HELPERS": "0"
+  },
   "crons": [
     {
       "path": "/api/notifications/cron/daily",

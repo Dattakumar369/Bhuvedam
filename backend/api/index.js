@@ -28,6 +28,7 @@ var __toESM = (mod, isNodeMode, target2) => (target2 = mod != null ? __create(__
   isNodeMode || !mod || !mod.__esModule ? __defProp(target2, "default", { value: mod, enumerable: true }) : target2,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/config/env.ts
 function loadEnv() {
@@ -2188,8 +2189,13 @@ var init_knowledgeSearch = __esm({
   }
 });
 
-// src/vercelHandler.cts
-var import_vercel = require("@hono/node-server/vercel");
+// src/vercelHandler.ts
+var vercelHandler_exports = {};
+__export(vercelHandler_exports, {
+  default: () => vercelHandler_default
+});
+module.exports = __toCommonJS(vercelHandler_exports);
+var import_vercel = require("hono/vercel");
 
 // src/server/index.ts
 var import_node_server = require("@hono/node-server");
@@ -13633,5 +13639,5 @@ if (isDirectServerRun()) {
   (0, import_node_server.serve)({ fetch: app.fetch, port });
 }
 
-// src/vercelHandler.cts
-module.exports = (0, import_vercel.handle)(server_default);
+// src/vercelHandler.ts
+var vercelHandler_default = (0, import_vercel.handle)(server_default);
