@@ -263,7 +263,6 @@ async function main() {
     const r = await syncAllPublications();
     console.log('Publications (ICAR/PJTSAU/ANGRAU/FAO/Gov):', JSON.stringify(r, null, 2));
   } else {
-    console.log(
     console.error(
       'Usage: tsx src/ingestion/syncAll.ts [all|daily|complete|crops|mandi|soil|weather|fertilizers|fertilizer-catalog|ag-catalog|bulk-catalog|knowledge|publications]',
     );

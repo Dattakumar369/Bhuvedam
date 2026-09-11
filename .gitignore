@@ -48,3 +48,5 @@ google-services.json.bak
 /android
 
 scripts/tmp-lgd/
+.vercel
+.env*
