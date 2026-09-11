@@ -12774,7 +12774,7 @@ app.post("/api/auth/register", async (c) => {
     return appError(c, "REGISTER_FAILED");
   }
 });
-app.post("/api/auth/login-password", async (c) => {
+async function handlePasswordLogin(c) {
   const body = await c.req.json();
   const identifier = (body.identifier ?? body.phone ?? "").trim();
   const password = body.password ?? "";
@@ -12798,15 +12798,17 @@ app.post("/api/auth/login-password", async (c) => {
     });
   } catch (err) {
     const code = err instanceof Error ? err.message : "LOGIN_FAILED";
-    log.warn("auth/login-password", "rejected", { code, identifier: maskPhone(identifier) });
+    log.warn("auth/signin", "rejected", { code, identifier: maskPhone(identifier) });
     if (code === "INVALID_CREDENTIALS") return appError(c, "INVALID_CREDENTIALS");
     if (code === "ACCOUNT_DISABLED") return appError(c, "ACCOUNT_DISABLED");
     if (code === "LOGIN_TIMEOUT") return appError(c, "SERVER_ERROR");
-    log.error("auth/login-password", "unexpected failure", { identifier: maskPhone(identifier), err });
+    log.error("auth/signin", "unexpected failure", { identifier: maskPhone(identifier), err });
     return appError(c, "LOGIN_FAILED");
   }
-});
-app.post("/api/auth/forgot-password", async (c) => {
+}
+app.post("/api/auth/signin", handlePasswordLogin);
+app.post("/api/auth/login-password", handlePasswordLogin);
+var handlePasswordRecover = async (c) => {
   const body = await c.req.json();
   const phoneRaw = body.phone?.trim();
   if (!phoneRaw) return appError(c, "MOBILE_REQUIRED");
@@ -12817,15 +12819,17 @@ app.post("/api/auth/forgot-password", async (c) => {
     return c.json({ success: true, data: result });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "SMS_FAILED";
-    log.warn("auth/forgot-password", "otp send failed", { phone: maskPhone(phoneRaw), msg });
+    log.warn("auth/recover", "otp send failed", { phone: maskPhone(phoneRaw), msg });
     if (msg.startsWith("WAIT_")) {
       const seconds = parseOtpWaitSeconds(msg) ?? 60;
       return appError(c, "OTP_WAIT", { retryAfterSec: seconds });
     }
     return appError(c, "OTP_SEND_FAILED");
   }
-});
-app.post("/api/auth/reset-password", async (c) => {
+};
+app.post("/api/auth/recover", handlePasswordRecover);
+app.post("/api/auth/forgot-password", handlePasswordRecover);
+var handlePasswordReset = async (c) => {
   const body = await c.req.json();
   const phoneRaw = body.phone?.trim();
   const otp = body.otp?.trim() ?? "";
@@ -12854,11 +12858,13 @@ app.post("/api/auth/reset-password", async (c) => {
     if (code.startsWith("OTP_") && otpMap[code]) return appError(c, otpMap[code]);
     if (code === "NOT_FOUND") return appError(c, "MOBILE_NOT_REGISTERED");
     if (code === "WEAK_PASSWORD") return appError(c, "WEAK_PASSWORD");
-    console.error("[auth/reset-password] failed:", err);
+    console.error("[auth/reset] failed:", err);
     return appError(c, "RESET_FAILED");
   }
-});
-app.post("/api/auth/change-password", farmerAuthMiddleware, async (c) => {
+};
+app.post("/api/auth/reset", handlePasswordReset);
+app.post("/api/auth/reset-password", handlePasswordReset);
+var handleCredentialsUpdate = async (c) => {
   const body = await c.req.json();
   const currentPassword = body.currentPassword ?? "";
   const newPassword = body.newPassword ?? body.password ?? "";
@@ -12874,10 +12880,12 @@ app.post("/api/auth/change-password", farmerAuthMiddleware, async (c) => {
     if (code === "NO_PASSWORD") return appError(c, "NO_PASSWORD");
     if (code === "SAME_PASSWORD") return appError(c, "SAME_PASSWORD");
     if (code === "WEAK_PASSWORD") return appError(c, "WEAK_PASSWORD");
-    console.error("[auth/change-password] failed:", err);
+    console.error("[auth/update-credentials] failed:", err);
     return appError(c, "CHANGE_PASSWORD_FAILED");
   }
-});
+};
+app.post("/api/auth/update-credentials", farmerAuthMiddleware, handleCredentialsUpdate);
+app.post("/api/auth/change-password", farmerAuthMiddleware, handleCredentialsUpdate);
 app.post("/api/auth/send-otp", async (c) => {
   const body = await c.req.json();
   const phoneRaw = body.phone?.trim();
