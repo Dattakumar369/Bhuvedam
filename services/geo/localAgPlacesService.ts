@@ -13,8 +13,8 @@ export function findLocalCuratedPlaces(
   latitude: number,
   longitude: number,
   filter: NearbyPlaceFilter = 'all',
-  radiusKm = 50,
-  limit = 20,
+  radiusKm = 120,
+  limit = 30,
 ): NearbyPlace[] {
   return CURATED_AG_PLACES.filter((p) => matchesFilter(p.placeType, filter))
     .map((p) => {

@@ -35,6 +35,9 @@ interface DbFertilizerProductRow {
   isSubsidized?: boolean;
   lastSyncedAt?: string | Date | null;
   metadata?: Record<string, unknown> | null;
+  /** Read-time DoF overlay fields from API */
+  priceSourceLabel?: string | null;
+  priceNote?: string | null;
 }
 
 function mapDbRow(row: DbFertilizerProductRow): FertilizerProduct {
@@ -67,10 +70,12 @@ function mapDbRow(row: DbFertilizerProductRow): FertilizerProduct {
           ? new Date(row.lastSyncedAt).toISOString()
           : null,
     priceSourceLabel:
-      typeof meta.priceSourceLabel === 'string' ? meta.priceSourceLabel : null,
+      row.priceSourceLabel ??
+      (typeof meta.priceSourceLabel === 'string' ? meta.priceSourceLabel : null),
     priceVerifiedAt:
       typeof meta.priceVerifiedAt === 'string' ? meta.priceVerifiedAt : null,
-    priceNote: typeof meta.priceNote === 'string' ? meta.priceNote : null,
+    priceNote:
+      row.priceNote ?? (typeof meta.priceNote === 'string' ? meta.priceNote : null),
   };
 }
 

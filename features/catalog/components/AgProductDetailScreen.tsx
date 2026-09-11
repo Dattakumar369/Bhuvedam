@@ -84,9 +84,9 @@ export function AgProductDetailScreen() {
           <Card variant="elevated" style={styles.doseCard}>
             <Label style={styles.doseLabel}>Dose</Label>
             <Body style={styles.doseValue}>{product.dosage}</Body>
-            {product.price ? (
-              <Body style={styles.priceValue}>{product.price}</Body>
-            ) : null}
+            <Body style={styles.priceValue}>
+              {product.price ?? 'Typical pack — verify MRP on label'}
+            </Body>
             {product.phiDays != null ? (
               <Caption style={styles.sourceTag}>PHI ≈ {product.phiDays} days (verify pack label)</Caption>
             ) : null}

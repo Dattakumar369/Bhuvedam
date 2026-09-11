@@ -220,6 +220,22 @@ export async function fetchAgCatalogProductById(id: string): Promise<AgCatalogPr
     return cached ?? null;
   }
 
+  // Reference rows (ref-pest-* / ref-fung-*) live only in the canonical catalog.
+  const preferCanonical = id.startsWith('ref-');
+
+  if (preferCanonical) {
+    try {
+      const response = await apiClient.get<{ data: CanonicalRow }>(
+        ENDPOINTS.agProducts.canonicalDetail(id),
+        { timeout: PRODUCT_TIMEOUT_MS },
+      );
+      const row = response.data.data;
+      if (row) return mapCanonicalRow(row, row.type as AgCatalogType);
+    } catch {
+      /* fall through */
+    }
+  }
+
   try {
     const response = await apiClient.get<{ data: BulkAgRow }>(ENDPOINTS.agProducts.detail(id), {
       timeout: PRODUCT_TIMEOUT_MS,

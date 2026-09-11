@@ -20,7 +20,6 @@ function isDev(): boolean {
 
 function shouldLog(level: LogLevel): boolean {
   if (level === 'error' || level === 'warn') return true;
-  if (level === 'info') return true;
   return isDev();
 }
 
@@ -93,7 +92,7 @@ export function logApiFailure(details: {
   message?: string;
   network?: boolean;
 }): void {
-  logger.api.error('Request failed', {
+  const payload = {
     apiBaseUrl: API_CONFIG.baseUrl,
     method: details.method?.toUpperCase(),
     url: details.url,
@@ -101,7 +100,15 @@ export function logApiFailure(details: {
     code: details.code,
     message: details.message,
     network: details.network ?? false,
-  });
+  };
+
+  // Expected auth expiry — warn once-level noise, don't trip LogBox.
+  if (details.status === 401) {
+    logger.api.warn('Request unauthorized', payload);
+    return;
+  }
+
+  logger.api.error('Request failed', payload);
 }
 
 export function logAuthApiError(action: string, err: unknown, meta?: Record<string, unknown>): void {

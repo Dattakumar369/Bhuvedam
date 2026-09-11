@@ -127,13 +127,18 @@ async function persist(state: FarmerContext): Promise<boolean> {
   }
 
   await setUserScoped(userId, STORAGE_KEYS.farmerContext, JSON.stringify(state));
-  const synced = await syncFarmerProfileToDatabase().catch(() => false);
-  if (!synced && shouldSyncFarmerToDatabase()) {
-    useFarmerContextStore.setState({ syncError: 'sync_failed' });
-  } else if (synced) {
-    useFarmerContextStore.setState({ syncError: null });
+
+  // Local write is enough for taps — push to server in the background.
+  if (shouldSyncFarmerToDatabase()) {
+    void syncFarmerProfileToDatabase()
+      .then((synced) => {
+        useFarmerContextStore.setState({ syncError: synced ? null : 'sync_failed' });
+      })
+      .catch(() => {
+        useFarmerContextStore.setState({ syncError: 'sync_failed' });
+      });
   }
-  return synced;
+  return true;
 }
 
 function detectCropsInText(text: string): string[] {

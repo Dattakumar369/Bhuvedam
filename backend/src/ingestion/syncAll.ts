@@ -141,7 +141,8 @@ export async function runCompleteSync(): Promise<SyncResult[]> {
 
 /**
  * Production daily job — safe for Vercel ~60s:
- * mandi (AP + Telangana), fertilizer DoF/NBS prices, weather snapshots, AP/TS crop seed.
+ * mandi (AP + Telangana), fertilizer DoF/NBS prices, weather snapshots, AP/TS crop seed,
+ * nearby mandi/shop curated pins. Pathakalu schemes stay app-bundled (update via OTA).
  * Pesticides stay code-bundled (CIB&RC reference) and update on deploy.
  */
 export async function runDailyAutoSync(): Promise<SyncResult[]> {
@@ -182,6 +183,15 @@ export async function runDailyAutoSync(): Promise<SyncResult[]> {
       run: async () => {
         const upserted = await seedBhuvedamCrops();
         return { fetched: upserted, upserted };
+      },
+    },
+    {
+      sourceId: 'bhuvedam',
+      label: 'Nearby mandi/shops seed',
+      run: async () => {
+        const { seedCuratedAgPlaces } = await import('../services/nearbyAgPlacesService');
+        const r = await seedCuratedAgPlaces();
+        return { fetched: r.inserted + r.skipped, upserted: r.inserted };
       },
     },
   ];

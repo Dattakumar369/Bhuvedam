@@ -2,7 +2,7 @@ import { API_CONFIG } from '@/constants/app';
 import type { FarmerContext } from '@/store/farmerContextStore';
 import { useFarmerContextStore } from '@/store/farmerContextStore';
 import { useUserStore } from '@/store/userStore';
-import { apiClient } from '@/services/api/client';
+import { apiClient, getAuthToken } from '@/services/api/client';
 import { ENDPOINTS } from '@/services/api/endpoints';
 
 export interface FarmerSyncPayload {
@@ -78,13 +78,13 @@ export interface FarmerServerProfile {
 
 /** Pull farmer farm setup from Neon into the app. */
 export async function fetchFarmerProfileFromDatabase(): Promise<FarmerServerProfile | null> {
-  const { token } = useUserStore.getState();
+  const token = getAuthToken() ?? useUserStore.getState().token;
   if (!isBackendToken(token)) return null;
 
   try {
     const response = await apiClient.get<{ success: boolean; data: FarmerServerProfile }>(
       ENDPOINTS.farmers.me,
-      { timeout: 12000 },
+      { timeout: 8000 },
     );
     return response.data.data;
   } catch {
@@ -96,7 +96,8 @@ export async function fetchFarmerProfileFromDatabase(): Promise<FarmerServerProf
 export async function syncFarmerProfileToDatabase(
   payload?: FarmerSyncPayload,
 ): Promise<boolean> {
-  const { token, user } = useUserStore.getState();
+  const token = getAuthToken() ?? useUserStore.getState().token;
+  const user = useUserStore.getState().user;
   if (!isBackendToken(token)) return false;
 
   const context = useFarmerContextStore.getState();
@@ -108,7 +109,7 @@ export async function syncFarmerProfileToDatabase(
     });
 
   try {
-    await apiClient.put(ENDPOINTS.farmers.sync, body, { timeout: 12000 });
+    await apiClient.put(ENDPOINTS.farmers.sync, body, { timeout: 8000 });
     return true;
   } catch {
     return false;
@@ -117,5 +118,5 @@ export async function syncFarmerProfileToDatabase(
 
 export function shouldSyncFarmerToDatabase(): boolean {
   if (!API_CONFIG.baseUrl) return false;
-  return isBackendToken(useUserStore.getState().token);
+  return isBackendToken(getAuthToken() ?? useUserStore.getState().token);
 }

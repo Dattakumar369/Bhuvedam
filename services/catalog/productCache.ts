@@ -4,7 +4,7 @@ import type { FertilizerProduct } from '@/types/fertilizerProduct';
 import { appCache } from '@/utils/storage';
 import { secureStorage } from '@/utils/storage';
 
-const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12h — price overlays update often
 const MAX_CACHED = 120;
 
 type CacheEnvelope<T> = { savedAt: number; items: T[] };

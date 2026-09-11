@@ -4,6 +4,9 @@ import { searchNearbyGooglePlaces } from '@/services/geo/googlePlacesService';
 import { findLocalCuratedPlaces } from '@/services/geo/localAgPlacesService';
 import type { NearbyPlace, NearbyPlaceFilter } from '@/types/nearbyPlace';
 
+const SEARCH_RADIUS_KM = 120;
+const FETCH_TIMEOUT_MS = 8000;
+
 interface DbNearbyResponse {
   data?: NearbyPlace[];
 }
@@ -24,6 +27,20 @@ function mergePlaces(existing: NearbyPlace[], incoming: NearbyPlace[]): NearbyPl
   return merged;
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function fetchFromBackend(
   latitude: number,
   longitude: number,
@@ -36,10 +53,15 @@ async function fetchFromBackend(
       lat: String(latitude),
       lng: String(longitude),
       type: filter,
-      radiusKm: '50',
-      limit: '20',
+      radiusKm: String(SEARCH_RADIUS_KM),
+      limit: '30',
     });
-    const res = await fetch(`${API_CONFIG.baseUrl}/api/places/nearby?${params.toString()}`);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    const res = await fetch(`${API_CONFIG.baseUrl}/api/places/nearby?${params.toString()}`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
     if (!res.ok) return [];
     const json = (await res.json()) as DbNearbyResponse;
     return json.data ?? [];
@@ -54,22 +76,29 @@ export async function fetchNearbyPlaces(
   longitude: number,
   filter: NearbyPlaceFilter = 'all',
 ): Promise<NearbyPlace[]> {
-  let results: NearbyPlace[] = [];
+  // Always start with offline curated pins so hung network never blanks the screen.
+  let results = findLocalCuratedPlaces(latitude, longitude, filter, SEARCH_RADIUS_KM, 30);
+
+  const remoteJobs: Promise<NearbyPlace[]>[] = [];
 
   if (isGooglePlacesConfigured()) {
-    try {
-      const google = await searchNearbyGooglePlaces(latitude, longitude, filter);
-      results = mergePlaces(results, google);
-    } catch {
-      // Google REST may fail on device — fall through to DB/local
-    }
+    remoteJobs.push(
+      withTimeout(
+        searchNearbyGooglePlaces(latitude, longitude, filter, SEARCH_RADIUS_KM * 1000).catch(
+          () => [] as NearbyPlace[],
+        ),
+        FETCH_TIMEOUT_MS,
+        [],
+      ),
+    );
   }
 
-  const backend = await fetchFromBackend(latitude, longitude, filter);
-  results = mergePlaces(results, backend);
+  remoteJobs.push(fetchFromBackend(latitude, longitude, filter));
 
-  const local = findLocalCuratedPlaces(latitude, longitude, filter);
-  results = mergePlaces(results, local);
+  const remoteBatches = await Promise.all(remoteJobs);
+  for (const batch of remoteBatches) {
+    results = mergePlaces(results, batch);
+  }
 
-  return results.sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 20);
+  return results.sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 30);
 }

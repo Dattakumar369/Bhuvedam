@@ -20,6 +20,7 @@ export const userRepository = {
     const response = await apiClient.post<{ success: boolean; data: LoginResponse }>(
       ENDPOINTS.auth.loginPassword,
       data,
+      { timeout: 12000 },
     );
     return response.data.data;
   },
@@ -34,6 +35,7 @@ export const userRepository = {
       const response = await apiClient.post<{ success: boolean; data: LoginResponse }>(
         ENDPOINTS.auth.register,
         data,
+        { timeout: 12000 },
       );
       logger.auth.info('Register success', { userId: response.data.data.user.id });
       return response.data.data;

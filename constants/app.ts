@@ -33,9 +33,11 @@ function resolveUseBackendData(): boolean {
 export const API_CONFIG = {
   baseUrl: resolveApiBaseUrl(),
   useBackendData: resolveUseBackendData(),
-  timeout: 45000,
-  retryAttempts: 3,
-  retryDelay: 1000,
+  /** Keep short — hung Vercel calls must not freeze login/taps for 45s+. */
+  timeout: 15000,
+  authTimeout: 12000,
+  retryAttempts: 1,
+  retryDelay: 600,
 } as const;
 
 export const STORAGE_KEYS = {
@@ -53,7 +55,7 @@ export const STORAGE_KEYS = {
   alertPrefs: 'bhuvedam_alert_prefs',
   pushToken: 'bhuvedam_push_token',
   lastUserId: 'bhuvedam_last_user_id',
-  productCacheFertilizers: 'bhuvedam_product_cache_fertilizers',
-  productCachePesticides: 'bhuvedam_product_cache_pesticides',
-  productCacheFungicides: 'bhuvedam_product_cache_fungicides',
+  productCacheFertilizers: 'bhuvedam_product_cache_fertilizers_v2',
+  productCachePesticides: 'bhuvedam_product_cache_pesticides_v2',
+  productCacheFungicides: 'bhuvedam_product_cache_fungicides_v2',
 } as const;

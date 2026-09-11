@@ -9,7 +9,7 @@ import { MapErrorBoundary } from '@/components/MapErrorBoundary';
 import { Card, Header } from '@/components/ui';
 import { Body, Caption } from '@/components/ui/Typography';
 import { isGoogleMapsConfigured } from '@/constants/mapsConfig';
-import { FIELD_DEFAULT_ZOOM, NEARBY_MAP_MAX_ZOOM, NEARBY_OVERVIEW_DELTA, regionAt } from '@/constants/mapViewConfig';
+import { NEARBY_DEFAULT_ZOOM, NEARBY_MAP_MAX_ZOOM, NEARBY_OVERVIEW_DELTA, regionAt } from '@/constants/mapViewConfig';
 import { NearbyPlaceCard } from '@/features/places/components/NearbyPlaceCard';
 import { useNearbyPlaces } from '@/hooks/useNearbyPlaces';
 import type { NearbyPlaceFilter } from '@/types/nearbyPlace';
@@ -83,14 +83,15 @@ function NearbyPlacesMap({
             initialRegion={region}
             onMapReady={() => {
               setReady(true);
-              centerMapAtZoom(mapRef, latitude, longitude, FIELD_DEFAULT_ZOOM);
+              // Overview zoom — do NOT use field ultra-zoom (22) or markers look "missing".
+              centerMapAtZoom(mapRef, latitude, longitude, NEARBY_DEFAULT_ZOOM);
             }}
             onRegionChangeComplete={setMapRegion}
             showsUserLocation
             rotateEnabled={false}
             zoomEnabled
             scrollEnabled
-            minZoomLevel={12}
+            minZoomLevel={8}
             maxZoomLevel={NEARBY_MAP_MAX_ZOOM}
           >
             {places.map((place) => (

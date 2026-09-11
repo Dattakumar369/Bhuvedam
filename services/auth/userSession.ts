@@ -66,8 +66,12 @@ export async function activateUserSession(user: User): Promise<void> {
 
   await secureStorage.set(STORAGE_KEYS.lastUserId, user.id);
   await migrateLegacyStorageForUser(user.id);
-  await loadFarmerProfileForUser(user);
+
+  // Local chats/farm first so UI is ready; server profile can follow.
   await hydrateUserScopedStores(user.id);
+  if (!useUserStore.getState().isAuthenticated) return;
+
+  await loadFarmerProfileForUser(user);
 }
 
 /** On cold start — if another account was active in memory, clear RAM only. */
@@ -88,15 +92,21 @@ export async function ensureStorageMatchesUser(userId: string | undefined): Prom
   await migrateLegacyStorageForUser(userId);
 }
 
-/** Startup for logged-in user: server profile + this user's local chats/alerts/farm. */
+/** Startup for logged-in user: local stores first, then server profile. */
 export async function bootstrapAuthenticatedSession(user: User): Promise<void> {
   await ensureStorageMatchesUser(user.id);
-  await loadFarmerProfileForUser(user);
   await hydrateUserScopedStores(user.id);
 
-  if (notificationsSupported && useAlertStore.getState().notificationsEnabled) {
-    void registerForPushNotifications();
+  if (!useUserStore.getState().isAuthenticated) {
+    return;
   }
+
+  // Network profile in background — do not block home.
+  void loadFarmerProfileForUser(user).then(() => {
+    if (notificationsSupported && useAlertStore.getState().notificationsEnabled) {
+      void registerForPushNotifications();
+    }
+  });
 }
 
 export async function isStorageOwnedByUser(userId: string): Promise<boolean> {

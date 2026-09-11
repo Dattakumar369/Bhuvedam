@@ -5,6 +5,8 @@ import { fetchNearbyPlaces } from '@/services/geo/nearbyPlacesService';
 import { requestLocationPermission } from '@/services/location/locationService';
 import type { NearbyPlace, NearbyPlaceFilter } from '@/types/nearbyPlace';
 
+const GPS_TIMEOUT_MS = 12000;
+
 interface NearbyPlacesState {
   places: NearbyPlace[];
   latitude: number | null;
@@ -15,6 +17,17 @@ interface NearbyPlacesState {
   filter: NearbyPlaceFilter;
   setFilter: (filter: NearbyPlaceFilter) => void;
   refresh: () => Promise<void>;
+}
+
+async function readPosition(): Promise<Location.LocationObject | null> {
+  try {
+    return await Promise.race([
+      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), GPS_TIMEOUT_MS)),
+    ]);
+  } catch {
+    return null;
+  }
 }
 
 export function useNearbyPlaces(): NearbyPlacesState {
@@ -33,7 +46,19 @@ export function useNearbyPlaces(): NearbyPlacesState {
       return null;
     }
 
-    const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    let pos = await readPosition();
+    if (!pos) {
+      try {
+        pos = await Location.getLastKnownPositionAsync();
+      } catch {
+        pos = null;
+      }
+    }
+    if (!pos) {
+      setError('Location raaledu — GPS ON unda chudandi.');
+      return null;
+    }
+
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
     setLatitude(lat);
@@ -54,7 +79,7 @@ export function useNearbyPlaces(): NearbyPlacesState {
     const results = await fetchNearbyPlaces(lat, lng, activeFilter);
     setPlaces(results);
     if (!results.length) {
-      setError('50 km lopala mandi/shops kanipinchatam ledu — location change chesi try cheyandi.');
+      setError('120 km lopala mandi/shops kanipinchatam ledu — location change chesi try cheyandi.');
     } else {
       setError(null);
     }
@@ -65,21 +90,16 @@ export function useNearbyPlaces(): NearbyPlacesState {
     setError(null);
 
     try {
-      let lat = latitude;
-      let lng = longitude;
-      if (lat == null || lng == null) {
-        const coords = await resolveLocation();
-        if (!coords) return;
-        lat = coords.lat;
-        lng = coords.lng;
-      }
-      await loadPlaces(lat, lng, filter);
+      // Always re-read GPS on refresh — stale coords are a common empty-list cause.
+      const coords = await resolveLocation();
+      if (!coords) return;
+      await loadPlaces(coords.lat, coords.lng, filter);
     } catch {
       setError('Location raaledu — GPS ON unda chudandi.');
     } finally {
       setIsLoading(false);
     }
-  }, [filter, latitude, longitude, loadPlaces, resolveLocation]);
+  }, [filter, loadPlaces, resolveLocation]);
 
   useEffect(() => {
     void refresh();

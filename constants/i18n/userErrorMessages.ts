@@ -1,10 +1,10 @@
-import type { LanguageCode } from '@/constants/languages';
 import {
-  HI_ERRORS,
-  KN_ERRORS,
-  MR_ERRORS,
-  TA_ERRORS,
+    HI_ERRORS,
+    KN_ERRORS,
+    MR_ERRORS,
+    TA_ERRORS,
 } from '@/constants/i18n/userErrorMessagesLocales';
+import type { LanguageCode } from '@/constants/languages';
 
 /** Plain-language messages for farmers — never show HTTP codes or tech errors */
 const EN: Record<string, string | ((sec: number) => string)> = {

@@ -76,7 +76,7 @@ export default function FertilizerDetailScreen() {
           </View>
 
           <Card variant="elevated" style={styles.priceCard}>
-            <Body style={styles.price}>{product.mrp ?? 'Price on enquiry'}</Body>
+            <Body style={styles.price}>{product.mrp ?? 'Ask dealer (pack MRP)'}</Body>
             {product.packSize ? <Caption>Pack: {product.packSize}</Caption> : null}
             {product.priceSourceLabel ? (
               <Caption style={styles.priceSource}>{product.priceSourceLabel}</Caption>

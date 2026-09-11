@@ -64,7 +64,7 @@ export function FertilizerProductCard({ product, compact, onPress }: FertilizerP
 
           <View style={styles.footer}>
             <Body style={styles.price} numberOfLines={1}>
-              {product.mrp ?? 'Price on enquiry'}
+              {product.mrp ?? 'Ask dealer (pack MRP)'}
             </Body>
             {product.packSize ? <Caption style={styles.pack}>{product.packSize}</Caption> : null}
           </View>

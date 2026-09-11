@@ -81,7 +81,7 @@ function buildFromActives(
       applicationMethod: `Use ${active.dose} in ~200 L water/acre (or as label). ${when}`,
       precautions: `Follow label dose.${phiText} Wear PPE (gloves, mask). Rotate chemical groups. Do not mix unknown products.`,
       description: `CIB&RC-style registered formulation reference. Targets: ${active.targets.join(', ')}. Crops: ${active.crops.join(', ')}. Source: PPQS registered products list.`,
-      price: enrich?.packMrp ?? null,
+      price: enrich?.packMrp ?? 'Typical dealer pack — verify MRP on label',
       image: resolveProductImageUrl({
         id: `ref-${type === 'pesticide' ? 'pest' : 'fung'}-${slug(active.name)}`,
         type,

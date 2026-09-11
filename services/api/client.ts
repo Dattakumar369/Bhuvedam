@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 import { API_CONFIG } from '@/constants/app';
+import { notifyAuthFailure } from '@/services/api/authFailure';
 import type { ApiError } from '@/types/api';
 import { logApiFailure } from '@/utils/logger';
 
@@ -12,6 +13,11 @@ export function setAuthToken(token: string | null): void {
 
 export function getAuthToken(): string | null {
   return authToken;
+}
+
+function isAuthPath(url?: string): boolean {
+  if (!url) return false;
+  return url.includes('/api/auth/');
 }
 
 export function createApiClient(): AxiosInstance {
@@ -29,6 +35,9 @@ export function createApiClient(): AxiosInstance {
       if (authToken) {
         config.headers.Authorization = `Bearer ${authToken}`;
       }
+      if (isAuthPath(config.url)) {
+        config.timeout = API_CONFIG.authTimeout;
+      }
       return config;
     },
     (error) => Promise.reject(error),
@@ -41,12 +50,13 @@ export function createApiClient(): AxiosInstance {
 
       if (error.response?.status === 401) {
         setAuthToken(null);
+        notifyAuthFailure();
       }
 
       if (
         originalRequest &&
         !originalRequest.headers['X-Retry'] &&
-        shouldRetry(error)
+        shouldRetry(error, originalRequest.url)
       ) {
         originalRequest.headers['X-Retry'] = 'true';
         await delay(API_CONFIG.retryDelay);
@@ -94,7 +104,10 @@ export function createApiClient(): AxiosInstance {
   return client;
 }
 
-function shouldRetry(error: AxiosError): boolean {
+function shouldRetry(error: AxiosError, url?: string): boolean {
+  // Auth must fail fast — never retry hung login/register.
+  if (isAuthPath(url)) return false;
+  if (error.code === 'ECONNABORTED') return false;
   if (!error.response) return true;
   return error.response.status >= 500;
 }

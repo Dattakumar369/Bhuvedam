@@ -1666,6 +1666,387 @@ var init_openAlexSource = __esm({
   }
 });
 
+// src/ingestion/data/curatedAgPlaces.ts
+var CURATED_AG_PLACES;
+var init_curatedAgPlaces = __esm({
+  "src/ingestion/data/curatedAgPlaces.ts"() {
+    "use strict";
+    CURATED_AG_PLACES = [
+      // ── Andhra Pradesh mandis ──────────────────────────────────────────────
+      {
+        placeType: "mandi",
+        name: "Guntur APMC",
+        district: "Guntur",
+        state: "Andhra Pradesh",
+        latitude: 16.3067,
+        longitude: 80.4365
+      },
+      {
+        placeType: "mandi",
+        name: "Vijayawada Nunna APMC",
+        district: "Krishna",
+        state: "Andhra Pradesh",
+        latitude: 16.5193,
+        longitude: 80.6305
+      },
+      {
+        placeType: "mandi",
+        name: "Kurnool APMC",
+        district: "Kurnool",
+        state: "Andhra Pradesh",
+        latitude: 15.8281,
+        longitude: 78.0373
+      },
+      {
+        placeType: "mandi",
+        name: "Tirupati APMC",
+        district: "Tirupati",
+        state: "Andhra Pradesh",
+        latitude: 13.6288,
+        longitude: 79.4192
+      },
+      {
+        placeType: "mandi",
+        name: "Nellore APMC",
+        district: "SPSR Nellore",
+        state: "Andhra Pradesh",
+        latitude: 14.4426,
+        longitude: 79.9865
+      },
+      {
+        placeType: "mandi",
+        name: "Visakhapatnam Rythu Bazaar / Market Yard",
+        district: "Visakhapatnam",
+        state: "Andhra Pradesh",
+        latitude: 17.6868,
+        longitude: 83.2185
+      },
+      {
+        placeType: "mandi",
+        name: "Anantapur APMC",
+        district: "Anantapur",
+        state: "Andhra Pradesh",
+        latitude: 14.6819,
+        longitude: 77.6006
+      },
+      {
+        placeType: "mandi",
+        name: "Kadapa (YSR) APMC",
+        district: "YSR Kadapa",
+        state: "Andhra Pradesh",
+        latitude: 14.4673,
+        longitude: 78.8242
+      },
+      {
+        placeType: "mandi",
+        name: "Ongole APMC",
+        district: "Prakasam",
+        state: "Andhra Pradesh",
+        latitude: 15.5057,
+        longitude: 80.0499
+      },
+      {
+        placeType: "mandi",
+        name: "Rajahmundry Market Yard",
+        district: "East Godavari",
+        state: "Andhra Pradesh",
+        latitude: 17.0005,
+        longitude: 81.804
+      },
+      {
+        placeType: "mandi",
+        name: "Eluru APMC",
+        district: "Eluru",
+        state: "Andhra Pradesh",
+        latitude: 16.7107,
+        longitude: 81.0952
+      },
+      {
+        placeType: "mandi",
+        name: "Srikakulam APMC",
+        district: "Srikakulam",
+        state: "Andhra Pradesh",
+        latitude: 18.2969,
+        longitude: 83.8965
+      },
+      {
+        placeType: "mandi",
+        name: "Chittoor APMC",
+        district: "Chittoor",
+        state: "Andhra Pradesh",
+        latitude: 13.2172,
+        longitude: 79.1003
+      },
+      {
+        placeType: "mandi",
+        name: "Vizianagaram Market Yard",
+        district: "Vizianagaram",
+        state: "Andhra Pradesh",
+        latitude: 18.1067,
+        longitude: 83.3956
+      },
+      // ── Telangana mandis ───────────────────────────────────────────────────
+      {
+        placeType: "mandi",
+        name: "Warangal APMC",
+        district: "Warangal",
+        state: "Telangana",
+        latitude: 17.9689,
+        longitude: 79.5941
+      },
+      {
+        placeType: "mandi",
+        name: "Karimnagar APMC",
+        district: "Karimnagar",
+        state: "Telangana",
+        latitude: 18.4386,
+        longitude: 79.1288
+      },
+      {
+        placeType: "mandi",
+        name: "Nizamabad APMC",
+        district: "Nizamabad",
+        state: "Telangana",
+        latitude: 18.6725,
+        longitude: 78.0941
+      },
+      {
+        placeType: "mandi",
+        name: "Hyderabad Bowenpally Market Yard",
+        district: "Hyderabad",
+        state: "Telangana",
+        latitude: 17.4584,
+        longitude: 78.4189
+      },
+      {
+        placeType: "mandi",
+        name: "Khammam APMC",
+        district: "Khammam",
+        state: "Telangana",
+        latitude: 17.2473,
+        longitude: 80.1514
+      },
+      {
+        placeType: "mandi",
+        name: "Mahbubnagar APMC",
+        district: "Mahbubnagar",
+        state: "Telangana",
+        latitude: 16.7375,
+        longitude: 78.0081
+      },
+      {
+        placeType: "mandi",
+        name: "Nalgonda APMC",
+        district: "Nalgonda",
+        state: "Telangana",
+        latitude: 17.0575,
+        longitude: 79.267
+      },
+      {
+        placeType: "mandi",
+        name: "Adilabad Market Yard",
+        district: "Adilabad",
+        state: "Telangana",
+        latitude: 19.6641,
+        longitude: 78.532
+      },
+      {
+        placeType: "mandi",
+        name: "Siddipet APMC",
+        district: "Siddipet",
+        state: "Telangana",
+        latitude: 18.1018,
+        longitude: 78.852
+      },
+      {
+        placeType: "mandi",
+        name: "Sangareddy Market Yard",
+        district: "Sangareddy",
+        state: "Telangana",
+        latitude: 17.6247,
+        longitude: 78.0867
+      },
+      // ── Shops / dealers ────────────────────────────────────────────────────
+      {
+        placeType: "fertilizer_shop",
+        name: "IFFCO Dealer \u2014 Guntur",
+        district: "Guntur",
+        state: "Andhra Pradesh",
+        address: "Arundelpet, Guntur",
+        latitude: 16.306,
+        longitude: 80.44
+      },
+      {
+        placeType: "fertilizer_shop",
+        name: "PACS Fertilizer \u2014 Tenali",
+        district: "Guntur",
+        state: "Andhra Pradesh",
+        latitude: 16.2428,
+        longitude: 80.6404
+      },
+      {
+        placeType: "fertilizer_shop",
+        name: "Rythu Bharosa Kendra \u2014 Vijayawada",
+        district: "NTR",
+        state: "Andhra Pradesh",
+        latitude: 16.5062,
+        longitude: 80.648
+      },
+      {
+        placeType: "fertilizer_shop",
+        name: "Agri Input Dealer \u2014 Kurnool",
+        district: "Kurnool",
+        state: "Andhra Pradesh",
+        latitude: 15.8285,
+        longitude: 78.042
+      },
+      {
+        placeType: "fertilizer_shop",
+        name: "Rythu Seva Kendram \u2014 Visakhapatnam",
+        district: "Visakhapatnam",
+        state: "Andhra Pradesh",
+        latitude: 17.7215,
+        longitude: 83.3042
+      },
+      {
+        placeType: "fertilizer_shop",
+        name: "Agri Input Shop \u2014 Anantapur",
+        district: "Anantapur",
+        state: "Andhra Pradesh",
+        latitude: 14.685,
+        longitude: 77.605
+      },
+      {
+        placeType: "fertilizer_shop",
+        name: "Rythu Bharosa Kendra \u2014 Rajahmundry",
+        district: "East Godavari",
+        state: "Andhra Pradesh",
+        latitude: 17.004,
+        longitude: 81.78
+      },
+      {
+        placeType: "fertilizer_shop",
+        name: "Telangana Markfed \u2014 Warangal",
+        district: "Warangal",
+        state: "Telangana",
+        latitude: 17.975,
+        longitude: 79.6
+      },
+      {
+        placeType: "dealer",
+        name: "Seed & Pesticide Dealer \u2014 Karimnagar",
+        district: "Karimnagar",
+        state: "Telangana",
+        latitude: 18.44,
+        longitude: 79.13
+      },
+      {
+        placeType: "fertilizer_shop",
+        name: "Rythu Vedika / Input Shop \u2014 Nizamabad",
+        district: "Nizamabad",
+        state: "Telangana",
+        latitude: 18.672,
+        longitude: 78.1
+      },
+      {
+        placeType: "fertilizer_shop",
+        name: "Agri Dealer \u2014 Khammam",
+        district: "Khammam",
+        state: "Telangana",
+        latitude: 17.25,
+        longitude: 80.15
+      },
+      {
+        placeType: "dealer",
+        name: "Seed & Fertilizer Dealer \u2014 Hyderabad (Bowenpally)",
+        district: "Hyderabad",
+        state: "Telangana",
+        latitude: 17.46,
+        longitude: 78.42
+      }
+    ];
+  }
+});
+
+// src/services/nearbyAgPlacesService.ts
+var nearbyAgPlacesService_exports = {};
+__export(nearbyAgPlacesService_exports, {
+  findNearbyAgPlacesFromDb: () => findNearbyAgPlacesFromDb,
+  seedCuratedAgPlaces: () => seedCuratedAgPlaces
+});
+function toNumber(value) {
+  if (value == null) return 0;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function matchesType(placeType, filter) {
+  if (filter === "all") return true;
+  if (filter === "mandi") return placeType === "mandi";
+  return placeType === "fertilizer_shop" || placeType === "seed_shop" || placeType === "dealer";
+}
+function rowToNearby(row, fromLat, fromLon) {
+  const lat = toNumber(row.latitude);
+  const lon = toNumber(row.longitude);
+  return {
+    id: row.id,
+    placeType: row.placeType,
+    name: row.name,
+    district: row.district,
+    state: row.state,
+    address: row.address,
+    latitude: lat,
+    longitude: lon,
+    phone: row.phone,
+    distanceKm: Math.round(haversineKm(fromLat, fromLon, lat, lon) * 10) / 10,
+    source: "database"
+  };
+}
+async function seedCuratedAgPlaces() {
+  let inserted = 0;
+  let skipped = 0;
+  for (const place of CURATED_AG_PLACES) {
+    const existing = await db.select({ id: agPlaces.id }).from(agPlaces).where((0, import_drizzle_orm12.and)((0, import_drizzle_orm12.eq)(agPlaces.name, place.name), (0, import_drizzle_orm12.eq)(agPlaces.district, place.district))).limit(1);
+    if (existing.length) {
+      skipped++;
+      continue;
+    }
+    await db.insert(agPlaces).values({
+      placeType: place.placeType,
+      name: place.name,
+      district: place.district,
+      state: place.state,
+      address: place.address ?? null,
+      latitude: String(place.latitude),
+      longitude: String(place.longitude),
+      phone: place.phone ?? null,
+      source: "curated"
+    });
+    inserted++;
+  }
+  return { inserted, skipped };
+}
+async function findNearbyAgPlacesFromDb(latitude, longitude, type = "all", radiusKm = 120, limit = 30) {
+  const rows = await db.select().from(agPlaces).where((0, import_drizzle_orm12.eq)(agPlaces.active, true));
+  return rows.filter((row) => matchesType(row.placeType, type)).map((row) => rowToNearby(row, latitude, longitude)).filter((p) => p.distanceKm <= radiusKm).sort((a, b) => a.distanceKm - b.distanceKm).slice(0, limit);
+}
+var import_drizzle_orm12;
+var init_nearbyAgPlacesService = __esm({
+  "src/services/nearbyAgPlacesService.ts"() {
+    "use strict";
+    import_drizzle_orm12 = require("drizzle-orm");
+    init_db();
+    init_agPlaces();
+    init_curatedAgPlaces();
+  }
+});
+
 // src/data/agLocalTerms.ts
 function localDiseaseLabel(diseaseId, englishName) {
   for (const key of Object.keys(DISEASE_LOCAL_TE)) {
@@ -1810,17 +2191,17 @@ function prioritizeNanoUrea(products) {
   });
 }
 async function fetchCropAgPack(cropId) {
-  const cropFilter = import_drizzle_orm13.sql`${agProducts.crops} @> ${JSON.stringify([cropId])}::jsonb`;
+  const cropFilter = import_drizzle_orm14.sql`${agProducts.crops} @> ${JSON.stringify([cropId])}::jsonb`;
   let [diseases2, pesticides, fungicides] = await Promise.all([
-    db.select().from(cropDiseaseCatalog).where((0, import_drizzle_orm13.eq)(cropDiseaseCatalog.cropId, cropId)).limit(12),
-    db.select().from(agProducts).where((0, import_drizzle_orm13.and)((0, import_drizzle_orm13.eq)(agProducts.type, "pesticide"), cropFilter)).limit(10),
-    db.select().from(agProducts).where((0, import_drizzle_orm13.and)((0, import_drizzle_orm13.eq)(agProducts.type, "fungicide"), cropFilter)).limit(8)
+    db.select().from(cropDiseaseCatalog).where((0, import_drizzle_orm14.eq)(cropDiseaseCatalog.cropId, cropId)).limit(12),
+    db.select().from(agProducts).where((0, import_drizzle_orm14.and)((0, import_drizzle_orm14.eq)(agProducts.type, "pesticide"), cropFilter)).limit(10),
+    db.select().from(agProducts).where((0, import_drizzle_orm14.and)((0, import_drizzle_orm14.eq)(agProducts.type, "fungicide"), cropFilter)).limit(8)
   ]);
   if (!pesticides.length) {
-    pesticides = await db.select().from(agProducts).where((0, import_drizzle_orm13.eq)(agProducts.type, "pesticide")).limit(8);
+    pesticides = await db.select().from(agProducts).where((0, import_drizzle_orm14.eq)(agProducts.type, "pesticide")).limit(8);
   }
   if (!fungicides.length) {
-    fungicides = await db.select().from(agProducts).where((0, import_drizzle_orm13.eq)(agProducts.type, "fungicide")).limit(8);
+    fungicides = await db.select().from(agProducts).where((0, import_drizzle_orm14.eq)(agProducts.type, "fungicide")).limit(8);
   }
   return { diseases: diseases2, pesticides, fungicides };
 }
@@ -1872,16 +2253,16 @@ function isFertilizerQuery(query) {
 async function queryProducts(searchTerms, types, cropId, limit = 12) {
   if (!searchTerms.length) return [];
   const termConditions = searchTerms.flatMap((term) => [
-    (0, import_drizzle_orm13.ilike)(agProducts.name, `%${term}%`),
-    (0, import_drizzle_orm13.ilike)(agProducts.nutrientComposition, `%${term}%`),
-    (0, import_drizzle_orm13.ilike)(agProducts.description, `%${term}%`),
-    (0, import_drizzle_orm13.ilike)(agProducts.npkRatio, `%${term}%`)
+    (0, import_drizzle_orm14.ilike)(agProducts.name, `%${term}%`),
+    (0, import_drizzle_orm14.ilike)(agProducts.nutrientComposition, `%${term}%`),
+    (0, import_drizzle_orm14.ilike)(agProducts.description, `%${term}%`),
+    (0, import_drizzle_orm14.ilike)(agProducts.npkRatio, `%${term}%`)
   ]);
-  const conditions = [(0, import_drizzle_orm13.or)(...termConditions), (0, import_drizzle_orm13.inArray)(agProducts.type, types)];
+  const conditions = [(0, import_drizzle_orm14.or)(...termConditions), (0, import_drizzle_orm14.inArray)(agProducts.type, types)];
   if (cropId) {
-    conditions.push(import_drizzle_orm13.sql`${agProducts.crops} @> ${JSON.stringify([cropId])}::jsonb`);
+    conditions.push(import_drizzle_orm14.sql`${agProducts.crops} @> ${JSON.stringify([cropId])}::jsonb`);
   }
-  return db.select().from(agProducts).where((0, import_drizzle_orm13.and)(...conditions)).limit(limit);
+  return db.select().from(agProducts).where((0, import_drizzle_orm14.and)(...conditions)).limit(limit);
 }
 async function searchAgCatalogForAI(query, cropHint, limit = 12) {
   const q = query.trim();
@@ -1925,13 +2306,13 @@ async function searchAgCatalogForAI(query, cropHint, limit = 12) {
   }
   if (!products.length && (mentionsUrea(q) || isAlt)) {
     products = (await db.select().from(agProducts).where(
-      (0, import_drizzle_orm13.and)(
-        (0, import_drizzle_orm13.eq)(agProducts.type, "fertilizer"),
-        (0, import_drizzle_orm13.or)(
-          (0, import_drizzle_orm13.ilike)(agProducts.name, "%nano urea%"),
-          (0, import_drizzle_orm13.ilike)(agProducts.name, "%ammonium%"),
-          (0, import_drizzle_orm13.ilike)(agProducts.name, "%nitrate%"),
-          (0, import_drizzle_orm13.ilike)(agProducts.name, "%dap%")
+      (0, import_drizzle_orm14.and)(
+        (0, import_drizzle_orm14.eq)(agProducts.type, "fertilizer"),
+        (0, import_drizzle_orm14.or)(
+          (0, import_drizzle_orm14.ilike)(agProducts.name, "%nano urea%"),
+          (0, import_drizzle_orm14.ilike)(agProducts.name, "%ammonium%"),
+          (0, import_drizzle_orm14.ilike)(agProducts.name, "%nitrate%"),
+          (0, import_drizzle_orm14.ilike)(agProducts.name, "%dap%")
         )
       )
     ).limit(limit)).filter((p) => !isConventionalUrea(p.name));
@@ -1941,18 +2322,18 @@ async function searchAgCatalogForAI(query, cropHint, limit = 12) {
   if (needsDiseases && (DISEASE_RE.test(q) || FUNG_RE.test(q) || PEST_RE.test(q) || cropId)) {
     const pattern = `%${terms[0] ?? q.slice(0, 40)}%`;
     const diseaseConditions = [
-      (0, import_drizzle_orm13.or)(
-        (0, import_drizzle_orm13.ilike)(cropDiseaseCatalog.name, pattern),
-        (0, import_drizzle_orm13.ilike)(cropDiseaseCatalog.symptoms, pattern),
-        (0, import_drizzle_orm13.ilike)(cropDiseaseCatalog.treatment, pattern)
+      (0, import_drizzle_orm14.or)(
+        (0, import_drizzle_orm14.ilike)(cropDiseaseCatalog.name, pattern),
+        (0, import_drizzle_orm14.ilike)(cropDiseaseCatalog.symptoms, pattern),
+        (0, import_drizzle_orm14.ilike)(cropDiseaseCatalog.treatment, pattern)
       )
     ];
     if (cropId && !isFertilizerQuery(q)) {
-      diseaseConditions.push((0, import_drizzle_orm13.eq)(cropDiseaseCatalog.cropId, cropId));
+      diseaseConditions.push((0, import_drizzle_orm14.eq)(cropDiseaseCatalog.cropId, cropId));
     } else if (!DISEASE_RE.test(q) && !FUNG_RE.test(q) && !PEST_RE.test(q)) {
-      diseaseConditions.push(import_drizzle_orm13.sql`false`);
+      diseaseConditions.push(import_drizzle_orm14.sql`false`);
     }
-    diseases2 = await db.select().from(cropDiseaseCatalog).where((0, import_drizzle_orm13.and)(...diseaseConditions)).limit(limit);
+    diseases2 = await db.select().from(cropDiseaseCatalog).where((0, import_drizzle_orm14.and)(...diseaseConditions)).limit(limit);
   }
   return { products: prioritizeNanoUrea(products).slice(0, limit), diseases: diseases2.slice(0, limit) };
 }
@@ -2016,11 +2397,11 @@ async function buildAgCatalogContextForAI(query, cropIds = []) {
   }
   return formatAgCatalogForAI(products, diseases2, query, cropHint);
 }
-var import_drizzle_orm13, FERT_RE, PEST_RE, FUNG_RE, DISEASE_RE, ALT_RE, PRODUCT_KEYWORDS, UREA_ALTERNATIVE_TERMS, CROP_ALIASES;
+var import_drizzle_orm14, FERT_RE, PEST_RE, FUNG_RE, DISEASE_RE, ALT_RE, PRODUCT_KEYWORDS, UREA_ALTERNATIVE_TERMS, CROP_ALIASES;
 var init_agCatalogSearch = __esm({
   "src/services/agCatalogSearch.ts"() {
     "use strict";
-    import_drizzle_orm13 = require("drizzle-orm");
+    import_drizzle_orm14 = require("drizzle-orm");
     init_db();
     init_agProducts();
     init_agLocalTerms();
@@ -2088,14 +2469,14 @@ async function searchKnowledge(query, limit = 20) {
     citationCount: agKnowledge.citationCount,
     tags: agKnowledge.tags
   }).from(agKnowledge).where(
-    (0, import_drizzle_orm14.or)(
-      (0, import_drizzle_orm14.ilike)(agKnowledge.title, pattern),
-      (0, import_drizzle_orm14.ilike)(agKnowledge.summary, pattern),
-      (0, import_drizzle_orm14.ilike)(agKnowledge.content, pattern),
-      import_drizzle_orm14.sql`${agKnowledge.tags}::text ilike ${pattern}`,
-      ...words.map((w) => (0, import_drizzle_orm14.ilike)(agKnowledge.title, `%${w}%`))
+    (0, import_drizzle_orm15.or)(
+      (0, import_drizzle_orm15.ilike)(agKnowledge.title, pattern),
+      (0, import_drizzle_orm15.ilike)(agKnowledge.summary, pattern),
+      (0, import_drizzle_orm15.ilike)(agKnowledge.content, pattern),
+      import_drizzle_orm15.sql`${agKnowledge.tags}::text ilike ${pattern}`,
+      ...words.map((w) => (0, import_drizzle_orm15.ilike)(agKnowledge.title, `%${w}%`))
     )
-  ).orderBy((0, import_drizzle_orm14.desc)(agKnowledge.citationCount)).limit(limit * 2);
+  ).orderBy((0, import_drizzle_orm15.desc)(agKnowledge.citationCount)).limit(limit * 2);
   const hits = rows.map((r) => ({
     type: r.type,
     title: r.title,
@@ -2112,9 +2493,9 @@ async function searchKnowledge(query, limit = 20) {
     return (b.citationCount ?? 0) - (a.citationCount ?? 0);
   }).slice(0, limit);
   if (hits.length < limit) {
-    const diseaseRows = await db.select().from(diseases).where((0, import_drizzle_orm14.or)((0, import_drizzle_orm14.ilike)(diseases.name, pattern), (0, import_drizzle_orm14.ilike)(diseases.symptoms, pattern))).limit(5);
+    const diseaseRows = await db.select().from(diseases).where((0, import_drizzle_orm15.or)((0, import_drizzle_orm15.ilike)(diseases.name, pattern), (0, import_drizzle_orm15.ilike)(diseases.symptoms, pattern))).limit(5);
     for (const d of diseaseRows) {
-      const sprays = await db.select().from(diseaseSprays).where(import_drizzle_orm14.sql`${diseaseSprays.diseaseId} = ${d.id}`).limit(3);
+      const sprays = await db.select().from(diseaseSprays).where(import_drizzle_orm15.sql`${diseaseSprays.diseaseId} = ${d.id}`).limit(3);
       hits.push({
         type: "disease",
         title: d.name,
@@ -2126,7 +2507,7 @@ async function searchKnowledge(query, limit = 20) {
         tags: [d.cropId]
       });
     }
-    const chemRows = await db.select().from(agrochemicals).where((0, import_drizzle_orm14.or)((0, import_drizzle_orm14.ilike)(agrochemicals.name, pattern), (0, import_drizzle_orm14.ilike)(agrochemicals.target, pattern))).limit(5);
+    const chemRows = await db.select().from(agrochemicals).where((0, import_drizzle_orm15.or)((0, import_drizzle_orm15.ilike)(agrochemicals.name, pattern), (0, import_drizzle_orm15.ilike)(agrochemicals.target, pattern))).limit(5);
     for (const c of chemRows) {
       hits.push({
         type: c.type,
@@ -2176,11 +2557,11 @@ async function buildKnowledgeContextForAI(query, cropIds = []) {
   ]);
   return formatKnowledgeForAI(hits, query, catalogContext);
 }
-var import_drizzle_orm14;
+var import_drizzle_orm15;
 var init_knowledgeSearch = __esm({
   "src/services/knowledgeSearch.ts"() {
     "use strict";
-    import_drizzle_orm14 = require("drizzle-orm");
+    import_drizzle_orm15 = require("drizzle-orm");
     init_db();
     init_schema();
     init_publicationTypes();
@@ -4683,15 +5064,28 @@ var FERTILIZER_PRICE_SOURCE = {
 };
 var OFFICIAL_FERTILIZER_MRPS = [
   {
-    productIds: ["iffco-urea", "nfl-urea", "coromandel-urea"],
-    aliases: ["neem coated urea", "urea", "46-0-0"],
+    productIds: [
+      "iffco-urea",
+      "nfl-urea",
+      "nfl-neem-urea",
+      "coromandel-urea",
+      "coromandel-gromor-urea",
+      "nagarjuna-urea"
+    ],
+    aliases: ["neem coated urea", "neem urea", "urea", "46-0-0"],
     mrp: "\u20B9242/bag (45 kg) \u2014 DoF statutory",
     packSize: "45 kg",
     isSubsidized: true,
     grade: "Urea (Neem coated)"
   },
   {
-    productIds: ["iffco-dap", "coromandel-dap", "nfl-dap"],
+    productIds: [
+      "iffco-dap",
+      "coromandel-dap",
+      "coromandel-gromor-dap",
+      "nfl-dap",
+      "nagarjuna-dap"
+    ],
     aliases: ["dap", "diammonium phosphate", "18-46-0"],
     mrp: "\u20B91,350/bag (50 kg) \u2014 NBS notified (typical)",
     packSize: "50 kg",
@@ -4699,7 +5093,7 @@ var OFFICIAL_FERTILIZER_MRPS = [
     grade: "DAP 18-46-0"
   },
   {
-    productIds: ["iffco-mop", "coromandel-mop"],
+    productIds: ["iffco-mop", "coromandel-mop", "coromandel-gromor-mop", "dof-mop"],
     aliases: ["mop", "muriate of potash", "0-0-60", "potash"],
     mrp: "\u20B91,700/bag (50 kg) \u2014 NBS notified (typical)",
     packSize: "50 kg",
@@ -4707,7 +5101,7 @@ var OFFICIAL_FERTILIZER_MRPS = [
     grade: "MOP 0-0-60"
   },
   {
-    productIds: ["iffco-ssp", "coromandel-ssp"],
+    productIds: ["iffco-ssp", "coromandel-ssp", "coromandel-gromor-ssp", "dof-ssp"],
     aliases: ["ssp", "single super phosphate"],
     mrp: "\u20B9400/bag (50 kg) \u2014 NBS notified (typical)",
     packSize: "50 kg",
@@ -4715,7 +5109,13 @@ var OFFICIAL_FERTILIZER_MRPS = [
     grade: "SSP"
   },
   {
-    productIds: ["iffco-npk-10-26-26", "coromandel-npk-10-26-26"],
+    productIds: [
+      "iffco-npk-10-26-26",
+      "coromandel-npk-10-26-26",
+      "coromandel-gromor-10-26-26",
+      "coromandel-gromor-ultra-10-26-26",
+      "deepak-mahadhan-10-26-26"
+    ],
     aliases: ["10-26-26", "npk 10-26-26"],
     mrp: "\u20B91,450/bag (50 kg) \u2014 NBS notified (typical)",
     packSize: "50 kg",
@@ -4723,7 +5123,12 @@ var OFFICIAL_FERTILIZER_MRPS = [
     grade: "NPK 10-26-26"
   },
   {
-    productIds: ["iffco-npk-12-32-16", "coromandel-npk-12-32-16"],
+    productIds: [
+      "iffco-npk-12-32-16",
+      "coromandel-npk-12-32-16",
+      "coromandel-gromor-12-32-16",
+      "deepak-mahadhan-12-32-16"
+    ],
     aliases: ["12-32-16", "npk 12-32-16"],
     mrp: "\u20B91,480/bag (50 kg) \u2014 NBS notified (typical)",
     packSize: "50 kg",
@@ -4731,7 +5136,12 @@ var OFFICIAL_FERTILIZER_MRPS = [
     grade: "NPK 12-32-16"
   },
   {
-    productIds: ["iffco-npk-20-20-0", "coromandel-20-20-0-13"],
+    productIds: [
+      "iffco-np-20-20-0-13",
+      "coromandel-20-20-0-13",
+      "coromandel-gromor-20-20-0-13",
+      "deepak-mahadhan-20-20-0-13"
+    ],
     aliases: ["20-20-0", "20-20-0-13", "npk 20-20-0"],
     mrp: "\u20B91,200/bag (50 kg) \u2014 NBS notified (typical)",
     packSize: "50 kg",
@@ -4739,21 +5149,170 @@ var OFFICIAL_FERTILIZER_MRPS = [
     grade: "NPK 20-20-0"
   },
   {
-    productIds: ["iffco-npk-19-19-19"],
-    aliases: ["19-19-19", "npk 19-19-19"],
+    productIds: [
+      "iffco-npk-19-19-19",
+      "dof-npk-19-19-19",
+      "nagarjuna-polyfeed-19-19-19"
+    ],
+    aliases: ["19-19-19", "npk 19-19-19", "polyfeed"],
     mrp: "\u20B91,250/bag (50 kg) \u2014 NBS notified (typical)",
     packSize: "50 kg",
     isSubsidized: true,
     grade: "NPK 19-19-19"
+  },
+  {
+    productIds: ["iffco-npk-15-15-15", "coromandel-gromor-15-15-15-09"],
+    aliases: ["15-15-15", "15-15-15-09", "npk 15-15-15"],
+    mrp: "\u20B91,300/bag (50 kg) \u2014 NBS notified (typical)",
+    packSize: "50 kg",
+    isSubsidized: true,
+    grade: "NPK 15-15-15"
+  },
+  {
+    productIds: ["iffco-np-28-28-0", "coromandel-gromor-28-28-0"],
+    aliases: ["28-28-0", "np 28-28"],
+    mrp: "\u20B91,750/bag (50 kg) \u2014 NBS notified (typical)",
+    packSize: "50 kg",
+    isSubsidized: true,
+    grade: "NP 28-28-0"
+  },
+  {
+    productIds: ["dof-ammonium-sulphate"],
+    aliases: ["ammonium sulphate", "ammonium sulfate", "20.6-0-0"],
+    mrp: "\u20B9550/bag (50 kg) \u2014 NBS notified (typical)",
+    packSize: "50 kg",
+    isSubsidized: true,
+    grade: "Ammonium sulphate"
+  },
+  {
+    productIds: ["nagarjuna-map", "dof-map"],
+    aliases: ["map", "mono ammonium phosphate", "12-61-0"],
+    mrp: "\u20B91,600/bag (50 kg) \u2014 NBS notified (typical)",
+    packSize: "50 kg",
+    isSubsidized: true,
+    grade: "MAP 12-61-0"
+  },
+  {
+    productIds: ["dof-tsp"],
+    aliases: ["tsp", "triple super phosphate"],
+    mrp: "\u20B9900/bag (50 kg) \u2014 NBS notified (typical)",
+    packSize: "50 kg",
+    isSubsidized: true,
+    grade: "TSP"
+  },
+  {
+    productIds: ["iffco-nano-urea"],
+    aliases: ["nano urea"],
+    mrp: "\u20B9225/bottle (500 ml) \u2014 company MRP (typical)",
+    packSize: "500 ml",
+    isSubsidized: false,
+    grade: "Nano urea"
+  },
+  {
+    productIds: ["iffco-nano-dap"],
+    aliases: ["nano dap"],
+    mrp: "\u20B9600/bottle (500 ml) \u2014 company MRP (typical)",
+    packSize: "500 ml",
+    isSubsidized: false,
+    grade: "Nano DAP"
+  },
+  {
+    productIds: ["iffco-nano-zinc"],
+    aliases: ["nano zinc"],
+    mrp: "\u20B9200/bottle (100 ml) \u2014 company MRP (typical)",
+    packSize: "100 ml",
+    isSubsidized: false,
+    grade: "Nano zinc"
+  },
+  {
+    productIds: ["coromandel-paramfos"],
+    aliases: ["paramfos", "16-20-0-13"],
+    mrp: "\u20B91,350/bag (50 kg) \u2014 NBS notified (typical)",
+    packSize: "50 kg",
+    isSubsidized: true,
+    grade: "Paramfos 16-20-0-13"
+  },
+  {
+    productIds: ["nfl-zinc-sulphate", "dof-zinc-sulphate"],
+    aliases: ["zinc sulphate", "znso4"],
+    mrp: "\u20B990\u2013140/kg \u2014 dealer typical",
+    packSize: "1\u201325 kg",
+    isSubsidized: false,
+    grade: "Zinc sulphate"
+  },
+  {
+    productIds: ["nfl-ferrous-sulphate", "dof-ferrous-sulphate"],
+    aliases: ["ferrous sulphate", "feso4"],
+    mrp: "\u20B940\u201370/kg \u2014 dealer typical",
+    packSize: "1\u201325 kg",
+    isSubsidized: false,
+    grade: "Ferrous sulphate"
+  },
+  {
+    productIds: ["dof-boron"],
+    aliases: ["borax", "boron fertilizer"],
+    mrp: "\u20B9180\u2013280/kg \u2014 dealer typical",
+    packSize: "1\u20135 kg",
+    isSubsidized: false,
+    grade: "Boron / Borax"
+  },
+  {
+    productIds: ["nfl-bio-azotobacter", "nfl-bio-psb", "nfl-bio-rhizobium"],
+    aliases: ["azotobacter", "bio-fertilizer", "psb", "rhizobium"],
+    mrp: "\u20B980\u2013150/pack \u2014 dealer typical",
+    packSize: "200 g\u20131 kg",
+    isSubsidized: false,
+    grade: "Bio-fertilizer"
+  },
+  {
+    productIds: ["dof-compost-city"],
+    aliases: ["city compost", "fcom"],
+    mrp: "\u20B95\u201312/kg \u2014 municipal / dealer typical",
+    packSize: "25\u201350 kg",
+    isSubsidized: false,
+    grade: "City compost"
+  },
+  {
+    productIds: ["nagarjuna-mkp"],
+    aliases: ["mkp", "00-52-34", "mono potassium phosphate"],
+    mrp: "\u20B9280\u2013380/kg \u2014 dealer typical",
+    packSize: "1\u201325 kg",
+    isSubsidized: false,
+    grade: "MKP 00-52-34"
+  },
+  {
+    productIds: ["nagarjuna-multi-k"],
+    aliases: ["multi-k", "potassium nitrate", "13-0-46"],
+    mrp: "\u20B9220\u2013320/kg \u2014 dealer typical",
+    packSize: "1\u201325 kg",
+    isSubsidized: false,
+    grade: "Potassium nitrate"
+  },
+  {
+    productIds: ["deepak-mahadhan-amruta-cn"],
+    aliases: ["calcium nitrate", "amruta cn"],
+    mrp: "\u20B990\u2013140/kg \u2014 dealer typical",
+    packSize: "1\u201325 kg",
+    isSubsidized: false,
+    grade: "Calcium nitrate"
+  },
+  {
+    productIds: ["deepak-mahadhan-bentonite-s"],
+    aliases: ["sulphur bentonite", "bentonite s"],
+    mrp: "\u20B945\u201375/kg \u2014 dealer typical",
+    packSize: "10\u201350 kg",
+    isSubsidized: false,
+    grade: "Sulphur bentonite"
   }
 ];
 function resolveOfficialMrp(input) {
   const byId = OFFICIAL_FERTILIZER_MRPS.find((row) => row.productIds.includes(input.id));
   if (byId) return byId;
   const hay = `${input.name} ${input.npk ?? ""}`.toLowerCase();
-  return OFFICIAL_FERTILIZER_MRPS.find(
-    (row) => row.aliases.some((alias) => hay.includes(alias.toLowerCase()))
-  ) ?? null;
+  const ranked = [...OFFICIAL_FERTILIZER_MRPS].sort(
+    (a, b) => Math.max(...b.aliases.map((x) => x.length)) - Math.max(...a.aliases.map((x) => x.length))
+  );
+  return ranked.find((row) => row.aliases.some((alias) => hay.includes(alias.toLowerCase()))) ?? null;
 }
 
 // src/ingestion/data/plantVillageDiseases.ts
@@ -9507,6 +10066,15 @@ async function runDailyAutoSync() {
         const upserted = await seedBhuvedamCrops();
         return { fetched: upserted, upserted };
       }
+    },
+    {
+      sourceId: "bhuvedam",
+      label: "Nearby mandi/shops seed",
+      run: async () => {
+        const { seedCuratedAgPlaces: seedCuratedAgPlaces2 } = await Promise.resolve().then(() => (init_nearbyAgPlacesService(), nearbyAgPlacesService_exports));
+        const r = await seedCuratedAgPlaces2();
+        return { fetched: r.inserted + r.skipped, upserted: r.inserted };
+      }
     }
   ];
   for (const { sourceId, label, run } of jobs) {
@@ -10169,7 +10737,7 @@ function resolveAgentTemperature(agentId, voiceMode = false) {
 
 // src/services/aiKnowledgeCache.ts
 var import_node_crypto2 = require("node:crypto");
-var import_drizzle_orm12 = require("drizzle-orm");
+var import_drizzle_orm13 = require("drizzle-orm");
 init_db();
 init_schema();
 var SOURCE = "ai_cache";
@@ -10238,7 +10806,7 @@ async function cacheAiKnowledgeAnswer(query, answer, opts = {}) {
       content: a,
       url: topUrl ?? void 0,
       cropTags,
-      citationCount: import_drizzle_orm12.sql`COALESCE(${agKnowledge.citationCount}, 0) + 1`,
+      citationCount: import_drizzle_orm13.sql`COALESCE(${agKnowledge.citationCount}, 0) + 1`,
       syncedAt: /* @__PURE__ */ new Date(),
       metadata: {
         provider,
@@ -11162,7 +11730,7 @@ function buildFromActives(type, subType, actives) {
       applicationMethod: `Use ${active.dose} in ~200 L water/acre (or as label). ${when}`,
       precautions: `Follow label dose.${phiText} Wear PPE (gloves, mask). Rotate chemical groups. Do not mix unknown products.`,
       description: `CIB&RC-style registered formulation reference. Targets: ${active.targets.join(", ")}. Crops: ${active.crops.join(", ")}. Source: PPQS registered products list.`,
-      price: enrich?.packMrp ?? null,
+      price: enrich?.packMrp ?? "Typical dealer pack \u2014 verify MRP on label",
       image: resolveProductImageUrl({
         id: `ref-${type === "pesticide" ? "pest" : "fung"}-${slug2(active.name)}`,
         type,
@@ -11226,7 +11794,7 @@ function canonicalAgStats() {
 }
 
 // src/services/cropLocalization.ts
-var import_drizzle_orm15 = require("drizzle-orm");
+var import_drizzle_orm16 = require("drizzle-orm");
 init_db();
 init_schema();
 
@@ -11376,14 +11944,14 @@ async function persistLocalization(row, lang, displayName, details) {
   await db.update(crops).set({
     localizedNames,
     metadata,
-    searchAliases: import_drizzle_orm15.sql`(
+    searchAliases: import_drizzle_orm16.sql`(
         SELECT COALESCE(jsonb_agg(DISTINCT val), '[]'::jsonb)
         FROM (
           SELECT jsonb_array_elements_text(COALESCE(${crops.searchAliases}, '[]'::jsonb)) AS val
           UNION ALL SELECT ${displayName.toLowerCase()}
         ) s
       )`
-  }).where((0, import_drizzle_orm15.eq)(crops.id, row.id));
+  }).where((0, import_drizzle_orm16.eq)(crops.id, row.id));
 }
 async function localizeCropRow(row, lang, mode = "full") {
   if (mode === "none") {
@@ -11476,7 +12044,7 @@ function parseLocalizeMode(raw, limit = 500) {
 }
 
 // src/services/farmAlertPushService.ts
-var import_drizzle_orm18 = require("drizzle-orm");
+var import_drizzle_orm19 = require("drizzle-orm");
 init_db();
 init_cropCalendar();
 init_mandiPrices();
@@ -11485,19 +12053,19 @@ init_pushTokens();
 init_weather();
 
 // src/services/notificationInboxService.ts
-var import_drizzle_orm17 = require("drizzle-orm");
+var import_drizzle_orm18 = require("drizzle-orm");
 init_db();
 init_notifications();
 init_pushTokens();
 
 // src/services/pushNotificationService.ts
 var import_expo_server_sdk = require("expo-server-sdk");
-var import_drizzle_orm16 = require("drizzle-orm");
+var import_drizzle_orm17 = require("drizzle-orm");
 init_db();
 init_pushTokens();
 var expo = new import_expo_server_sdk.Expo();
 async function getFarmerPushTokens(farmerId) {
-  const rows = await db.select({ token: pushTokens.expoPushToken }).from(pushTokens).where((0, import_drizzle_orm16.eq)(pushTokens.farmerId, farmerId));
+  const rows = await db.select({ token: pushTokens.expoPushToken }).from(pushTokens).where((0, import_drizzle_orm17.eq)(pushTokens.farmerId, farmerId));
   return rows.map((r) => r.token).filter((t) => import_expo_server_sdk.Expo.isExpoPushToken(t));
 }
 async function sendExpoPush(tokens, title, body, data = {}) {
@@ -11541,17 +12109,17 @@ async function registerPushToken(farmerId, expoPushToken, platform) {
   });
 }
 async function removePushToken(farmerId, expoPushToken) {
-  await db.delete(pushTokens).where((0, import_drizzle_orm17.and)((0, import_drizzle_orm17.eq)(pushTokens.farmerId, farmerId), (0, import_drizzle_orm17.eq)(pushTokens.expoPushToken, expoPushToken)));
+  await db.delete(pushTokens).where((0, import_drizzle_orm18.and)((0, import_drizzle_orm18.eq)(pushTokens.farmerId, farmerId), (0, import_drizzle_orm18.eq)(pushTokens.expoPushToken, expoPushToken)));
 }
 async function listFarmerNotifications(farmerId, limit = 30) {
-  return db.select().from(notifications).where((0, import_drizzle_orm17.eq)(notifications.farmerId, farmerId)).orderBy((0, import_drizzle_orm17.desc)(notifications.createdAt)).limit(limit);
+  return db.select().from(notifications).where((0, import_drizzle_orm18.eq)(notifications.farmerId, farmerId)).orderBy((0, import_drizzle_orm18.desc)(notifications.createdAt)).limit(limit);
 }
 async function markNotificationRead(farmerId, notificationId) {
-  const result = await db.update(notifications).set({ isRead: true, readAt: /* @__PURE__ */ new Date() }).where((0, import_drizzle_orm17.and)((0, import_drizzle_orm17.eq)(notifications.id, notificationId), (0, import_drizzle_orm17.eq)(notifications.farmerId, farmerId))).returning({ id: notifications.id });
+  const result = await db.update(notifications).set({ isRead: true, readAt: /* @__PURE__ */ new Date() }).where((0, import_drizzle_orm18.and)((0, import_drizzle_orm18.eq)(notifications.id, notificationId), (0, import_drizzle_orm18.eq)(notifications.farmerId, farmerId))).returning({ id: notifications.id });
   return result.length > 0;
 }
 async function markAllNotificationsRead(farmerId) {
-  const result = await db.update(notifications).set({ isRead: true, readAt: /* @__PURE__ */ new Date() }).where((0, import_drizzle_orm17.and)((0, import_drizzle_orm17.eq)(notifications.farmerId, farmerId), (0, import_drizzle_orm17.eq)(notifications.isRead, false))).returning({ id: notifications.id });
+  const result = await db.update(notifications).set({ isRead: true, readAt: /* @__PURE__ */ new Date() }).where((0, import_drizzle_orm18.and)((0, import_drizzle_orm18.eq)(notifications.farmerId, farmerId), (0, import_drizzle_orm18.eq)(notifications.isRead, false))).returning({ id: notifications.id });
   return result.length;
 }
 async function createAndPushNotification(farmerId, input) {
@@ -11600,13 +12168,13 @@ var MANDI_PRICE_CHANGE_THRESHOLD = 5;
 var ALERT_DEDUPE_HOURS = 12;
 var MAX_PUSH_PER_RUN = 3;
 async function getFarmerCropIds(farmerId) {
-  const rows = await db.select({ cropId: cropCalendar.cropId }).from(cropCalendar).where((0, import_drizzle_orm18.eq)(cropCalendar.farmerId, farmerId));
+  const rows = await db.select({ cropId: cropCalendar.cropId }).from(cropCalendar).where((0, import_drizzle_orm19.eq)(cropCalendar.farmerId, farmerId));
   return [...new Set(rows.map((r) => r.cropId))];
 }
 async function getLatestWeatherRow(farmerId) {
-  const [farmerRow] = await db.select().from(weather).where((0, import_drizzle_orm18.eq)(weather.farmerId, farmerId)).orderBy((0, import_drizzle_orm18.desc)(weather.fetchedAt)).limit(1);
+  const [farmerRow] = await db.select().from(weather).where((0, import_drizzle_orm19.eq)(weather.farmerId, farmerId)).orderBy((0, import_drizzle_orm19.desc)(weather.fetchedAt)).limit(1);
   if (farmerRow) return farmerRow;
-  const [globalRow] = await db.select().from(weather).orderBy((0, import_drizzle_orm18.desc)(weather.fetchedAt)).limit(1);
+  const [globalRow] = await db.select().from(weather).orderBy((0, import_drizzle_orm19.desc)(weather.fetchedAt)).limit(1);
   return globalRow ?? null;
 }
 function buildWeatherAlerts(row) {
@@ -11658,14 +12226,14 @@ async function buildMandiAlerts(cropIds) {
   if (!cropIds.length) return [];
   const alerts = [];
   for (const cropId of cropIds.slice(0, 6)) {
-    const [latest] = await db.select().from(mandiPrices).where((0, import_drizzle_orm18.eq)(mandiPrices.cropId, cropId)).orderBy((0, import_drizzle_orm18.desc)(mandiPrices.fetchedAt)).limit(1);
+    const [latest] = await db.select().from(mandiPrices).where((0, import_drizzle_orm19.eq)(mandiPrices.cropId, cropId)).orderBy((0, import_drizzle_orm19.desc)(mandiPrices.fetchedAt)).limit(1);
     if (!latest) continue;
     const [older] = await db.select().from(mandiPrices).where(
-      (0, import_drizzle_orm18.and)(
-        (0, import_drizzle_orm18.eq)(mandiPrices.cropId, cropId),
-        import_drizzle_orm18.sql`${mandiPrices.fetchedAt} < ${latest.fetchedAt} - interval '20 hours'`
+      (0, import_drizzle_orm19.and)(
+        (0, import_drizzle_orm19.eq)(mandiPrices.cropId, cropId),
+        import_drizzle_orm19.sql`${mandiPrices.fetchedAt} < ${latest.fetchedAt} - interval '20 hours'`
       )
-    ).orderBy((0, import_drizzle_orm18.desc)(mandiPrices.fetchedAt)).limit(1);
+    ).orderBy((0, import_drizzle_orm19.desc)(mandiPrices.fetchedAt)).limit(1);
     if (!older) continue;
     const newPrice = Number(latest.modalPrice);
     const oldPrice = Number(older.modalPrice);
@@ -11692,7 +12260,7 @@ async function buildMandiAlerts(cropIds) {
 }
 async function wasAlertSentRecently(farmerId, alertKey) {
   const since = new Date(Date.now() - ALERT_DEDUPE_HOURS * 60 * 60 * 1e3);
-  const rows = await db.select({ data: notifications.data }).from(notifications).where((0, import_drizzle_orm18.and)((0, import_drizzle_orm18.eq)(notifications.farmerId, farmerId), (0, import_drizzle_orm18.gte)(notifications.createdAt, since)));
+  const rows = await db.select({ data: notifications.data }).from(notifications).where((0, import_drizzle_orm19.and)((0, import_drizzle_orm19.eq)(notifications.farmerId, farmerId), (0, import_drizzle_orm19.gte)(notifications.createdAt, since)));
   return rows.some((r) => r.data?.alertKey === alertKey);
 }
 async function collectPendingAlertsForFarmer(farmerId) {
@@ -11734,7 +12302,7 @@ async function dispatchRealtimeAlertsForAll() {
 }
 
 // src/services/farmerSync.ts
-var import_drizzle_orm19 = require("drizzle-orm");
+var import_drizzle_orm20 = require("drizzle-orm");
 init_db();
 init_cropCalendar();
 init_crops();
@@ -11801,7 +12369,7 @@ async function syncSurveyRecord(landId, input) {
   const khata = input.khataNumber?.trim() || null;
   const extent = resolveExtentAcres(input);
   const revenueVillage = input.village?.trim() || null;
-  await db.delete(surveyNumbers).where((0, import_drizzle_orm19.eq)(surveyNumbers.landId, landId));
+  await db.delete(surveyNumbers).where((0, import_drizzle_orm20.eq)(surveyNumbers.landId, landId));
   if (!survey && !khata) return;
   await db.insert(surveyNumbers).values({
     landId,
@@ -11813,14 +12381,14 @@ async function syncSurveyRecord(landId, input) {
 }
 async function upsertFarmerByPhone(phone, name, language = "te") {
   const existing = await db.query.farmers.findFirst({
-    where: (0, import_drizzle_orm19.eq)(farmers.phone, phone)
+    where: (0, import_drizzle_orm20.eq)(farmers.phone, phone)
   });
   if (existing) {
     const [updated] = await db.update(farmers).set({
       name,
       language: language || existing.language,
       updatedAt: /* @__PURE__ */ new Date()
-    }).where((0, import_drizzle_orm19.eq)(farmers.id, existing.id)).returning();
+    }).where((0, import_drizzle_orm20.eq)(farmers.id, existing.id)).returning();
     return updated;
   }
   const [created] = await db.insert(farmers).values({ phone, name, language }).returning();
@@ -11837,7 +12405,7 @@ async function syncFarmerProfile(farmerId, input) {
     ...label ? { locationLabel: label } : {},
     ...input.notes?.length ? { notes: input.notes.slice(0, 12) } : {},
     updatedAt: now
-  }).where((0, import_drizzle_orm19.eq)(farmers.id, farmerId));
+  }).where((0, import_drizzle_orm20.eq)(farmers.id, farmerId));
   const coords = averageCoordinate(input.fieldMeasurement?.points);
   const areaAcres = resolveAreaAcres(input);
   const landPatch = {
@@ -11852,23 +12420,23 @@ async function syncFarmerProfile(farmerId, input) {
     longitude: coords?.longitude ?? null,
     updatedAt: now
   };
-  const [existingLand] = await db.select().from(lands).where((0, import_drizzle_orm19.eq)(lands.farmerId, farmerId)).limit(1);
+  const [existingLand] = await db.select().from(lands).where((0, import_drizzle_orm20.eq)(lands.farmerId, farmerId)).limit(1);
   let landId;
   if (existingLand) {
-    await db.update(lands).set(landPatch).where((0, import_drizzle_orm19.eq)(lands.id, existingLand.id));
+    await db.update(lands).set(landPatch).where((0, import_drizzle_orm20.eq)(lands.id, existingLand.id));
     landId = existingLand.id;
   } else {
     const [inserted] = await db.insert(lands).values({ farmerId, ...landPatch }).returning();
     landId = inserted.id;
   }
   await syncSurveyRecord(landId, input);
-  await db.delete(cropCalendar).where((0, import_drizzle_orm19.eq)(cropCalendar.farmerId, farmerId));
+  await db.delete(cropCalendar).where((0, import_drizzle_orm20.eq)(cropCalendar.farmerId, farmerId));
   const plantings = input.cropPlantings?.length ? input.cropPlantings : (input.crops ?? []).map((cropId) => ({ cropId }));
   for (const planting of plantings) {
     const cropId = planting.cropId?.trim();
     if (!cropId) continue;
     const cropRow = await db.query.crops.findFirst({
-      where: (0, import_drizzle_orm19.eq)(crops.id, cropId)
+      where: (0, import_drizzle_orm20.eq)(crops.id, cropId)
     });
     if (!cropRow) continue;
     await db.insert(cropCalendar).values({
@@ -11881,7 +12449,7 @@ async function syncFarmerProfile(farmerId, input) {
     });
   }
   return db.query.farmers.findFirst({
-    where: (0, import_drizzle_orm19.eq)(farmers.id, farmerId),
+    where: (0, import_drizzle_orm20.eq)(farmers.id, farmerId),
     with: {
       lands: {
         with: { surveyNumbers: true }
@@ -11936,7 +12504,7 @@ function formatFarmerProfileForApp(profile) {
 }
 async function getFarmerProfile(farmerId) {
   return db.query.farmers.findFirst({
-    where: (0, import_drizzle_orm19.and)((0, import_drizzle_orm19.eq)(farmers.id, farmerId), (0, import_drizzle_orm19.eq)(farmers.isActive, true)),
+    where: (0, import_drizzle_orm20.and)((0, import_drizzle_orm20.eq)(farmers.id, farmerId), (0, import_drizzle_orm20.eq)(farmers.isActive, true)),
     with: {
       lands: {
         with: { surveyNumbers: true }
@@ -11947,56 +12515,93 @@ async function getFarmerProfile(farmerId) {
 }
 
 // src/services/fertilizerProductSearch.ts
-var import_drizzle_orm20 = require("drizzle-orm");
+var import_drizzle_orm21 = require("drizzle-orm");
 init_db();
 init_fertilizerProducts();
+function applyOfficialMrpOverlay(row) {
+  const official = resolveOfficialMrp({
+    id: row.id,
+    name: row.name,
+    npk: row.npk
+  });
+  const baseMeta = row.metadata ?? {};
+  if (!official) {
+    const hasPrice = Boolean(row.mrp || row.price);
+    return {
+      ...row,
+      mrp: row.mrp ?? row.price ?? null,
+      price: row.price ?? row.mrp ?? null,
+      priceSourceLabel: hasPrice ? typeof baseMeta.priceSourceLabel === "string" ? baseMeta.priceSourceLabel : FERTILIZER_PRICE_SOURCE.label : null,
+      priceNote: hasPrice ? typeof baseMeta.priceNote === "string" ? baseMeta.priceNote : FERTILIZER_PRICE_SOURCE.note : null,
+      metadata: baseMeta
+    };
+  }
+  return {
+    ...row,
+    mrp: official.mrp,
+    price: official.mrp,
+    packSize: row.packSize || official.packSize,
+    isSubsidized: official.isSubsidized || row.isSubsidized,
+    priceSourceLabel: FERTILIZER_PRICE_SOURCE.label,
+    priceNote: FERTILIZER_PRICE_SOURCE.note,
+    metadata: {
+      ...baseMeta,
+      priceSource: FERTILIZER_PRICE_SOURCE.id,
+      priceSourceLabel: FERTILIZER_PRICE_SOURCE.label,
+      priceNote: FERTILIZER_PRICE_SOURCE.note,
+      officialGrade: official.grade
+    }
+  };
+}
 async function searchFertilizerProducts(query) {
   const limit = Math.min(query.limit ?? 100, 500);
   const conditions = [];
   if (query.brand) {
-    conditions.push((0, import_drizzle_orm20.ilike)(fertilizerProducts.brand, query.brand));
+    conditions.push((0, import_drizzle_orm21.ilike)(fertilizerProducts.brand, query.brand));
   }
   if (query.category) {
-    conditions.push((0, import_drizzle_orm20.eq)(fertilizerProducts.category, query.category));
+    conditions.push((0, import_drizzle_orm21.eq)(fertilizerProducts.category, query.category));
   }
   if (query.source) {
-    conditions.push((0, import_drizzle_orm20.eq)(fertilizerProducts.source, query.source));
+    conditions.push((0, import_drizzle_orm21.eq)(fertilizerProducts.source, query.source));
   }
   if (query.search?.trim()) {
     const pattern = `%${query.search.trim()}%`;
     conditions.push(
-      (0, import_drizzle_orm20.or)(
-        (0, import_drizzle_orm20.ilike)(fertilizerProducts.name, pattern),
-        (0, import_drizzle_orm20.ilike)(fertilizerProducts.brand, pattern),
-        (0, import_drizzle_orm20.ilike)(fertilizerProducts.npk, pattern),
-        (0, import_drizzle_orm20.ilike)(fertilizerProducts.nutrient, pattern)
+      (0, import_drizzle_orm21.or)(
+        (0, import_drizzle_orm21.ilike)(fertilizerProducts.name, pattern),
+        (0, import_drizzle_orm21.ilike)(fertilizerProducts.brand, pattern),
+        (0, import_drizzle_orm21.ilike)(fertilizerProducts.npk, pattern),
+        (0, import_drizzle_orm21.ilike)(fertilizerProducts.nutrient, pattern)
       )
     );
   }
   if (query.crop?.trim()) {
     const cropId = query.crop.trim().toLowerCase();
-    conditions.push(import_drizzle_orm20.sql`${fertilizerProducts.crops} @> ${JSON.stringify([cropId])}::jsonb`);
+    conditions.push(import_drizzle_orm21.sql`${fertilizerProducts.crops} @> ${JSON.stringify([cropId])}::jsonb`);
   }
-  const rows = conditions.length ? await db.select().from(fertilizerProducts).where((0, import_drizzle_orm20.and)(...conditions)).limit(limit) : await db.select().from(fertilizerProducts).limit(limit);
+  const rows = conditions.length ? await db.select().from(fertilizerProducts).where((0, import_drizzle_orm21.and)(...conditions)).limit(limit) : await db.select().from(fertilizerProducts).limit(limit);
   return enrichProductsWithImages(
-    rows.map((r) => ({
-      ...r,
-      type: "fertilizer",
-      category: r.category,
-      sourceUrl: mergeManufacturerSourceUrl(r.id, r.sourceUrl) ?? r.sourceUrl
-    }))
+    rows.map((r) => {
+      const withMrp = applyOfficialMrpOverlay(r);
+      return {
+        ...withMrp,
+        type: "fertilizer",
+        category: withMrp.category,
+        sourceUrl: mergeManufacturerSourceUrl(withMrp.id, withMrp.sourceUrl) ?? withMrp.sourceUrl
+      };
+    })
   );
 }
 async function getFertilizerProductById(id) {
-  const row = await db.query.fertilizerProducts.findFirst({
-    where: (0, import_drizzle_orm20.eq)(fertilizerProducts.id, id)
-  });
+  const [row] = await db.select().from(fertilizerProducts).where((0, import_drizzle_orm21.eq)(fertilizerProducts.id, id)).limit(1);
   if (!row) return null;
+  const withMrp = applyOfficialMrpOverlay(row);
   return enrichProductImageAsync({
-    ...row,
+    ...withMrp,
     type: "fertilizer",
-    category: row.category,
-    sourceUrl: mergeManufacturerSourceUrl(row.id, row.sourceUrl) ?? row.sourceUrl
+    category: withMrp.category,
+    sourceUrl: mergeManufacturerSourceUrl(withMrp.id, withMrp.sourceUrl) ?? withMrp.sourceUrl
   });
 }
 
@@ -12004,7 +12609,7 @@ async function getFertilizerProductById(id) {
 init_knowledgeSearch();
 
 // src/services/otpService.ts
-var import_drizzle_orm21 = require("drizzle-orm");
+var import_drizzle_orm22 = require("drizzle-orm");
 var import_node_crypto3 = require("node:crypto");
 init_db();
 init_farmers();
@@ -12107,7 +12712,7 @@ async function verifyTwoFactorOtp(sessionId, otp) {
 }
 async function sendPhoneOtp(rawPhone) {
   const phone = formatPhone(rawPhone);
-  const [recent] = await db.select().from(otpCodes).where((0, import_drizzle_orm21.and)((0, import_drizzle_orm21.eq)(otpCodes.phone, phone), (0, import_drizzle_orm21.gt)(otpCodes.createdAt, new Date(Date.now() - OTP_COOLDOWN_MS)))).orderBy((0, import_drizzle_orm21.desc)(otpCodes.createdAt)).limit(1);
+  const [recent] = await db.select().from(otpCodes).where((0, import_drizzle_orm22.and)((0, import_drizzle_orm22.eq)(otpCodes.phone, phone), (0, import_drizzle_orm22.gt)(otpCodes.createdAt, new Date(Date.now() - OTP_COOLDOWN_MS)))).orderBy((0, import_drizzle_orm22.desc)(otpCodes.createdAt)).limit(1);
   if (recent) {
     const waitSec = Math.ceil(
       (recent.createdAt.getTime() + OTP_COOLDOWN_MS - Date.now()) / 1e3
@@ -12155,7 +12760,7 @@ async function verifyPhoneOtp(rawPhone, otp) {
   const phone = formatPhone(rawPhone);
   const code = otp.replace(/\D/g, "");
   if (code.length !== 6) return { valid: false, reason: "invalid" };
-  const [row] = await db.select().from(otpCodes).where((0, import_drizzle_orm21.and)((0, import_drizzle_orm21.eq)(otpCodes.phone, phone), (0, import_drizzle_orm21.gt)(otpCodes.expiresAt, /* @__PURE__ */ new Date()))).orderBy((0, import_drizzle_orm21.desc)(otpCodes.createdAt)).limit(1);
+  const [row] = await db.select().from(otpCodes).where((0, import_drizzle_orm22.and)((0, import_drizzle_orm22.eq)(otpCodes.phone, phone), (0, import_drizzle_orm22.gt)(otpCodes.expiresAt, /* @__PURE__ */ new Date()))).orderBy((0, import_drizzle_orm22.desc)(otpCodes.createdAt)).limit(1);
   if (!row) return { valid: false, reason: "expired" };
   if (row.attempts >= MAX_ATTEMPTS) return { valid: false, reason: "max_attempts" };
   let match = false;
@@ -12165,34 +12770,34 @@ async function verifyPhoneOtp(rawPhone, otp) {
   } else {
     match = row.codeHash === hashOtp(code, phone);
   }
-  await db.update(otpCodes).set({ attempts: row.attempts + 1 }).where((0, import_drizzle_orm21.eq)(otpCodes.id, row.id));
+  await db.update(otpCodes).set({ attempts: row.attempts + 1 }).where((0, import_drizzle_orm22.eq)(otpCodes.id, row.id));
   if (!match) return { valid: false, reason: "invalid" };
-  await db.update(otpCodes).set({ verifiedAt: /* @__PURE__ */ new Date() }).where((0, import_drizzle_orm21.eq)(otpCodes.id, row.id));
+  await db.update(otpCodes).set({ verifiedAt: /* @__PURE__ */ new Date() }).where((0, import_drizzle_orm22.eq)(otpCodes.id, row.id));
   return { valid: true };
 }
 async function hasVerifiedOtpSession(rawPhone) {
   const phone = formatPhone(rawPhone);
   const [row] = await db.select().from(otpCodes).where(
-    (0, import_drizzle_orm21.and)(
-      (0, import_drizzle_orm21.eq)(otpCodes.phone, phone),
-      (0, import_drizzle_orm21.gt)(otpCodes.expiresAt, /* @__PURE__ */ new Date()),
-      (0, import_drizzle_orm21.isNotNull)(otpCodes.verifiedAt)
+    (0, import_drizzle_orm22.and)(
+      (0, import_drizzle_orm22.eq)(otpCodes.phone, phone),
+      (0, import_drizzle_orm22.gt)(otpCodes.expiresAt, /* @__PURE__ */ new Date()),
+      (0, import_drizzle_orm22.isNotNull)(otpCodes.verifiedAt)
     )
-  ).orderBy((0, import_drizzle_orm21.desc)(otpCodes.createdAt)).limit(1);
+  ).orderBy((0, import_drizzle_orm22.desc)(otpCodes.createdAt)).limit(1);
   return Boolean(row);
 }
 async function consumeOtpSession(rawPhone) {
   const phone = formatPhone(rawPhone);
-  await db.delete(otpCodes).where((0, import_drizzle_orm21.eq)(otpCodes.phone, phone));
+  await db.delete(otpCodes).where((0, import_drizzle_orm22.eq)(otpCodes.phone, phone));
 }
 async function getFarmerByPhone(phone) {
-  const [row] = await db.select().from(farmers).where((0, import_drizzle_orm21.eq)(farmers.phone, formatPhone(phone))).limit(1);
+  const [row] = await db.select().from(farmers).where((0, import_drizzle_orm22.eq)(farmers.phone, formatPhone(phone))).limit(1);
   return row ?? null;
 }
 
 // src/services/passwordAuth.ts
 var import_node_crypto4 = require("node:crypto");
-var import_drizzle_orm22 = require("drizzle-orm");
+var import_drizzle_orm23 = require("drizzle-orm");
 init_db();
 init_farmers();
 var KEY_LEN = 64;
@@ -12238,19 +12843,19 @@ async function findFarmerByIdentifier(identifier) {
   if (!trimmed) return null;
   if (trimmed.includes("@")) {
     const email = normalizeEmail(trimmed);
-    const [row2] = await db.select().from(farmers).where((0, import_drizzle_orm22.eq)(farmers.email, email)).limit(1);
+    const [row2] = await db.select().from(farmers).where((0, import_drizzle_orm23.eq)(farmers.email, email)).limit(1);
     return row2 ?? null;
   }
   const phone = formatPhone(trimmed);
-  const [row] = await db.select().from(farmers).where((0, import_drizzle_orm22.eq)(farmers.phone, phone)).limit(1);
+  const [row] = await db.select().from(farmers).where((0, import_drizzle_orm23.eq)(farmers.phone, phone)).limit(1);
   return row ?? null;
 }
 async function findFarmerByPhoneOrEmail(phone, email) {
   const conditions = [];
-  if (phone) conditions.push((0, import_drizzle_orm22.eq)(farmers.phone, phone));
-  if (email) conditions.push((0, import_drizzle_orm22.eq)(farmers.email, email));
+  if (phone) conditions.push((0, import_drizzle_orm23.eq)(farmers.phone, phone));
+  if (email) conditions.push((0, import_drizzle_orm23.eq)(farmers.email, email));
   if (!conditions.length) return null;
-  const [row] = await db.select().from(farmers).where(conditions.length === 1 ? conditions[0] : (0, import_drizzle_orm22.or)(...conditions)).limit(1);
+  const [row] = await db.select().from(farmers).where(conditions.length === 1 ? conditions[0] : (0, import_drizzle_orm23.or)(...conditions)).limit(1);
   return row ?? null;
 }
 async function registerFarmerWithPassword(input) {
@@ -12314,12 +12919,12 @@ async function loginFarmerWithPassword(identifier, password) {
 async function updateFarmerPassword(farmerId, newPassword) {
   const pwdErr = validatePasswordStrength(newPassword);
   if (pwdErr) throw new Error("WEAK_PASSWORD");
-  const [updated] = await db.update(farmers).set({ passwordHash: hashPassword(newPassword), updatedAt: /* @__PURE__ */ new Date() }).where((0, import_drizzle_orm22.eq)(farmers.id, farmerId)).returning();
+  const [updated] = await db.update(farmers).set({ passwordHash: hashPassword(newPassword), updatedAt: /* @__PURE__ */ new Date() }).where((0, import_drizzle_orm23.eq)(farmers.id, farmerId)).returning();
   if (!updated) throw new Error("NOT_FOUND");
   return updated;
 }
 async function changeFarmerPassword(farmerId, currentPassword, newPassword) {
-  const [farmer] = await db.select().from(farmers).where((0, import_drizzle_orm22.eq)(farmers.id, farmerId)).limit(1);
+  const [farmer] = await db.select().from(farmers).where((0, import_drizzle_orm23.eq)(farmers.id, farmerId)).limit(1);
   if (!farmer) throw new Error("NOT_FOUND");
   if (!farmer.passwordHash) throw new Error("NO_PASSWORD");
   if (!verifyPassword(currentPassword, farmer.passwordHash)) throw new Error("WRONG_PASSWORD");
@@ -12338,7 +12943,7 @@ async function resetPasswordWithPhoneOtp(rawPhone, otp, newPassword) {
 }
 
 // src/services/mandiAnalyticsService.ts
-var import_drizzle_orm23 = require("drizzle-orm");
+var import_drizzle_orm24 = require("drizzle-orm");
 init_db();
 init_schema();
 function dateOnly(value) {
@@ -12454,7 +13059,7 @@ async function fetchMandiAnalyticsFromDb(options) {
   const cutoff = /* @__PURE__ */ new Date();
   cutoff.setDate(cutoff.getDate() - historyDays);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
-  const rows = await db.select().from(mandiPrices).where((0, import_drizzle_orm23.and)((0, import_drizzle_orm23.eq)(mandiPrices.state, state), (0, import_drizzle_orm23.gte)(mandiPrices.priceDate, cutoffStr))).orderBy((0, import_drizzle_orm23.desc)(mandiPrices.priceDate)).limit(1e4);
+  const rows = await db.select().from(mandiPrices).where((0, import_drizzle_orm24.and)((0, import_drizzle_orm24.eq)(mandiPrices.state, state), (0, import_drizzle_orm24.gte)(mandiPrices.priceDate, cutoffStr))).orderBy((0, import_drizzle_orm24.desc)(mandiPrices.priceDate)).limit(1e4);
   let analytics = buildAnalyticsFromDbRows(rows);
   if (options?.cropId) {
     analytics = analytics.filter((item) => item.cropId === options.cropId);
@@ -12462,201 +13067,8 @@ async function fetchMandiAnalyticsFromDb(options) {
   return analytics;
 }
 
-// src/services/nearbyAgPlacesService.ts
-var import_drizzle_orm24 = require("drizzle-orm");
-init_db();
-init_agPlaces();
-
-// src/ingestion/data/curatedAgPlaces.ts
-var CURATED_AG_PLACES = [
-  {
-    placeType: "mandi",
-    name: "Guntur APMC",
-    district: "Guntur",
-    state: "Andhra Pradesh",
-    latitude: 16.3067,
-    longitude: 80.4365
-  },
-  {
-    placeType: "mandi",
-    name: "Vijayawada Nunna APMC",
-    district: "Krishna",
-    state: "Andhra Pradesh",
-    latitude: 16.5193,
-    longitude: 80.6305
-  },
-  {
-    placeType: "mandi",
-    name: "Kurnool APMC",
-    district: "Kurnool",
-    state: "Andhra Pradesh",
-    latitude: 15.8281,
-    longitude: 78.0373
-  },
-  {
-    placeType: "mandi",
-    name: "Tirupati APMC",
-    district: "Chittoor",
-    state: "Andhra Pradesh",
-    latitude: 13.6288,
-    longitude: 79.4192
-  },
-  {
-    placeType: "mandi",
-    name: "Nellore APMC",
-    district: "SPSR Nellore",
-    state: "Andhra Pradesh",
-    latitude: 14.4426,
-    longitude: 79.9865
-  },
-  {
-    placeType: "mandi",
-    name: "Warangal APMC",
-    district: "Warangal",
-    state: "Telangana",
-    latitude: 17.9689,
-    longitude: 79.5941
-  },
-  {
-    placeType: "mandi",
-    name: "Karimnagar APMC",
-    district: "Karimnagar",
-    state: "Telangana",
-    latitude: 18.4386,
-    longitude: 79.1288
-  },
-  {
-    placeType: "mandi",
-    name: "Nizamabad APMC",
-    district: "Nizamabad",
-    state: "Telangana",
-    latitude: 18.6725,
-    longitude: 78.0941
-  },
-  {
-    placeType: "mandi",
-    name: "Hyderabad Bowenpally Market Yard",
-    district: "Hyderabad",
-    state: "Telangana",
-    latitude: 17.4584,
-    longitude: 78.4189
-  },
-  {
-    placeType: "fertilizer_shop",
-    name: "IFFCO Dealer \u2014 Guntur",
-    district: "Guntur",
-    state: "Andhra Pradesh",
-    address: "Arundelpet, Guntur",
-    latitude: 16.306,
-    longitude: 80.44
-  },
-  {
-    placeType: "fertilizer_shop",
-    name: "PACS Fertilizer \u2014 Tenali",
-    district: "Guntur",
-    state: "Andhra Pradesh",
-    latitude: 16.2428,
-    longitude: 80.6404
-  },
-  {
-    placeType: "fertilizer_shop",
-    name: "Rythu Bharosa Kendra \u2014 Vijayawada",
-    district: "Krishna",
-    state: "Andhra Pradesh",
-    latitude: 16.5062,
-    longitude: 80.648
-  },
-  {
-    placeType: "fertilizer_shop",
-    name: "Agri Input Dealer \u2014 Kurnool",
-    district: "Kurnool",
-    state: "Andhra Pradesh",
-    latitude: 15.8285,
-    longitude: 78.042
-  },
-  {
-    placeType: "fertilizer_shop",
-    name: "Telangana Markfed \u2014 Warangal",
-    district: "Warangal",
-    state: "Telangana",
-    latitude: 17.975,
-    longitude: 79.6
-  },
-  {
-    placeType: "dealer",
-    name: "Seed & Pesticide Dealer \u2014 Karimnagar",
-    district: "Karimnagar",
-    state: "Telangana",
-    latitude: 18.44,
-    longitude: 79.13
-  }
-];
-
-// src/services/nearbyAgPlacesService.ts
-function toNumber(value) {
-  if (value == null) return 0;
-  const n = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(n) ? n : 0;
-}
-function haversineKm(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-function matchesType(placeType, filter) {
-  if (filter === "all") return true;
-  if (filter === "mandi") return placeType === "mandi";
-  return placeType === "fertilizer_shop" || placeType === "seed_shop" || placeType === "dealer";
-}
-function rowToNearby(row, fromLat, fromLon) {
-  const lat = toNumber(row.latitude);
-  const lon = toNumber(row.longitude);
-  return {
-    id: row.id,
-    placeType: row.placeType,
-    name: row.name,
-    district: row.district,
-    state: row.state,
-    address: row.address,
-    latitude: lat,
-    longitude: lon,
-    phone: row.phone,
-    distanceKm: Math.round(haversineKm(fromLat, fromLon, lat, lon) * 10) / 10,
-    source: "database"
-  };
-}
-async function seedCuratedAgPlaces() {
-  let inserted = 0;
-  let skipped = 0;
-  for (const place of CURATED_AG_PLACES) {
-    const existing = await db.select({ id: agPlaces.id }).from(agPlaces).where((0, import_drizzle_orm24.and)((0, import_drizzle_orm24.eq)(agPlaces.name, place.name), (0, import_drizzle_orm24.eq)(agPlaces.district, place.district))).limit(1);
-    if (existing.length) {
-      skipped++;
-      continue;
-    }
-    await db.insert(agPlaces).values({
-      placeType: place.placeType,
-      name: place.name,
-      district: place.district,
-      state: place.state,
-      address: place.address ?? null,
-      latitude: String(place.latitude),
-      longitude: String(place.longitude),
-      phone: place.phone ?? null,
-      source: "curated"
-    });
-    inserted++;
-  }
-  return { inserted, skipped };
-}
-async function findNearbyAgPlacesFromDb(latitude, longitude, type = "all", radiusKm = 50, limit = 20) {
-  const rows = await db.select().from(agPlaces).where((0, import_drizzle_orm24.eq)(agPlaces.active, true));
-  return rows.filter((row) => matchesType(row.placeType, type)).map((row) => rowToNearby(row, latitude, longitude)).filter((p) => p.distanceKm <= radiusKm).sort((a, b) => a.distanceKm - b.distanceKm).slice(0, limit);
-}
-
 // src/server/index.ts
+init_nearbyAgPlacesService();
 (0, import_dotenv3.config)({ path: ".env" });
 var app = new import_hono.Hono();
 var publicRoot = import_node_path.default.join(process.cwd(), "public");
@@ -13096,7 +13508,7 @@ app.get("/api/places/nearby", async (c) => {
   const lat = Number(c.req.query("lat"));
   const lng = Number(c.req.query("lng"));
   const type = c.req.query("type") ?? "all";
-  const radiusKm = Number(c.req.query("radiusKm") ?? 50);
+  const radiusKm = Number(c.req.query("radiusKm") ?? 120);
   const limit = Number(c.req.query("limit") ?? 20);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return c.json({ error: "lat and lng required" }, 400);

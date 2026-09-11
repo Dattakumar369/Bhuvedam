@@ -28,7 +28,7 @@ export const useCropCatalogStore = create<CropCatalogState>((set, get) => ({
 
   setLanguage: (language) => {
     set({ language });
-    void get().hydrate(language);
+    // Do not auto-fetch the full crop catalog on language change — screens hydrate on demand.
   },
 
   hydrate: async (language) => {

@@ -667,7 +667,7 @@ app.get('/api/places/nearby', async (c) => {
   const lat = Number(c.req.query('lat'));
   const lng = Number(c.req.query('lng'));
   const type = (c.req.query('type') ?? 'all') as NearbyPlaceType;
-  const radiusKm = Number(c.req.query('radiusKm') ?? 50);
+  const radiusKm = Number(c.req.query('radiusKm') ?? 120);
   const limit = Number(c.req.query('limit') ?? 20);
 
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {

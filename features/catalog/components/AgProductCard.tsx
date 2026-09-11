@@ -49,12 +49,22 @@ export function AgProductCard({ product, compact, categoryLabel, onPress }: AgPr
           </Title>
 
           {target ? <Caption style={styles.meta} numberOfLines={2}>Target: {target}</Caption> : null}
+          {product.activeIngredient && !target ? (
+            <Caption style={styles.meta} numberOfLines={1}>
+              {product.activeIngredient}
+            </Caption>
+          ) : null}
           {product.dosage ? <Caption style={styles.dose}>{product.dosage}</Caption> : null}
-          {product.price ? <Caption style={styles.price}>{product.price}</Caption> : null}
+          <Caption style={styles.price}>
+            {product.price ?? 'Typical pack — verify MRP on label'}
+          </Caption>
           {product.whenToUse ? (
             <Caption style={styles.when} numberOfLines={2}>
               When: {product.whenToUse}
             </Caption>
+          ) : null}
+          {product.phiDays != null ? (
+            <Caption style={styles.when}>PHI: {product.phiDays} days</Caption>
           ) : null}
 
           {product.crops.length ? (

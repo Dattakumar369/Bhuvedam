@@ -62,34 +62,45 @@ export function AppProvider({ children }: AppProviderProps) {
       useBackendData: API_CONFIG.useBackendData,
     });
 
-    void hydrateUser().then(async () => {
-      await Promise.all([hydrateTheme(), hydrateLanguage()]);
+    void (async () => {
+      await Promise.all([hydrateUser(), hydrateTheme(), hydrateLanguage()]);
 
       const user = useUserStore.getState().user;
-      const isAuthenticated = useUserStore.getState().isAuthenticated;
+      let isAuthenticated = useUserStore.getState().isAuthenticated;
 
-      if (isAuthenticated && user) {
-        await bootstrapAuthenticatedSession(user);
-      } else {
-        await clearLocalSessionStores();
+      if (!isAuthenticated || !user) {
+        void clearLocalSessionStores();
+        return;
       }
 
+      await bootstrapAuthenticatedSession(user);
+
+      // Session may have been cleared by a 401 during bootstrap.
+      isAuthenticated = useUserStore.getState().isAuthenticated;
       if (!isAuthenticated) return;
 
       const refreshedFarmer = useFarmerContextStore.getState();
-      if (user?.farmSize && !refreshedFarmer.farmSize) {
-        void setFarmSize(user.farmSize);
+      const latestUser = useUserStore.getState().user;
+      if (latestUser?.farmSize && !refreshedFarmer.farmSize) {
+        void setFarmSize(latestUser.farmSize);
       }
-      await fetchWeather();
-      const location = useWeatherStore.getState().location;
-      if (location && !refreshedFarmer.soilProfile) {
-        void fetchSoilFromLocation(location.latitude, location.longitude);
-      }
+
+      // Weather/mandi must not block startup or login.
+      void fetchWeather().then(() => {
+        if (!useUserStore.getState().isAuthenticated) return;
+        const location = useWeatherStore.getState().location;
+        const farm = useFarmerContextStore.getState();
+        if (location && !farm.soilProfile) {
+          void fetchSoilFromLocation(location.latitude, location.longitude);
+        }
+      });
+
       void fetchMandiRates().then(() => {
+        if (!useUserStore.getState().isAuthenticated) return;
         const notify = useAlertStore.getState().notificationsEnabled;
         void refreshAlerts({ force: true, notify });
       });
-    });
+    })();
   }, [
     hydrateUser,
     hydrateTheme,

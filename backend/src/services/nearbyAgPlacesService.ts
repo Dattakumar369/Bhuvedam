@@ -105,8 +105,8 @@ export async function findNearbyAgPlacesFromDb(
   latitude: number,
   longitude: number,
   type: NearbyPlaceType = 'all',
-  radiusKm = 50,
-  limit = 20,
+  radiusKm = 120,
+  limit = 30,
 ): Promise<NearbyPlaceResult[]> {
   const rows = await db.select().from(agPlaces).where(eq(agPlaces.active, true));
 

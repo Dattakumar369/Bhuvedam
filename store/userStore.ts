@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { STORAGE_KEYS } from '@/constants/app';
+import { registerAuthFailureHandler } from '@/services/api/authFailure';
 import { activateUserSession, clearLocalSessionStores, ensureStorageMatchesUser } from '@/services/auth/userSession';
 import { setAuthToken } from '@/services/api/client';
 import { userRepository } from '@/services/api/repositories';
@@ -32,6 +33,7 @@ interface UserState {
   setToken: (token: string) => Promise<void>;
   login: (user: User, token: string) => Promise<void>;
   logout: () => Promise<void>;
+  clearExpiredSession: () => Promise<void>;
   hydrate: () => Promise<void>;
   setOnboardingComplete: (value: boolean) => Promise<void>;
 }
@@ -52,15 +54,24 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
 
   login: async (user, token) => {
-    await secureStorage.set(STORAGE_KEYS.authToken, token);
+    await Promise.all([
+      secureStorage.set(STORAGE_KEYS.authToken, token),
+      secureStorage.set(STORAGE_KEYS.user, JSON.stringify(user)),
+    ]);
     setAuthToken(token);
     set({ user, token, isAuthenticated: true, isLoading: false });
 
-    await activateUserSession(user);
-
-    const updatedUser = get().user ?? user;
-    await secureStorage.set(STORAGE_KEYS.user, JSON.stringify(updatedUser));
-    set({ user: updatedUser });
+    // Profile + disk hydrate in background so login navigates immediately.
+    void activateUserSession(user)
+      .then(async () => {
+        if (!get().isAuthenticated) return;
+        const updatedUser = get().user ?? user;
+        await secureStorage.set(STORAGE_KEYS.user, JSON.stringify(updatedUser));
+        set({ user: updatedUser });
+      })
+      .catch(() => {
+        // Keep local session; profile can sync later.
+      });
   },
 
   logout: async () => {
@@ -74,6 +85,18 @@ export const useUserStore = create<UserState>((set, get) => ({
     await secureStorage.remove(STORAGE_KEYS.user);
     setAuthToken(null);
     set({ user: null, token: null, isAuthenticated: false });
+  },
+
+  /** Clear expired/invalid session without calling the server. */
+  clearExpiredSession: async () => {
+    const { token, isAuthenticated } = get();
+    if (!token && !isAuthenticated) return;
+
+    setAuthToken(null);
+    set({ user: null, token: null, isAuthenticated: false });
+    await secureStorage.remove(STORAGE_KEYS.authToken);
+    await secureStorage.remove(STORAGE_KEYS.user);
+    await clearLocalSessionStores();
   },
 
   hydrate: async () => {
@@ -113,3 +136,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({ onboardingComplete: value });
   },
 }));
+
+registerAuthFailureHandler(() => {
+  void useUserStore.getState().clearExpiredSession();
+});
