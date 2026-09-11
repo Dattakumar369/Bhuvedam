@@ -1,6 +1,8 @@
-/** Vercel serverless entry — CJS default export must be the handler function itself. */
-import { handle } from 'hono/vercel';
+/**
+ * Vercel Node serverless entry.
+ * getRequestListener properly reads POST bodies (unlike broken helpers / wrong export shapes).
+ */
+import { getRequestListener } from '@hono/node-server';
 import app from './server/index';
 
-// Important: Vercel expects module.exports = fn, not { default: fn }
-module.exports = handle(app);
+module.exports = getRequestListener(app.fetch);

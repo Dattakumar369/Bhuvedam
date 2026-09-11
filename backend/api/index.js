@@ -2189,7 +2189,7 @@ var init_knowledgeSearch = __esm({
 });
 
 // src/vercelHandler.cts
-var import_vercel = require("hono/vercel");
+var import_node_server2 = require("@hono/node-server");
 
 // src/server/index.ts
 var import_node_server = require("@hono/node-server");
@@ -13634,4 +13634,4 @@ if (isDirectServerRun()) {
 }
 
 // src/vercelHandler.cts
-module.exports = (0, import_vercel.handle)(server_default);
+module.exports = (0, import_node_server2.getRequestListener)(server_default.fetch);
