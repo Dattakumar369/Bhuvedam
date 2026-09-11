@@ -12688,6 +12688,31 @@ app.get("/health", (c) => {
     config: { database, jwt, ai, aiProvider }
   });
 });
+app.get("/api/auth/ping", async (c) => {
+  const started = Date.now();
+  try {
+    const rows = await Promise.race([
+      db.select({ id: farmers.id }).from(farmers).limit(1),
+      new Promise(
+        (_, reject) => setTimeout(() => reject(new Error("FARMERS_TIMEOUT")), 5e3)
+      )
+    ]);
+    return c.json({
+      ok: true,
+      ms: Date.now() - started,
+      sample: rows.length
+    });
+  } catch (err) {
+    return c.json(
+      {
+        ok: false,
+        ms: Date.now() - started,
+        error: err instanceof Error ? err.message : "unknown"
+      },
+      503
+    );
+  }
+});
 app.post("/api/auth/login", async (c) => {
   if (process.env.NODE_ENV === "production" && process.env.ALLOW_LEGACY_LOGIN !== "true") {
     return appError(c, "LEGACY_LOGIN_DISABLED");

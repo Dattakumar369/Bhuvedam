@@ -15,6 +15,7 @@ import {
     crops,
     cropVarieties,
     dataSources,
+    farmers,
     mandiPrices,
     soils,
     syncJobs,
@@ -149,6 +150,33 @@ app.get('/health', (c) => {
     service: 'bhuvedam-api',
     config: { database, jwt, ai, aiProvider },
   });
+});
+
+/** Lightweight farmers table probe — helps diagnose auth DB hangs */
+app.get('/api/auth/ping', async (c) => {
+  const started = Date.now();
+  try {
+    const rows = await Promise.race([
+      db.select({ id: farmers.id }).from(farmers).limit(1),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('FARMERS_TIMEOUT')), 5000),
+      ),
+    ]);
+    return c.json({
+      ok: true,
+      ms: Date.now() - started,
+      sample: rows.length,
+    });
+  } catch (err) {
+    return c.json(
+      {
+        ok: false,
+        ms: Date.now() - started,
+        error: err instanceof Error ? err.message : 'unknown',
+      },
+      503,
+    );
+  }
 });
 
 /** Legacy login — disabled in production (use OTP only) */
