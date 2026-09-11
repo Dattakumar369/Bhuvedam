@@ -50,6 +50,12 @@ export function AgProductCard({ product, compact, categoryLabel, onPress }: AgPr
 
           {target ? <Caption style={styles.meta} numberOfLines={2}>Target: {target}</Caption> : null}
           {product.dosage ? <Caption style={styles.dose}>{product.dosage}</Caption> : null}
+          {product.price ? <Caption style={styles.price}>{product.price}</Caption> : null}
+          {product.whenToUse ? (
+            <Caption style={styles.when} numberOfLines={2}>
+              When: {product.whenToUse}
+            </Caption>
+          ) : null}
 
           {product.crops.length ? (
             <Caption style={styles.crops} numberOfLines={1}>
@@ -75,5 +81,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 13, lineHeight: 17 },
   meta: { color: colors.textSecondary, lineHeight: 15 },
   dose: { color: colors.primary, fontFamily: 'Poppins_600SemiBold', fontSize: 11 },
+  price: { color: colors.success, fontFamily: 'Poppins_600SemiBold', fontSize: 11 },
+  when: { color: colors.textSecondary, fontSize: 10, lineHeight: 14 },
   crops: { color: colors.textTertiary, fontSize: 10 },
 });

@@ -13,6 +13,11 @@ import { fertilizerProducts } from '../../db/schema/fertilizerProducts';
 import { DOA_ADVISORIES } from '../data/doaAdvisories';
 import { ICAR_GUIDELINES } from '../data/icarGuidelines';
 import { INDIAN_FERTILIZER_CATALOG } from '../data/indianFertilizerCatalog';
+import {
+  FERTILIZER_PRICE_SOURCE,
+  FERTILIZER_PRICE_VERIFIED_AT,
+  resolveOfficialMrp,
+} from '../data/officialFertilizerMrps';
 import { PLANT_VILLAGE_DISEASES } from '../data/plantVillageDiseases';
 import { SOIL_HEALTH_RECOMMENDATIONS } from '../data/soilHealthRecommendations';
 import { mergeManufacturerSourceUrl } from '../../data/manufacturerProductPages';
@@ -27,11 +32,26 @@ function fertilizerDescription(item: (typeof INDIAN_FERTILIZER_CATALOG)[0]): str
   return parts.join(' — ');
 }
 
-export async function syncIndianFertilizerCatalog(): Promise<{ fetched: number; upserted: number }> {
+export async function syncIndianFertilizerCatalog(): Promise<{
+  fetched: number;
+  upserted: number;
+  officialPricesApplied: number;
+  priceVerifiedAt: string;
+}> {
   const now = new Date();
+  let officialPricesApplied = 0;
 
   for (const item of INDIAN_FERTILIZER_CATALOG) {
-    const price = item.price ?? item.mrp ?? null;
+    const official = resolveOfficialMrp({
+      id: item.id,
+      name: item.name,
+      npk: item.npk,
+    });
+    if (official) officialPricesApplied += 1;
+    const mrp = official?.mrp ?? item.mrp ?? null;
+    const price = official?.mrp ?? item.price ?? item.mrp ?? null;
+    const packSize = official?.packSize ?? item.packSize ?? null;
+    const isSubsidized = official?.isSubsidized ?? item.isSubsidized ?? true;
     const sourceUrl = mergeManufacturerSourceUrl(item.id, item.sourceUrl) ?? null;
     const image = await resolveProductImageUrlAsync({
       id: item.id,
@@ -40,6 +60,18 @@ export async function syncIndianFertilizerCatalog(): Promise<{ fetched: number; 
       category: item.category,
       sourceUrl,
     });
+    const metadata = {
+      ...(item.metadata ?? {}),
+      priceSource: official ? FERTILIZER_PRICE_SOURCE.id : 'brand_catalog',
+      priceSourceLabel: official
+        ? FERTILIZER_PRICE_SOURCE.label
+        : 'Brand / catalog reference',
+      priceVerifiedAt: official ? FERTILIZER_PRICE_VERIFIED_AT : null,
+      priceNote: official ? FERTILIZER_PRICE_SOURCE.note : null,
+      officialGrade: official?.grade ?? null,
+      whenToUse: item.application,
+      urvarakUrl: FERTILIZER_PRICE_SOURCE.urvarakUrl,
+    };
     await db
       .insert(fertilizerProducts)
       .values({
@@ -62,14 +94,14 @@ export async function syncIndianFertilizerCatalog(): Promise<{ fetched: number; 
         application: item.application,
         applicationMethod: item.applicationMethod ?? null,
         precautions: item.precautions ?? null,
-        mrp: item.mrp ?? null,
+        mrp,
         price,
-        packSize: item.packSize ?? null,
+        packSize,
         image: image ?? item.image ?? null,
         source: item.source,
         sourceUrl,
-        isSubsidized: item.isSubsidized ?? true,
-        metadata: item.metadata ?? {},
+        isSubsidized,
+        metadata,
         lastSyncedAt: now,
         updatedAt: now,
       })
@@ -94,14 +126,14 @@ export async function syncIndianFertilizerCatalog(): Promise<{ fetched: number; 
           application: item.application,
           applicationMethod: item.applicationMethod ?? null,
           precautions: item.precautions ?? null,
-          mrp: item.mrp ?? null,
+          mrp,
           price,
-          packSize: item.packSize ?? null,
+          packSize,
           image: image ?? item.image ?? null,
           source: item.source,
           sourceUrl,
-          isSubsidized: item.isSubsidized ?? true,
-          metadata: item.metadata ?? {},
+          isSubsidized,
+          metadata,
           lastSyncedAt: now,
           updatedAt: now,
         },
@@ -112,7 +144,12 @@ export async function syncIndianFertilizerCatalog(): Promise<{ fetched: number; 
     .select({ count: sql<number>`count(*)::int` })
     .from(fertilizerProducts);
 
-  return { fetched: INDIAN_FERTILIZER_CATALOG.length, upserted: count ?? 0 };
+  return {
+    fetched: INDIAN_FERTILIZER_CATALOG.length,
+    upserted: count ?? 0,
+    officialPricesApplied,
+    priceVerifiedAt: FERTILIZER_PRICE_VERIFIED_AT,
+  };
 }
 
 export async function syncPlantDiseases(): Promise<{ fetched: number; upserted: number }> {

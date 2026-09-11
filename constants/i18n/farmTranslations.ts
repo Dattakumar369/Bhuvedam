@@ -50,6 +50,15 @@ export interface FarmTranslations {
   villagePh: string;
   statePh: string;
   addressRequiredHint: string;
+  geographyPickState: string;
+  geographySearchDistrict: string;
+  geographySearchMandal: string;
+  geographySearchVillage: string;
+  geographySelectDistrictFirst: string;
+  geographySelectMandalFirst: string;
+  geographyLgdHint: string;
+  geographyManualEntry: string;
+  geographyManualHint: string;
   gpsFillAddress: string;
   gpsFillLoading: string;
   gpsFillFailed: string;
@@ -127,6 +136,16 @@ const enFarm: FarmTranslations = {
   villagePh: 'e.g. Pedakurapadu',
   statePh: 'Andhra Pradesh / Telangana',
   addressRequiredHint: 'Fill all fields for accurate mandi rates & weather',
+  geographyPickState: 'Select state',
+  geographySearchDistrict: 'Search district…',
+  geographySearchMandal: 'Search mandal…',
+  geographySearchVillage: 'Search village…',
+  geographySelectDistrictFirst: 'Select district first',
+  geographySelectMandalFirst: 'Select mandal first',
+  geographyLgdHint:
+    'Official LGD list — pick district, then mandal, then village. GPS / place search auto-matches when possible.',
+  geographyManualEntry: 'Type address manually',
+  geographyManualHint: 'For other states, type district, mandal, and village.',
   gpsFillAddress: 'Use GPS — fill village',
   gpsFillLoading: 'Getting GPS location…',
   gpsFillFailed: 'Could not get location — check GPS permission',
@@ -204,6 +223,16 @@ const teFarm: FarmTranslations = {
   villagePh: 'ఉదా: పెదకూరపాడు',
   statePh: 'ఆంధ్ర ప్రదేశ్ / తెలంగాణ',
   addressRequiredHint: 'మండి ధరలు మరియు వాతావరణం సరిగా రావాలి — అన్నీ పూరించండి',
+  geographyPickState: 'రాష్ట్రం ఎంచుకోండి',
+  geographySearchDistrict: 'జిల్లా వెతకండి…',
+  geographySearchMandal: 'మండలం వెతకండి…',
+  geographySearchVillage: 'గ్రామం వెతకండి…',
+  geographySelectDistrictFirst: 'ముందు జిల్లా ఎంచుకోండి',
+  geographySelectMandalFirst: 'ముందు మండలం ఎంచుకోండి',
+  geographyLgdHint:
+    'అధికారిక LGD జాబితా — జిల్లా, తర్వాత మండలం, తర్వాత గ్రామం ఎంచుకోండి. GPS / స్థల శోధన సాధ్యమైతే స్వయంగా సరిపోలుతుంది.',
+  geographyManualEntry: 'చిరునామా మాన్యువల్‌గా రాయండి',
+  geographyManualHint: 'ఇతర రాష్ట్రాలకు జిల్లా, మండలం, గ్రామం టైప్ చేయండి.',
   gpsFillAddress: 'GPS — గ్రామం auto fill',
   gpsFillLoading: 'GPS location తీసుకుంటున్నాం…',
   gpsFillFailed: 'Location రాలేదు — GPS permission చూడండి',

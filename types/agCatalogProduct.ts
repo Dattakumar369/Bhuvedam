@@ -23,6 +23,10 @@ export interface AgCatalogProduct {
   source?: string;
   sourceUrl?: string | null;
   isSubsidized?: boolean;
+  whenToUse?: string | null;
+  phiDays?: number | null;
+  status?: 'registered' | 'banned' | 'restricted';
+  verifiedAt?: string | null;
 }
 
 export interface AgCatalogFilters {

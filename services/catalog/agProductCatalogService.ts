@@ -28,6 +28,10 @@ interface CanonicalRow {
   image?: string | null;
   source: string;
   sourceUrl: string;
+  whenToUse?: string | null;
+  phiDays?: number | null;
+  status?: 'registered' | 'banned' | 'restricted';
+  verifiedAt?: string;
 }
 
 interface BulkAgRow {
@@ -72,6 +76,10 @@ function mapCanonicalRow(row: CanonicalRow, type: AgCatalogType): AgCatalogProdu
     image: row.image,
     source: row.source,
     sourceUrl: row.sourceUrl,
+    whenToUse: row.whenToUse,
+    phiDays: row.phiDays,
+    status: row.status,
+    verifiedAt: row.verifiedAt,
   };
 }
 
@@ -168,20 +176,23 @@ export async function fetchAgCatalogProducts(
   filters: AgCatalogFilters = {},
 ): Promise<{ products: AgCatalogProduct[]; source: 'reference' | 'offline' }> {
   if (type === 'fertilizer') {
-    return { products: [], source: 'offline' };
+    return { products: [], source: 'offline', verifiedAt: null };
   }
 
   if (API_CONFIG.useBackendData) {
     try {
-      let products = await fetchBulkProducts(type, filters);
+      // Prefer real CIB&RC reference catalog (one row per formulation) over bulk brand matrix.
+      let products = await fetchCanonicalProducts(type, filters);
       if (!products.length) {
-        products = await fetchCanonicalProducts(type, filters);
+        products = await fetchBulkProducts(type, filters);
       }
       if (products.length) {
         void saveAgProductsCache(type, products);
         return {
           products: applyClientFilters(products, filters),
           source: 'reference',
+          verifiedAt:
+            (products[0] as AgCatalogProduct & { verifiedAt?: string }).verifiedAt ?? null,
         };
       }
     } catch {
@@ -194,10 +205,11 @@ export async function fetchAgCatalogProducts(
     return {
       products: applyClientFilters(cached, filters),
       source: 'offline',
+      verifiedAt: null,
     };
   }
 
-  return { products: [], source: 'offline' };
+  return { products: [], source: 'offline', verifiedAt: null };
 }
 
 export async function fetchAgCatalogProductById(id: string): Promise<AgCatalogProduct | null> {

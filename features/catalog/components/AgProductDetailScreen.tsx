@@ -82,19 +82,31 @@ export function AgProductDetailScreen() {
           </View>
 
           <Card variant="elevated" style={styles.doseCard}>
-            <Label style={styles.doseLabel}>Motta / Dose</Label>
+            <Label style={styles.doseLabel}>Dose</Label>
             <Body style={styles.doseValue}>{product.dosage}</Body>
-            <Caption style={styles.sourceTag}>Source: {product.source ?? 'CIB&RC reference'}</Caption>
+            {product.price ? (
+              <Body style={styles.priceValue}>{product.price}</Body>
+            ) : null}
+            {product.phiDays != null ? (
+              <Caption style={styles.sourceTag}>PHI ≈ {product.phiDays} days (verify pack label)</Caption>
+            ) : null}
+            <Caption style={styles.sourceTag}>
+              Source: {product.source ?? 'CIB&RC reference'}
+              {product.verifiedAt ? ` · verified ${product.verifiedAt}` : ''}
+            </Caption>
           </Card>
 
+          {product.whenToUse ? (
+            <DetailRow icon="calendar-clock" label="When to use" value={product.whenToUse} />
+          ) : null}
           {product.applicationMethod ? (
-            <DetailRow icon="hand-back-right-outline" label="Vidhanam" value={product.applicationMethod} />
+            <DetailRow icon="hand-back-right-outline" label="How to apply" value={product.applicationMethod} />
           ) : null}
           {product.description ? (
-            <DetailRow icon="star-outline" label="Upayogam" value={product.description} />
+            <DetailRow icon="star-outline" label="About" value={product.description} />
           ) : null}
           {product.precautions ? (
-            <DetailRow icon="alert-outline" label="Jagratta" value={product.precautions} warn />
+            <DetailRow icon="alert-outline" label="Precautions" value={product.precautions} warn />
           ) : null}
 
           {product.crops.length ? (
@@ -173,6 +185,7 @@ const styles = StyleSheet.create({
   doseCard: { alignItems: 'center', gap: 6, paddingVertical: spacing.md },
   doseLabel: { color: colors.textSecondary },
   doseValue: { fontSize: 20, color: colors.primary, fontFamily: 'Poppins_700Bold', textAlign: 'center' },
+  priceValue: { fontSize: 16, color: colors.success, fontFamily: 'Poppins_600SemiBold', textAlign: 'center' },
   sourceTag: { color: colors.textTertiary, textAlign: 'center' },
   detailRow: { gap: spacing.sm },
   detailHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

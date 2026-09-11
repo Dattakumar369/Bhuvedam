@@ -139,6 +139,78 @@ export async function runCompleteSync(): Promise<SyncResult[]> {
   return results;
 }
 
+/**
+ * Production daily job — safe for Vercel ~60s:
+ * mandi (AP + Telangana), fertilizer DoF/NBS prices, weather snapshots, AP/TS crop seed.
+ * Pesticides stay code-bundled (CIB&RC reference) and update on deploy.
+ */
+export async function runDailyAutoSync(): Promise<SyncResult[]> {
+  await ensureDataSources();
+  const results: SyncResult[] = [];
+
+  const jobs: {
+    sourceId: string;
+    label: string;
+    run: () => Promise<{ fetched: number; upserted: number }>;
+  }[] = [
+    {
+      sourceId: 'agmarknet',
+      label: 'Mandi AP',
+      run: () => syncAgmarknetMandi({ state: 'Andhra Pradesh' }),
+    },
+    {
+      sourceId: 'agmarknet',
+      label: 'Mandi Telangana',
+      run: () => syncAgmarknetMandi({ state: 'Telangana' }),
+    },
+    {
+      sourceId: 'indian_fertilizers',
+      label: 'Fertilizer DoF/NBS catalog',
+      run: async () => {
+        const r = await syncIndianFertilizerCatalog();
+        return { fetched: r.fetched, upserted: r.upserted };
+      },
+    },
+    {
+      sourceId: 'open_meteo',
+      label: 'Weather snapshots',
+      run: () => syncGlobalWeather(),
+    },
+    {
+      sourceId: 'bhuvedam',
+      label: 'AP/Telangana crops',
+      run: async () => {
+        const upserted = await seedBhuvedamCrops();
+        return { fetched: upserted, upserted };
+      },
+    },
+  ];
+
+  for (const { sourceId, label, run } of jobs) {
+    const jobId = await startSyncJob(sourceId);
+    try {
+      const { fetched, upserted } = await run();
+      await finishSyncJob(jobId, sourceId, 'success', {
+        fetched,
+        upserted,
+        metadata: { label },
+      });
+      results.push({ sourceId, fetched, upserted, errors: [] });
+      console.log(`✓ ${label}: fetched ${fetched}, stored ${upserted}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      await finishSyncJob(jobId, sourceId, 'failed', {
+        error: msg,
+        metadata: { label },
+      });
+      results.push({ sourceId, fetched: 0, upserted: 0, errors: [msg] });
+      console.error(`✗ ${label}: ${msg}`);
+    }
+  }
+
+  return results;
+}
+
 const target = process.argv[2] ?? 'all';
 
 async function main() {
@@ -146,6 +218,8 @@ async function main() {
 
   if (target === 'all') {
     await runFullSync();
+  } else if (target === 'daily') {
+    await runDailyAutoSync();
   } else if (target === 'complete') {
     await runCompleteSync();
   } else if (target === 'crops') {
@@ -190,7 +264,8 @@ async function main() {
     console.log('Publications (ICAR/PJTSAU/ANGRAU/FAO/Gov):', JSON.stringify(r, null, 2));
   } else {
     console.log(
-      'Usage: tsx src/ingestion/syncAll.ts [all|complete|crops|mandi|soil|weather|fertilizers|fertilizer-catalog|ag-catalog|bulk-catalog|knowledge|publications]',
+    console.error(
+      'Usage: tsx src/ingestion/syncAll.ts [all|daily|complete|crops|mandi|soil|weather|fertilizers|fertilizer-catalog|ag-catalog|bulk-catalog|knowledge|publications]',
     );
   }
 

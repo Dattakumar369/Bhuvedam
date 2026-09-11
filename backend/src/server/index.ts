@@ -27,11 +27,12 @@ import {
     soilHealthRecommendations,
 } from '../db/schema/agCatalog';
 import { agProducts, cropDiseaseCatalog } from '../db/schema/agProducts';
+import { fertilizerProducts } from '../db/schema/fertilizerProducts';
 import { appError, parseOtpWaitSeconds } from '../errors/appError';
 import { syncBulkAgCatalog } from '../ingestion/sources/bulkAgCatalogSource';
 import { syncIndianAgCatalog, syncIndianFertilizerCatalog } from '../ingestion/sources/indianAgCatalogSource';
 import { syncAllPublications } from '../ingestion/sources/publicationKnowledgeSource';
-import { runFullSync } from '../ingestion/syncAll';
+import { runDailyAutoSync, runFullSync } from '../ingestion/syncAll';
 import { geoKey } from '../ingestion/utils';
 import { log, maskPhone } from '../logging/logger';
 import { adminAuthMiddleware } from '../middleware/adminAuth';
@@ -649,10 +650,17 @@ app.get('/api/fertilizer-products', async (c) => {
     limit: Number(c.req.query('limit') ?? 100),
   });
 
+  const [syncRow] = await db
+    .select({ at: sql<string>`max(${fertilizerProducts.lastSyncedAt})` })
+    .from(fertilizerProducts);
+
   return c.json({
     data,
     count: data.length,
     source: 'neon',
+    lastSyncedAt: syncRow?.at ?? null,
+    priceNote:
+      'DoF statutory urea MRP + NBS notified typical bag MRPs. Dealer may add local charges — verify on pack / POS.',
   });
 });
 
@@ -810,7 +818,15 @@ app.get('/api/ag-products/canonical', async (c) => {
     target: c.req.query('target'),
     limit: Number(c.req.query('limit') ?? 100),
   });
-  return c.json({ data, count: data.length, source: 'cibrc_reference', stats: canonicalAgStats() });
+  return c.json({
+    data,
+    count: data.length,
+    source: 'cibrc_reference',
+    stats: canonicalAgStats(),
+    verifiedAt: canonicalAgStats().verifiedAt,
+    priceNote:
+      'Typical dealer pack price bands — verify exact MRP on the pack. Banned actives are hidden.',
+  });
 });
 
 app.get('/api/ag-products/canonical/:id', async (c) => {
@@ -939,12 +955,17 @@ app.get('/api/sync/status', async (c) => {
   const [weatherRow] = await db
     .select({ at: sql<string>`max(${weather.fetchedAt})` })
     .from(weather);
+  const [fertRow] = await db
+    .select({ at: sql<string>`max(${fertilizerProducts.lastSyncedAt})` })
+    .from(fertilizerProducts);
 
   return c.json({
     sources,
     recentJobs: jobs,
     mandiLastSync: mandiRow?.at ?? null,
     weatherLastSync: weatherRow?.at ?? null,
+    fertilizerLastSync: fertRow?.at ?? null,
+    pesticideCatalogVerifiedAt: canonicalAgStats().verifiedAt,
   });
 });
 
@@ -1161,6 +1182,28 @@ app.get('/api/notifications/cron/daily', runDailyNotificationCron);
 app.post('/api/notifications/cron/daily', runDailyNotificationCron);
 app.get('/api/notifications/cron/realtime', runRealtimeNotificationCron);
 app.post('/api/notifications/cron/realtime', runRealtimeNotificationCron);
+
+/** Daily auto data sync — mandi, fertilizers, weather, crops (no manual sync needed). */
+async function runDailyDataCron(c: Context) {
+  if (!authorizeCron(c)) {
+    return appError(c, 'FORBIDDEN');
+  }
+  const results = await runDailyAutoSync();
+  const failed = results.filter((r) => r.errors.length > 0);
+  return c.json({
+    ok: failed.length === 0,
+    results,
+    pesticide: canonicalAgStats(),
+    note:
+      'Pesticides/fungicides use bundled CIB&RC reference (updates on deploy). Mandi needs DATA_GOV_API_KEY.',
+  });
+}
+
+app.get('/api/cron/daily-data', runDailyDataCron);
+app.post('/api/cron/daily-data', runDailyDataCron);
+/** @deprecated alias — use /api/cron/daily-data */
+app.get('/api/cron/agro-catalog', runDailyDataCron);
+app.post('/api/cron/agro-catalog', runDailyDataCron);
 
 /** AI chat (non-stream) — reliable on React Native APK */
 app.post('/api/ai/chat', farmerAuthMiddleware, async (c) => {

@@ -1,4 +1,5 @@
 import type { LanguageCode } from '@/constants/languages';
+import type { SchemeEligibilityReasonCode } from '@/types/govtScheme';
 
 export interface ScreenTranslations {
   weather: string;
@@ -66,6 +67,15 @@ export interface ScreenTranslations {
   pathakaluResultCount: (n: number) => string;
   pathakaluEmpty: string;
   pathakaluDisclaimer: string;
+  pathakaluEligibleBadge: string;
+  pathakaluPossibleBadge: string;
+  pathakaluEligibleCount: (n: number) => string;
+  pathakaluEligibilityHint: string;
+  pathakaluActiveBadge: string;
+  pathakaluWhoEligible: string;
+  pathakaluHowToApply: string;
+  pathakaluOpenPortal: string;
+  pathakaluReason: (code: SchemeEligibilityReasonCode) => string;
   aboutTitle: string;
   aboutPara1: string;
   aboutPara2: string;
@@ -138,15 +148,42 @@ const en: ScreenTranslations = {
   pathakaluTitle: 'Government Schemes',
   pathakaluIntroTitle: 'Subsidy, Loans & Insurance',
   pathakaluIntroBody:
-    'PM-KISAN, KCC, crop insurance, Rythu Bharosa, Annadata Sukhibhava — latest government schemes here. No need to add or update yourself.',
-  pathakaluUpdated: (date, count) => `Last updated: ${date} · ${count} schemes`,
+    'Only active schemes are listed. We match them to your My Farm profile and highlight ones you may qualify for.',
+  pathakaluUpdated: (date, count) => `Last updated: ${date} · ${count} active schemes`,
   pathakaluSearch: 'Search — PM-KISAN, KCC, insurance...',
   pathakaluCategory: 'Category',
   pathakaluRegion: 'State',
   pathakaluResultCount: (n) => `${n} schemes found`,
   pathakaluEmpty: 'Try a different search or filter',
   pathakaluDisclaimer:
-    'Information only — verify exact eligibility & amounts on official government portals. Schemes are updated regularly.',
+    'Information only — verify exact eligibility and amounts on official government portals. Closed schemes are not shown.',
+  pathakaluEligibleBadge: 'You may be eligible',
+  pathakaluPossibleBadge: 'Check eligibility',
+  pathakaluEligibleCount: (n) =>
+    n === 1
+      ? '1 scheme looks like a good match for you'
+      : `${n} schemes look like a good match for you`,
+  pathakaluEligibilityHint:
+    'Complete My Farm (state, land / survey) to see highlighted matches.',
+  pathakaluActiveBadge: 'Active',
+  pathakaluWhoEligible: 'Who is eligible?',
+  pathakaluHowToApply: 'How to apply?',
+  pathakaluOpenPortal: 'Open official portal',
+  pathakaluReason: (code) =>
+    ({
+      ap_only: 'Andhra Pradesh farmers only',
+      ts_only: 'Telangana farmers only',
+      add_state: 'Add your state in My Farm for a clearer match',
+      state_ap: 'Your state: Andhra Pradesh',
+      state_ts: 'Your state: Telangana',
+      central: 'Central scheme — India-wide',
+      landless_only: 'For landless agricultural labour only',
+      for_landless: 'For landless agricultural labour',
+      needs_land: 'Needs land details — add acres or survey number in My Farm',
+      has_land: 'Land on your profile',
+      has_records: 'Survey / khata ready',
+      add_records: 'Add survey / khata for easier apply',
+    })[code],
   aboutTitle: 'About',
   aboutPara1:
     'Bhuvedam is an AI-powered agriculture assistant designed to help farmers make smarter decisions. We combine weather intelligence, crop expertise, and conversational AI to deliver actionable insights right at your fingertips.',
@@ -215,18 +252,45 @@ const te: ScreenTranslations = {
   cropProtNoSpray: 'No spray advice for this selection. Try another stage or ask AI chat.',
   cropProtDisclaimer:
     'Always follow product label & local agriculture officer advice. Prices are approximate market ranges. PHI = days before harvest when spray is not allowed.',
-  pathakaluTitle: 'ప్రభుత్వ Pathakalu',
-  pathakaluIntroTitle: 'Subsidy, Loans & Insurance',
+  pathakaluTitle: 'ప్రభుత్వ పథకాలు',
+  pathakaluIntroTitle: 'సబ్సిడీ, రుణాలు మరియు బీమా',
   pathakaluIntroBody:
-    'PM-KISAN, KCC, crop insurance, Rythu Bharosa, Annadata Sukhibhava — latest government pathakalu ikkada chudandi. Meeru add/update cheyalsina avasaram ledu.',
-  pathakaluUpdated: (date, count) => `Last updated: ${date} · ${count} schemes`,
-  pathakaluSearch: 'Search — PM-KISAN, KCC, insurance...',
+    'ప్రస్తుతం అందుబాటులో ఉన్న పథకాలు మాత్రమే చూపిస్తున్నాము. మీ పొలం ప్రొఫైల్ ఆధారంగా మీకు సరిపోయే పథకాలను హైలైట్ చేస్తాము.',
+  pathakaluUpdated: (date, count) => `చివరి నవీకరణ: ${date} · ${count} క్రియాశీల పథకాలు`,
+  pathakaluSearch: 'వెతకండి — పీఎం-కిసాన్, కెసిసి, బీమా...',
   pathakaluCategory: 'రకం',
   pathakaluRegion: 'రాష్ట్రం',
-  pathakaluResultCount: (n) => `${n} pathakalu kanipistunnayi`,
-  pathakaluEmpty: 'Search or filter marchi try cheyandi',
+  pathakaluResultCount: (n) => `${n} పథకాలు కనిపిస్తున్నాయి`,
+  pathakaluEmpty: 'వేరే శోధన లేదా ఫిల్టర్ ప్రయత్నించండి',
   pathakaluDisclaimer:
-    'Information only — exact eligibility & amounts official government portals lo verify cheyandi. Schemes update avuthu untayi.',
+    'సమాచారం మాత్రమే — ఖచ్చితమైన అర్హత మరియు మొత్తాలను అధికారిక ప్రభుత్వ పోర్టల్స్‌లో నిర్ధారించుకోండి. మూసివేసిన పథకాలు చూపించబడవు.',
+  pathakaluEligibleBadge: 'మీరు అర్హులు కావచ్చు',
+  pathakaluPossibleBadge: 'అర్హతను తనిఖీ చేయండి',
+  pathakaluEligibleCount: (n) =>
+    n === 1
+      ? '1 పథకం మీకు బాగా సరిపోతుంది'
+      : `${n} పథకాలు మీకు బాగా సరిపోతున్నాయి`,
+  pathakaluEligibilityHint:
+    'మీ పొలం (రాష్ట్రం, భూమి / సర్వే) పూర్తి చేయండి — సరిపోయే పథకాలు హైలైట్ అవుతాయి.',
+  pathakaluActiveBadge: 'క్రియాశీలం',
+  pathakaluWhoEligible: 'ఎవరు అర్హులు?',
+  pathakaluHowToApply: 'ఎలా దరఖాస్తు చేయాలి?',
+  pathakaluOpenPortal: 'అధికారిక పోర్టల్ తెరవండి',
+  pathakaluReason: (code) =>
+    ({
+      ap_only: 'ఆంధ్రప్రదేశ్ రైతులకు మాత్రమే',
+      ts_only: 'తెలంగాణ రైతులకు మాత్రమే',
+      add_state: 'స్పష్టమైన మ్యాచ్ కోసం మీ పొలంలో రాష్ట్రం జోడించండి',
+      state_ap: 'మీ రాష్ట్రం: ఆంధ్రప్రదేశ్',
+      state_ts: 'మీ రాష్ట్రం: తెలంగాణ',
+      central: 'కేంద్ర పథకం — భారతదేశం అంతటా',
+      landless_only: 'భూమి లేని వ్యవసాయ కూలీలకు మాత్రమే',
+      for_landless: 'భూమి లేని వ్యవసాయ కూలీల కోసం',
+      needs_land: 'భూమి వివరాలు అవసరం — మీ పొలంలో ఎకరాలు లేదా సర్వే నంబర్ జోడించండి',
+      has_land: 'మీ ప్రొఫైల్‌లో భూమి ఉంది',
+      has_records: 'సర్వే / ఖాతా సిద్ధం',
+      add_records: 'సులభంగా దరఖాస్తు కోసం సర్వే / ఖాతా జోడించండి',
+    })[code],
   aboutTitle: 'గురించి',
   aboutPara1:
     'Bhuvedam oka AI-powered agriculture assistant — farmers ki smart decisions teesukovadaniki. Weather, crop expertise, conversational AI kalipi actionable insights istam.',
@@ -288,17 +352,28 @@ const hi: ScreenTranslations = {
   cropProtDisclaimer:
     'Product label और local agriculture officer की सलाह follow करें। कीमतें approximate हैं। PHI = कटाई से पहले spray न करने के दिन।',
   pathakaluTitle: 'सरकारी योजनाएं',
-  pathakaluIntroTitle: 'Subsidy, Loans & Insurance',
+  pathakaluIntroTitle: 'सब्सिडी, ऋण और बीमा',
   pathakaluIntroBody:
-    'PM-KISAN, KCC, crop insurance, Rythu Bharosa — latest government yojanayein yahan। Khud add/update karne ki zaroorat nahi।',
-  pathakaluUpdated: (date, count) => `Last updated: ${date} · ${count} yojanayein`,
-  pathakaluSearch: 'Search — PM-KISAN, KCC, insurance...',
+    'केवल सक्रिय योजनाएँ दिखाई जाती हैं। आपके खेत प्रोफ़ाइल से मेल खाती योजनाएँ हाइलाइट होती हैं।',
+  pathakaluUpdated: (date, count) => `अंतिम अपडेट: ${date} · ${count} सक्रिय योजनाएँ`,
+  pathakaluSearch: 'खोजें — पीएम-किसान, केसीसी, बीमा...',
   pathakaluCategory: 'श्रेणी',
   pathakaluRegion: 'राज्य',
-  pathakaluResultCount: (n) => `${n} yojanayein mili`,
-  pathakaluEmpty: 'Search ya filter badal kar try karein',
+  pathakaluResultCount: (n) => `${n} योजनाएँ मिलीं`,
+  pathakaluEmpty: 'अलग खोज या फ़िल्टर आज़माएँ',
   pathakaluDisclaimer:
-    'Sirf jankari — exact eligibility official portals par verify karein। Yojanayein update hoti rehti hain।',
+    'केवल जानकारी — सटीक पात्रता आधिकारिक पोर्टल पर जाँचें। बंद योजनाएँ नहीं दिखतीं।',
+  pathakaluEligibleBadge: 'आप पात्र हो सकते हैं',
+  pathakaluPossibleBadge: 'पात्रता जाँचें',
+  pathakaluEligibleCount: (n) =>
+    n === 1 ? '1 योजना आपके लिए अच्छी मेल है' : `${n} योजनाएँ आपके लिए अच्छी मेल हैं`,
+  pathakaluEligibilityHint:
+    'मेरा खेत में राज्य और ज़मीन / सर्वे भरें — पात्र योजनाएँ हाइलाइट होंगी।',
+  pathakaluActiveBadge: 'सक्रिय',
+  pathakaluWhoEligible: 'कौन पात्र है?',
+  pathakaluHowToApply: 'आवेदन कैसे करें?',
+  pathakaluOpenPortal: 'आधिकारिक पोर्टल खोलें',
+  pathakaluReason: (code) => en.pathakaluReason(code),
   aboutTitle: 'के बारे में',
   aboutPara1:
     'Bhuvedam ek AI-powered krishi sahayak hai — kisanon ko smart faisle lene mein madad karta hai। Weather, fasal expertise aur AI se actionable insights deta hai।',

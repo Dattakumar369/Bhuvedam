@@ -27,7 +27,6 @@ export default function CropScreen() {
   const [search, setSearch] = useState('');
   const [season, setSeason] = useState<SeasonFilter>('all');
   const [showAllCrops, setShowAllCrops] = useState(false);
-  const [wizardActive, setWizardActive] = useState(false);
 
   const fetchWeather = useWeatherStore((s) => s.fetchWeather);
   const farmerCrops = useFarmerContextStore((s) => s.crops);
@@ -70,9 +69,9 @@ export default function CropScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled
-        scrollEnabled={!wizardActive}
+        keyboardDismissMode="on-drag"
       >
-        <FarmerFarmSetup onWizardActiveChange={setWizardActive} />
+        <FarmerFarmSetup />
 
         {!setupComplete ? (
           <View style={[styles.lockedBox, { backgroundColor: c.surfaceVariant }]}>

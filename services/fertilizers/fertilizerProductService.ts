@@ -33,9 +33,12 @@ interface DbFertilizerProductRow {
   source: string;
   sourceUrl?: string | null;
   isSubsidized?: boolean;
+  lastSyncedAt?: string | Date | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 function mapDbRow(row: DbFertilizerProductRow): FertilizerProduct {
+  const meta = row.metadata ?? {};
   return {
     id: row.id,
     name: row.name,
@@ -57,6 +60,17 @@ function mapDbRow(row: DbFertilizerProductRow): FertilizerProduct {
     source: row.source,
     sourceUrl: row.sourceUrl,
     isSubsidized: row.isSubsidized ?? true,
+    lastSyncedAt:
+      typeof row.lastSyncedAt === 'string'
+        ? row.lastSyncedAt
+        : row.lastSyncedAt
+          ? new Date(row.lastSyncedAt).toISOString()
+          : null,
+    priceSourceLabel:
+      typeof meta.priceSourceLabel === 'string' ? meta.priceSourceLabel : null,
+    priceVerifiedAt:
+      typeof meta.priceVerifiedAt === 'string' ? meta.priceVerifiedAt : null,
+    priceNote: typeof meta.priceNote === 'string' ? meta.priceNote : null,
   };
 }
 
@@ -88,12 +102,17 @@ function applyClientFilters(
 
 export async function fetchFertilizerProducts(
   filters: FertilizerProductFilters = {},
-): Promise<{ products: FertilizerProduct[]; source: 'catalog' | 'offline' }> {
+): Promise<{
+  products: FertilizerProduct[];
+  source: 'catalog' | 'offline';
+  lastSyncedAt: string | null;
+}> {
   if (API_CONFIG.useBackendData) {
     try {
-      const response = await apiClient.get<{ data: DbFertilizerProductRow[] }>(
-        ENDPOINTS.fertilizerProducts.list,
-        {
+      const response = await apiClient.get<{
+        data: DbFertilizerProductRow[];
+        lastSyncedAt?: string | null;
+      }>(ENDPOINTS.fertilizerProducts.list, {
           params: {
             search: filters.search?.trim() || undefined,
             brand: filters.brand && filters.brand !== 'all' ? filters.brand : undefined,
@@ -108,7 +127,14 @@ export async function fetchFertilizerProducts(
       const products = (response.data.data ?? []).map(mapDbRow);
       if (products.length) {
         void saveFertilizersCache(products);
-        return { products, source: 'catalog' };
+        return {
+          products,
+          source: 'catalog',
+          lastSyncedAt:
+            response.data.lastSyncedAt ??
+            products.find((p) => p.lastSyncedAt)?.lastSyncedAt ??
+            null,
+        };
       }
     } catch {
       /* try cache below */
@@ -120,10 +146,11 @@ export async function fetchFertilizerProducts(
     return {
       products: applyClientFilters(cached, filters),
       source: 'offline',
+      lastSyncedAt: cached.find((p) => p.lastSyncedAt)?.lastSyncedAt ?? null,
     };
   }
 
-  return { products: [], source: 'offline' };
+  return { products: [], source: 'offline', lastSyncedAt: null };
 }
 
 export async function fetchFertilizerProductById(id: string): Promise<FertilizerProduct | null> {

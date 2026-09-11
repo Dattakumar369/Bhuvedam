@@ -11,6 +11,15 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     return { type: 'sourceFile', filePath: keepAwakeStub };
   }
 
+  // markdown-it (via react-native-markdown-display) requires Node's "punycode".
+  // RN has no Node stdlib — resolve the npm polyfill instead.
+  if (moduleName === 'punycode') {
+    return {
+      type: 'sourceFile',
+      filePath: require.resolve('punycode/'),
+    };
+  }
+
   if (defaultResolveRequest) {
     return defaultResolveRequest(context, moduleName, platform);
   }

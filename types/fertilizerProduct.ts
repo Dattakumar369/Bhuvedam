@@ -30,6 +30,10 @@ export interface FertilizerProduct {
   source?: string;
   sourceUrl?: string | null;
   isSubsidized?: boolean;
+  lastSyncedAt?: string | null;
+  priceSourceLabel?: string | null;
+  priceVerifiedAt?: string | null;
+  priceNote?: string | null;
 }
 
 export interface FertilizerProductFilters {

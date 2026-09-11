@@ -1,265 +1,434 @@
-import type { GovtScheme, GovtSchemeCategory, GovtSchemeRegion } from '@/types/govtScheme';
+import type { LanguageCode } from '@/constants/languages';
+import type {
+  GovtScheme,
+  GovtSchemeCategory,
+  GovtSchemeRegion,
+} from '@/types/govtScheme';
 
-export const GOVT_SCHEMES_UPDATED = '2026-07-22';
+export const GOVT_SCHEMES_UPDATED = '2026-09-04';
 
-export const GOVT_SCHEME_CATEGORIES: { id: GovtSchemeCategory | 'all'; labelTe: string }[] = [
-  { id: 'all', labelTe: 'అన్నీ' },
-  { id: 'support', labelTe: 'ఆర్థిక సహాయం' },
-  { id: 'subsidy', labelTe: 'Subsidy' },
-  { id: 'loan', labelTe: 'Loans' },
-  { id: 'insurance', labelTe: 'Insurance' },
+export const GOVT_SCHEME_CATEGORIES: {
+  id: GovtSchemeCategory | 'all';
+  labelEn: string;
+  labelTe: string;
+}[] = [
+  { id: 'all', labelEn: 'All', labelTe: 'అన్నీ' },
+  { id: 'support', labelEn: 'Income support', labelTe: 'ఆర్థిక సహాయం' },
+  { id: 'subsidy', labelEn: 'Subsidy', labelTe: 'సబ్సిడీ' },
+  { id: 'loan', labelEn: 'Loans', labelTe: 'రుణాలు' },
+  { id: 'insurance', labelEn: 'Insurance', labelTe: 'బీమా' },
 ];
 
-export const GOVT_SCHEME_REGIONS: { id: GovtSchemeRegion | 'all'; labelTe: string }[] = [
-  { id: 'all', labelTe: 'అన్నీ' },
-  { id: 'central', labelTe: 'కేంద్రం' },
-  { id: 'ap', labelTe: 'ఆంధ్ర ప్రదేశ్' },
-  { id: 'ts', labelTe: 'తెలంగాణ' },
+export const GOVT_SCHEME_REGIONS: {
+  id: GovtSchemeRegion | 'all';
+  labelEn: string;
+  labelTe: string;
+}[] = [
+  { id: 'all', labelEn: 'All', labelTe: 'అన్నీ' },
+  { id: 'central', labelEn: 'Central', labelTe: 'కేంద్రం' },
+  { id: 'ap', labelEn: 'Andhra Pradesh', labelTe: 'ఆంధ్ర ప్రదేశ్' },
+  { id: 'ts', labelEn: 'Telangana', labelTe: 'తెలంగాణ' },
 ];
 
+/**
+ * Only schemes with status: 'active' are shown in Pathakalu.
+ * Mark closed/discontinued schemes as status: 'closed' — they stay in data for history
+ * but are hidden from the farmer list.
+ */
 export const GOVT_SCHEMES: GovtScheme[] = [
   {
     id: 'pm-kisan',
     category: 'support',
     region: 'central',
-    titleTe: 'PM-KISAN Samman Nidhi',
-    titleEn: 'Direct income support',
-    amountTe: '₹6,000 / year',
+    status: 'active',
+    titleEn: 'PM-KISAN Samman Nidhi',
+    titleTe: 'పీఎం-కిసాన్ సమ్మాన్ నిధి',
+    amountEn: '₹6,000 / year',
+    amountTe: 'సంవత్సరానికి ₹6,000',
+    benefitEn:
+      'Landholding farmer families receive ₹6,000 a year in three equal installments of ₹2,000 each, transferred directly to the bank account.',
     benefitTe:
-      'Landholding farmer families ki year ki ₹6,000 — 3 equal installments lo (₹2,000 + ₹2,000 + ₹2,000) bank account ki direct transfer.',
+      'వ్యవసాయ భూమి ఉన్న రైతు కుటుంబాలకు సంవత్సరానికి ₹6,000 — మూడు సమాన వాయిదాలుగా (ఒక్కొక్కటి ₹2,000) బ్యాంకు ఖాతాలో నేరుగా జమ అవుతుంది.',
+    eligibilityEn:
+      'Farmer families with agricultural land (husband, wife, minor children). Institutional landholders, income-tax payers, and government employees are excluded. AgriStack Farmer ID / eKYC is important.',
     eligibilityTe:
-      'Agricultural land unna farmer family (husband, wife, minor children). Institutional land holders, income tax payers, government employees excluded.',
+      'వ్యవసాయ భూమి ఉన్న రైతు కుటుంబం (భర్త, భార్య, మైనర్ పిల్లలు). సంస్థాగత భూమి హోల్డర్లు, ఆదాయపు పన్ను చెల్లించేవారు, ప్రభుత్వ ఉద్యోగులు మినహాయింపు. అగ్రిస్టాక్ రైతు ఐడి / ఈకేవైసి ముఖ్యం.',
+    howToApplyEn:
+      'Register or check status at pmkisan.gov.in. Annual eKYC is mandatory — do biometric eKYC on the portal or at the nearest CSC. In Andhra Pradesh, link Farmer ID at apfr.agristack.gov.in.',
     howToApplyTe:
-      'pmkisan.gov.in lo register / status chudandi. Annual eKYC mandatory — portal or nearest CSC lo biometric eKYC cheyandi.',
+      'pmkisan.gov.inలో నమోదు చేసుకోండి లేదా స్థితి చూడండి. వార్షిక ఈకేవైసి తప్పనిసరి — పోర్టల్‌లో లేదా సమీప సీఎస్‌సీలో బయోమెట్రిక్ ఈకేవైసి చేయండి. ఆంధ్రప్రదేశ్‌లో apfr.agristack.gov.inలో రైతు ఐడి లింక్ చేయండి.',
     applyUrl: 'https://www.pmkisan.gov.in/',
     icon: 'cash-multiple',
-    highlights: ['eKYC mandatory', '22nd installment Mar 2026', 'Know Your Status portal lo check cheyandi'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['eKYC mandatory', 'Farmer ID / AgriStack', 'Know Your Status portal'],
+    highlightsTe: ['ఈకేవైసి తప్పనిసరి', 'రైతు ఐడి / అగ్రిస్టాక్', 'స్థితి తెలుసుకునే పోర్టల్'],
+    eligibilityRules: { requiresLand: true, prefersLandRecords: true },
+    verifiedAt: '2026-09-04',
   },
   {
     id: 'annadata-sukhibhava',
     category: 'support',
     region: 'ap',
-    titleTe: 'PM-KISAN — Annadata Sukhibhava',
-    titleEn: 'AP farmer investment support',
-    amountTe: '₹20,000 / family / year',
+    status: 'active',
+    titleEn: 'Annadata Sukhibhava + PM-KISAN',
+    titleTe: 'అన్నదాత సుఖీభవ + పీఎం-కిసాన్',
+    amountEn: '₹20,000 / family / year',
+    amountTe: 'కుటుంబానికి సంవత్సరానికి ₹20,000',
+    benefitEn:
+      'Eligible farmer families in Andhra Pradesh receive ₹20,000 a year (State ₹14,000 + Central PM-KISAN ₹6,000). Installments continue in 2026 — first tranche ₹7,000 (₹5,000 state + ₹2,000 PM-KISAN) has been released.',
     benefitTe:
-      'AP lo eligible farmer family ki year ki ₹20,000. Central PM-KISAN ₹6,000 kuda ee amount lo include. 2026 Kharif first installment ₹7,000 release ayyindi.',
+      'ఆంధ్రప్రదేశ్‌లో అర్హత ఉన్న రైతు కుటుంబానికి సంవత్సరానికి ₹20,000 (రాష్ట్రం ₹14,000 + కేంద్ర పీఎం-కిసాన్ ₹6,000). 2026లో వాయిదాలు కొనసాగుతున్నాయి — మొదటి వాయిదా ₹7,000 (రాష్ట్రం ₹5,000 + పీఎం-కిసాన్ ₹2,000) విడుదలైంది.',
+    eligibilityEn:
+      'Farmer families with agricultural land in Andhra Pradesh. Tribal farmers cultivating under RoFR (Forest Rights) are also eligible. Farmer ID / land records should be linked.',
     eligibilityTe:
-      'AP lo agricultural land unna farmer families. RoFR (Forest Rights) kinda sagu chestunna tribal farmers kuda eligible.',
+      'ఆంధ్రప్రదేశ్‌లో వ్యవసాయ భూమి ఉన్న రైతు కుటుంబాలు. అటవీ హక్కులు (RoFR) కింద సాగు చేస్తున్న గిరిజన రైతులు కూడా అర్హులు. రైతు ఐడి / భూమి రికార్డులు లింక్ అయి ఉండాలి.',
+    howToApplyEn:
+      'The state identifies beneficiaries automatically — keep bank account, Aadhaar, and land linked. Confirm Farmer ID at the AP Farmer Registry (apfr.agristack.gov.in) or your RSK.',
     howToApplyTe:
-      'State automatic ga identify chestundi — bank account linked undali. Status AP agriculture department / official portals lo verify cheyandi.',
+      'రాష్ట్రం స్వయంచాలకంగా గుర్తిస్తుంది — బ్యాంకు ఖాతా, ఆధార్, భూమి లింక్ అయి ఉండాలి. ఏపీ రైతు రిజిస్ట్రీ (apfr.agristack.gov.in) లేదా ఆర్ఎస్‌కేలో రైతు ఐడి నిర్ధారించుకోండి.',
+    applyUrl: 'https://apfr.agristack.gov.in/',
     icon: 'hand-heart',
-    highlights: ['₹20,000 per family', 'PM-KISAN included', '2026 Kharif: ₹7,000 1st installment'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['₹20,000 per family', 'Active in 2026', 'Farmer ID recommended'],
+    highlightsTe: ['కుటుంబానికి ₹20,000', '2026లో కొనసాగుతోంది', 'రైతు ఐడి సిఫార్సు'],
+    eligibilityRules: { requiresLand: true, prefersLandRecords: true },
+    verifiedAt: '2026-09-04',
   },
   {
     id: 'rythu-bharosa-ts',
     category: 'support',
     region: 'ts',
-    titleTe: 'Rythu Bharosa',
-    titleEn: 'Telangana investment support',
-    amountTe: '₹12,000 / acre / year',
+    status: 'active',
+    titleEn: 'Rythu Bharosa',
+    titleTe: 'రైతు భరోసా',
+    amountEn: '₹12,000 / acre / year',
+    amountTe: 'ఎకరానికి సంవత్సరానికి ₹12,000',
+    benefitEn:
+      'Cultivable land in Telangana gets ₹12,000 per acre per year — ₹6,000 each for Kharif and Rabi. Extra bonus may apply for paddy.',
     benefitTe:
-      'Telangana lo cultivable land ki acre ki year ki ₹12,000. Kharif & Rabi — rendu seasons lo ₹6,000 + ₹6,000. Paddy ki extra ₹500/quintal bonus.',
+      'తెలంగాణలో సాగు భూమికి ఎకరానికి సంవత్సరానికి ₹12,000. ఖరీఫ్ మరియు రబీలో ఒక్కొక్కటి ₹6,000. వరికి అదనపు బోనస్ ఉండవచ్చు.',
+    eligibilityEn:
+      'Arable land registered in Telangana (Bhu Bharati portal). Tenant farmers with a valid lease are also eligible. Real estate and industrial plots are excluded.',
     eligibilityTe:
-      'Telangana lo arable land registered (Bhu Bharati portal). Valid lease unna tenant farmers kuda eligible. Real estate / industrial plots excluded.',
+      'తెలంగాణలో నమోదైన సాగు భూమి (భూ భారతి పోర్టల్). చెల్లుబాటు అయ్యే లీజు ఉన్న కౌలు రైతులు కూడా అర్హులు. రియల్ ఎస్టేట్ / పారిశ్రామిక ప్లాట్లు మినహాయింపు.',
+    howToApplyEn:
+      'Usually through revenue records and Bhu Bharati verification. Landless agricultural labour may get linked Indiramma Atmiya Bharosa — ₹12,000 a year.',
     howToApplyTe:
-      'Revenue records & Bhu Bharati verification dwara automatic. Landless ag labor ki linked Indiramma Atmiya Bharosa — ₹12,000/year.',
+      'సాధారణంగా రెవెన్యూ రికార్డులు మరియు భూ భారతి ధృవీకరణ ద్వారా. భూమి లేని వ్యవసాయ కూలీలకు ఇందిరమ్మ ఆత్మీయ భరోసా — సంవత్సరానికి ₹12,000 అనుసంధానం కావచ్చు.',
     icon: 'sprout',
-    highlights: ['Per acre basis', 'Tenant farmers eligible', 'Paddy bonus ₹500/quintal'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['Per acre basis', 'Tenant farmers eligible', 'Telangana only'],
+    highlightsTe: ['ఎకరం ప్రాతిపదిక', 'కౌలు రైతులు అర్హులు', 'తెలంగాణ మాత్రమే'],
+    eligibilityRules: { requiresLand: true, prefersLandRecords: true },
+    verifiedAt: '2026-09-04',
   },
   {
     id: 'kcc',
     category: 'loan',
     region: 'central',
-    titleTe: 'Kisan Credit Card (KCC)',
-    titleEn: 'Affordable crop credit',
-    amountTe: '₹3–5 lakh limit',
+    status: 'active',
+    titleEn: 'Kisan Credit Card (KCC)',
+    titleTe: 'కిసాన్ క్రెడిట్ కార్డు (కెసిసి)',
+    amountEn: 'Limit about ₹3–5 lakh',
+    amountTe: 'పరిమితి సుమారు ₹3–5 లక్షలు',
+    benefitEn:
+      'Revolving credit for short-term crop loans and allied activities. Limit up to about ₹5 lakh. With timely repayment, effective interest can be around 4% a year.',
     benefitTe:
-      'Short-term crop loans & allied activities ki revolving credit. 2025-26 nunchi limit ₹5 lakh varaku penchadam approve ayyindi. Timely repayment unte effective interest 4% p.a.',
+      'స్వల్పకాలిక పంట రుణాలు మరియు అనుబంధ కార్యకలాపాలకు రివాల్వింగ్ క్రెడిట్. పరిమితి సుమారు ₹5 లక్షల వరకు. సకాలంలో చెల్లిస్తే ప్రభావవంతమైన వడ్డీ సంవత్సరానికి సుమారు 4%.',
+    eligibilityEn:
+      'Farmers, sharecroppers, and tenant farmers with land or crop details. Dairy, fishery, and other allied activities are also covered.',
     eligibilityTe:
-      'Farmers, sharecroppers, tenant farmers — land / crop details tho. Dairy, fishery allied activities kuda cover avuthayi.',
+      'రైతులు, వాటాదారులు, కౌలు రైతులు — భూమి లేదా పంట వివరాలతో. పాడి, చేపల పెంపకం వంటి అనుబంధ రంగాలు కూడా కవర్ అవుతాయి.',
+    howToApplyEn:
+      'Apply for a KCC at your bank, cooperative, or RRB branch. Keep Farmer ID and land records ready.',
     howToApplyTe:
-      'Meeku najamaina bank / cooperative / RRB branch lo KCC apply cheyandi. PM-KISAN beneficiaries ki KCC saturation campaign undi.',
+      'మీ బ్యాంకు / సహకార / ఆర్ఆర్బి శాఖలో కెసిసి కోసం దరఖాస్తు చేయండి. రైతు ఐడి మరియు భూమి రికార్డులు సిద్ధంగా ఉంచండి.',
     icon: 'credit-card-outline',
-    highlights: ['Effective 4% on timely pay', 'Limit up to ₹5 lakh', 'Crop + allied activities'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['About 4% with timely repayment', 'Limit up to ₹5 lakh', 'Crop and allied'],
+    highlightsTe: ['సకాల చెల్లింపుతో సుమారు 4%', '₹5 లక్షల వరకు పరిమితి', 'పంట మరియు అనుబంధం'],
+    eligibilityRules: { requiresLand: true, prefersLandRecords: true },
+    verifiedAt: '2026-09-04',
   },
   {
     id: 'miss-interest-subvention',
     category: 'loan',
     region: 'central',
-    titleTe: 'Interest Subvention (MISS)',
-    titleEn: 'Low interest on KCC loans',
-    amountTe: '7% → 4% effective',
+    status: 'active',
+    titleEn: 'Interest Subvention (MISS)',
+    titleTe: 'వడ్డీ రాయితీ (ఎంఐఎస్ఎస్)',
+    amountEn: '7% → about 4% effective',
+    amountTe: '7% నుంచి సుమారు 4% ప్రభావవంతం',
+    benefitEn:
+      'Interest subvention on short-term KCC loans. With the Prompt Repayment Incentive, the effective rate can be around 4% a year. The scheme continues.',
     benefitTe:
-      'KCC short-term loans ki 1.5% interest subvention — base rate 7%. Prompt Repayment Incentive (PRI) 3% extra unte effective rate 4% p.a. 2025-26 continue ayyindi.',
+      'కెసిసి స్వల్పకాలిక రుణాలపై వడ్డీ రాయితీ. సకాల చెల్లింపు ప్రోత్సాహకంతో ప్రభావవంతమైన రేటు సంవత్సరానికి సుమారు 4%. పథకం కొనసాగుతోంది.',
+    eligibilityEn:
+      'Short-term crop loans through KCC. Farmers who repay on time get the full benefit.',
     eligibilityTe:
-      '₹3 lakh varaku short-term crop loans through KCC. Prompt repayment chese farmers ki full benefit.',
+      'కెసిసి ద్వారా స్వల్పకాలిక పంట రుణాలు. సకాలంలో చెల్లించే రైతులకు పూర్తి ప్రయోజనం.',
+    howToApplyEn:
+      'The bank applies it automatically when you take a KCC loan. Timely repayment is important.',
     howToApplyTe:
-      'KCC loan teesukunetappudu bank automatic ga apply chestundi. Time ki repay cheyadam important.',
+      'కెసిసి రుణం తీసుకున్నప్పుడు బ్యాంకు స్వయంచాలకంగా వర్తింపజేస్తుంది. సకాలంలో చెల్లించడం ముఖ్యం.',
     icon: 'percent',
-    highlights: ['Continued 2025-26', 'PRI = 4% effective rate', '₹15,640 crore allocation'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['Active with KCC', 'About 4% with prompt repayment', 'Timely repayment'],
+    highlightsTe: ['కెసిసితో కొనసాగుతోంది', 'సకాల చెల్లింపుతో సుమారు 4%', 'సకాల చెల్లింపు'],
+    eligibilityRules: { requiresLand: true },
+    verifiedAt: '2026-09-04',
   },
   {
     id: 'ap-zero-interest-loan',
     category: 'loan',
     region: 'ap',
-    titleTe: 'AP Interest-free Crop Loan',
-    titleEn: '0% crop loan (AP)',
-    amountTe: '₹3 lakh varaku 0%',
+    status: 'active',
+    titleEn: 'AP Interest-free Crop Loan',
+    titleTe: 'ఆంధ్రప్రదేశ్ వడ్డీ రహిత పంట రుణం',
+    amountEn: '0% up to ₹3 lakh',
+    amountTe: '₹3 లక్షల వరకు 0%',
+    benefitEn:
+      'Andhra Pradesh provides additional state subvention on crop loans so eligible KCC loans can effectively become 0% interest when repaid on time.',
     benefitTe:
-      'Andhra Pradesh lo eligible farmers ki crop loans ki state additional subvention — KCC loans practically 0% interest rate ki reach avuthayi (timely repayment condition).',
+      'ఆంధ్రప్రదేశ్‌లో అర్హత ఉన్న రైతుల పంట రుణాలకు రాష్ట్ర అదనపు రాయితీ — సకాల చెల్లింపు షరతుతో కెసిసి రుణాలు ఆచరణలో 0% వడ్డీ కావచ్చు.',
+    eligibilityEn:
+      'Registered farmers in Andhra Pradesh with valid land records and a bank KCC or crop loan account.',
     eligibilityTe:
-      'AP lo registered farmers with valid land records. Bank KCC / crop loan account undali.',
+      'చెల్లుబాటు అయ్యే భూమి రికార్డులు ఉన్న ఆంధ్రప్రదేశ్ నమోదిత రైతులు. బ్యాంకు కెసిసి / పంట రుణ ఖాతా ఉండాలి.',
+    howToApplyEn:
+      'Apply for a crop loan or KCC at a local cooperative or nationalised bank. State subvention is adjusted through the bank.',
     howToApplyTe:
-      'Local cooperative / nationalized bank lo crop loan or KCC apply cheyandi. AP state subvention bank dwara adjust avuthundi.',
+      'స్థానిక సహకార లేదా జాతీయ బ్యాంకులో పంట రుణం లేదా కెసిసికి దరఖాస్తు చేయండి. రాష్ట్ర రాయితీ బ్యాంకు ద్వారా సర్దుబాటు అవుతుంది.',
     icon: 'bank-outline',
-    highlights: ['State top-up on central KCC', 'Up to ₹3 lakh', 'Timely repayment important'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['AP state top-up', 'Up to ₹3 lakh', 'Timely repayment'],
+    highlightsTe: ['ఆంధ్రప్రదేశ్ రాష్ట్ర అదనపు రాయితీ', '₹3 లక్షల వరకు', 'సకాల చెల్లింపు'],
+    eligibilityRules: { requiresLand: true, prefersLandRecords: true },
+    verifiedAt: '2026-09-04',
   },
   {
     id: 'pmfby',
     category: 'insurance',
     region: 'central',
-    titleTe: 'PM Fasal Bima Yojana (PMFBY)',
-    titleEn: 'Crop insurance',
-    amountTe: 'Farmer premium: 2% / 1.5%',
+    status: 'active',
+    titleEn: 'PM Fasal Bima Yojana (PMFBY)',
+    titleTe: 'పీఎం ఫసల్ బీమా యోజన (పీఎంఎఫ్‌బీవై)',
+    amountEn: 'Farmer premium: 2% / 1.5%',
+    amountTe: 'రైతు ప్రీమియం: 2% / 1.5%',
+    benefitEn:
+      'Crop insurance for natural disasters, drought, flood, and pest damage. Farmer premium: Kharif 2%, Rabi 1.5%, commercial/horticulture 5%. The government pays the remaining premium.',
     benefitTe:
-      'Natural disasters, drought, flood, pest damage ki crop insurance. Kharif: 2% premium, Rabi: 1.5%, commercial/horticulture: 5%. Government remaining premium pay chestundi.',
+      'ప్రకృతి వైపరీత్యాలు, కరువు, వరద, చీడపీడ నష్టాలకు పంట బీమా. రైతు ప్రీమియం: ఖరీఫ్ 2%, రబీ 1.5%, వాణిజ్య/హార్టికల్చర్ 5%. మిగిలిన ప్రీమియం ప్రభుత్వం చెల్లిస్తుంది.',
+    eligibilityEn:
+      'All farmers including sharecroppers and tenant farmers — for notified crops in notified areas. From 2026, land-owning farmers need AgriStack Farmer ID for enrollment.',
     eligibilityTe:
-      'All farmers including sharecroppers & tenant farmers — notified crops in notified areas. Loanee farmers ki compulsory (notified areas lo).',
+      'వాటాదారులు మరియు కౌలు రైతులతో సహా అన్ని రైతులు — నోటిఫై చేసిన ప్రాంతాల్లో నోటిఫై చేసిన పంటలకు. 2026 నుంచి భూమి ఉన్న రైతులకు నమోదుకు అగ్రిస్టాక్ రైతు ఐడి అవసరం.',
+    howToApplyEn:
+      'Through the bank (for farmers with loans) or at pmfby.gov.in. Enrol before the sowing season starts. Generate your Farmer ID.',
     howToApplyTe:
-      'Bank dwara (loan unna farmers) or pmfby.gov.in / crop insurance portal. Sowing season start mundu enroll cheyandi.',
+      'బ్యాంకు ద్వారా (రుణం ఉన్న రైతులు) లేదా pmfby.gov.inలో. విత్తన సీజన్ ముందు నమోదు చేసుకోండి. రైతు ఐడి తయారు చేసుకోండి.',
     applyUrl: 'https://pmfby.gov.in/',
     icon: 'shield-check',
-    highlights: ['Low farmer premium', 'Covers sowing to harvest', 'Voluntary for non-loanee farmers'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['Active for Kharif and Rabi', 'Farmer ID for landowners', 'Low premium'],
+    highlightsTe: ['ఖరీఫ్ మరియు రబీకి కొనసాగుతోంది', 'భూమి ఉన్నవారికి రైతు ఐడి', 'తక్కువ ప్రీమియం'],
+    eligibilityRules: { requiresLand: true, prefersLandRecords: true },
+    verifiedAt: '2026-09-04',
   },
   {
     id: 'rythu-bima-ts',
     category: 'insurance',
     region: 'ts',
-    titleTe: 'Rythu Bima',
-    titleEn: 'Telangana farmer life cover',
-    amountTe: '₹5 lakh nominee ki',
+    status: 'active',
+    titleEn: 'Rythu Bima',
+    titleTe: 'రైతు బీమా',
+    amountEn: '₹5 lakh to nominee',
+    amountTe: 'నామినీకి ₹5 లక్షలు',
+    benefitEn:
+      'Life cover for registered Telangana farmers — if the farmer dies, the nominee receives ₹5 lakh. Linked for farmers registered under Rythu Bharosa.',
     benefitTe:
-      'Registered Telangana farmers ki life insurance — farmer death aithe nominee ki ₹5 lakh payout. Rythu Bharosa registered farmers ki linked.',
+      'నమోదిత తెలంగాణ రైతులకు జీవిత బీమా — రైతు మరణిస్తే నామినీకి ₹5 లక్షలు. రైతు భరోసా నమోదైన రైతులకు అనుసంధానం.',
+    eligibilityEn:
+      'Farmers in Telangana with Rythu Bharosa or agriculture registration.',
     eligibilityTe:
-      'Telangana lo Rythu Bharosa / agriculture registration unna farmers.',
+      'తెలంగాణలో రైతు భరోసా లేదా వ్యవసాయ నమోదు ఉన్న రైతులు.',
+    howToApplyEn:
+      'Usually linked automatically with Rythu Bharosa registration. Confirm details at your local agriculture office.',
     howToApplyTe:
-      'Rythu Bharosa registration tho automatic link avuthundi. Details mee local agriculture office lo confirm cheyandi.',
+      'సాధారణంగా రైతు భరోసా నమోదుతో స్వయంచాలకంగా లింక్ అవుతుంది. వివరాలు స్థానిక వ్యవసాయ కార్యాలయంలో నిర్ధారించుకోండి.',
     icon: 'heart-pulse',
-    highlights: ['₹5 lakh to nominee', 'Linked to Rythu Bharosa', 'Family safety net'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['₹5 lakh to nominee', 'Linked to Rythu Bharosa', 'Telangana only'],
+    highlightsTe: ['నామినీకి ₹5 లక్షలు', 'రైతు భరోసాకు లింక్', 'తెలంగాణ మాత్రమే'],
+    eligibilityRules: { requiresLand: true },
+    verifiedAt: '2026-09-04',
   },
   {
     id: 'pmksy-micro-irrigation',
     category: 'subsidy',
     region: 'central',
-    titleTe: 'PM Krishi Sinchai — Drip / Sprinkler',
-    titleEn: 'Micro irrigation subsidy',
-    amountTe: '55% varaku subsidy',
+    status: 'active',
+    titleEn: 'PM Krishi Sinchai — Drip / Sprinkler',
+    titleTe: 'పీఎం కృషి సించాయి — డ్రిప్ / స్ప్రింక్లర్',
+    amountEn: 'Subsidy up to 55%',
+    amountTe: '55% వరకు సబ్సిడీ',
+    benefitEn:
+      'Capital subsidy for drip and sprinkler systems. Small and marginal farmers: up to 55%. Others: about 45%. Helps save water and improve yield.',
     benefitTe:
-      'Drip & sprinkler systems ki capital subsidy. Small & marginal farmers: 55% varaku. Others: 45%. Water save + yield penchadaniki.',
+      'డ్రిప్ మరియు స్ప్రింక్లర్ వ్యవస్థలకు మూలధన సబ్సిడీ. చిన్న మరియు సన్నకారు రైతులకు 55% వరకు. ఇతరులకు సుమారు 45%. నీటి పొదుపు మరియు దిగుబడి పెంపుదలకు సహాయం.',
+    eligibilityEn:
+      'Farmers with cultivable land who will install a micro-irrigation system through an empaneled company.',
     eligibilityTe:
-      'Farmers with cultivable land. Micro irrigation system install cheyali — empaneled company dwara.',
+      'సాగు భూమి ఉన్న రైతులు — ఎంపనెల్డ్ కంపెనీ ద్వారా మైక్రో ఇరిగేషన్ వ్యవస్థ ఏర్పాటు చేయాలి.',
+    howToApplyEn:
+      'Apply at the District Agriculture Office or horticulture department. Online portals are available state-wise.',
     howToApplyTe:
-      'District Agriculture Office / horticulture department lo apply cheyandi. Online portals state-wise available.',
+      'జిల్లా వ్యవసాయ కార్యాలయం / ఉద్యానవన శాఖలో దరఖాస్తు చేయండి. రాష్ట్రాల వారీగా ఆన్‌లైన్ పోర్టల్స్ ఉన్నాయి.',
     icon: 'water',
-    highlights: ['Drip & sprinkler', '55% for small farmers', 'Per drop more crop'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['Drip and sprinkler', '55% for small farmers', 'Active'],
+    highlightsTe: ['డ్రిప్ మరియు స్ప్రింక్లర్', 'చిన్న రైతులకు 55%', 'కొనసాగుతోంది'],
+    eligibilityRules: { requiresLand: true },
+    verifiedAt: '2026-09-04',
   },
   {
     id: 'smam-machinery',
     category: 'subsidy',
     region: 'central',
-    titleTe: 'SMAM — Farm Machinery Subsidy',
-    titleEn: 'Tractor & equipment subsidy',
-    amountTe: '50% varaku subsidy',
+    status: 'active',
+    titleEn: 'SMAM — Farm Machinery Subsidy',
+    titleTe: 'ఎస్‌ఎంఏఎం — వ్యవసాయ యంత్రాల సబ్సిడీ',
+    amountEn: 'Subsidy up to 50%',
+    amountTe: '50% వరకు సబ్సిడీ',
+    benefitEn:
+      'Subsidy for tractors, power tillers, harvesters, seed drills, and similar farm machinery. Higher benefit for small and marginal farmers.',
     benefitTe:
-      'Tractor, power tiller, harvester, seed drill lanti farm machinery ki subsidy. Small & marginal farmers ki ekkuva benefit.',
+      'ట్రాక్టర్, పవర్ టిల్లర్, హార్వెస్టర్, సీడ్ డ్రిల్ వంటి వ్యవసాయ యంత్రాలకు సబ్సిడీ. చిన్న మరియు సన్నకారు రైతులకు ఎక్కువ ప్రయోజనం.',
+    eligibilityEn:
+      'Small, marginal, and other farmers. Support is also available to set up Custom Hiring Centres (CHC).',
     eligibilityTe:
-      'Small, marginal & other farmers. Custom Hiring Centres (CHC) establish cheyadaniki kuda support undi.',
+      'చిన్న, సన్నకారు మరియు ఇతర రైతులు. కస్టమ్ హైరింగ్ సెంటర్లు (సీహెచ్‌సీ) ఏర్పాటుకు కూడా మద్దతు ఉంది.',
+    howToApplyEn:
+      'Through the agriculture department or agrimachinery.nic.in. District-level approval applies.',
     howToApplyTe:
-      'Agriculture department / agrimachinery.nic.in portal. District level approval process undi.',
+      'వ్యవసాయ శాఖ లేదా agrimachinery.nic.in పోర్టల్ ద్వారా. జిల్లా స్థాయి ఆమోద ప్రక్రియ ఉంది.',
     applyUrl: 'https://agrimachinery.nic.in/',
     icon: 'tractor',
-    highlights: ['Tractor & tools', 'CHC support', 'Small farmer priority'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['Tractor and tools', 'CHC support', 'Small farmer priority'],
+    highlightsTe: ['ట్రాక్టర్ మరియు పరికరాలు', 'సీహెచ్‌సీ మద్దతు', 'చిన్న రైతు ప్రాధాన్యం'],
+    eligibilityRules: { requiresLand: true },
+    verifiedAt: '2026-09-04',
   },
   {
     id: 'aif',
     category: 'loan',
     region: 'central',
-    titleTe: 'Agriculture Infrastructure Fund (AIF)',
-    titleEn: 'Agri infra financing',
-    amountTe: '₹2–100 lakh loans',
+    status: 'active',
+    titleEn: 'Agriculture Infrastructure Fund (AIF)',
+    titleTe: 'వ్యవసాయ మౌలిక సదుపాయాల నిధి (ఏఐఎఫ్)',
+    amountEn: 'Loans ₹2–100 lakh',
+    amountTe: 'రుణాలు ₹2–100 లక్షలు',
+    benefitEn:
+      'Medium to long-term loans for cold storage, warehouses, sorting, grading, and processing units. About 3% interest subvention may apply.',
     benefitTe:
-      'Cold storage, warehouse, sorting, grading, processing units lanti agri infrastructure ki medium-long term loans. 3% interest subvention possible.',
+      'కోల్డ్ స్టోరేజ్, గోదాములు, సార్టింగ్, గ్రేడింగ్, ప్రాసెసింగ్ యూనిట్లకు మధ్య-దీర్ఘకాలిక రుణాలు. సుమారు 3% వడ్డీ రాయితీ ఉండవచ్చు.',
+    eligibilityEn:
+      'Farmers, FPOs, agri entrepreneurs, and startups with a viable project report.',
     eligibilityTe:
-      'Farmers, FPOs, agri entrepreneurs, startups. Viable project report kavali.',
+      'రైతులు, ఎఫ్‌పీఓలు, వ్యవసాయ వ్యవస్థాపకులు, స్టార్టప్‌లు — సాధ్యమైన ప్రాజెక్ట్ నివేదిక అవసరం.',
+    howToApplyEn:
+      'Apply through scheduled banks or NABARD-approved projects. See details at agriinfra.dac.gov.in.',
     howToApplyTe:
-      'Scheduled banks / NABARD approved projects dwara apply cheyandi. aif.gov.in lo details chudandi.',
+      'షెడ్యూల్డ్ బ్యాంకులు / నాబార్డ్ ఆమోదిత ప్రాజెక్టుల ద్వారా దరఖాస్తు చేయండి. agriinfra.dac.gov.inలో వివరాలు చూడండి.',
     applyUrl: 'https://agriinfra.dac.gov.in/',
     icon: 'warehouse',
-    highlights: ['Post-harvest infra', '3% interest subvention', 'FPOs eligible'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['Post-harvest infrastructure', 'About 3% interest subvention', 'FPOs eligible'],
+    highlightsTe: ['పంట అనంతర మౌలిక సదుపాయాలు', 'సుమారు 3% వడ్డీ రాయితీ', 'ఎఫ్‌పీఓలు అర్హులు'],
+    eligibilityRules: {},
+    verifiedAt: '2026-09-04',
   },
   {
     id: 'soil-health-card',
     category: 'subsidy',
     region: 'central',
-    titleTe: 'Soil Health Card',
-    titleEn: 'Free soil testing',
-    amountTe: 'Free',
+    status: 'active',
+    titleEn: 'Soil Health Card',
+    titleTe: 'నేల ఆరోగ్య కార్డు',
+    amountEn: 'Free',
+    amountTe: 'ఉచితం',
+    benefitEn:
+      'Free soil testing for your field with a report on N, P, K, micronutrients, and pH — to reduce fertilizer waste and guide better yield.',
     benefitTe:
-      'Mee polam soil test chesi N, P, K, micronutrients, pH report istaru. Fertilizer waste tagginchi, yield penchadaniki guide.',
+      'మీ పొలం నేల పరీక్ష చేసి నత్రజని, భాస్వరం, పొటాష్, సూక్ష్మపోషకాలు, పీహెచ్ నివేదిక ఇస్తారు — ఎరువు వృథా తగ్గించి దిగుబడి పెంచడానికి మార్గదర్శకం.',
+    eligibilityEn:
+      'All farmers across India who can provide a land sample.',
     eligibilityTe:
-      'All farmers — India wide scheme.',
+      'భారతదేశం అంతటా అన్ని రైతులు — భూమి నుంచి నమూనా ఇవ్వగలిగితే.',
+    howToApplyEn:
+      'Give a sample at the District Agriculture Office, soil testing lab, or RSK. Mobile soil testing vans are also available.',
     howToApplyTe:
-      'District Agriculture Office / soil testing lab lo sample ivvandi. Mobile soil testing vans kuda untayi.',
+      'జిల్లా వ్యవసాయ కార్యాలయం / నేల పరీక్షా ప్రయోగశాల / ఆర్ఎస్‌కేలో నమూనా ఇవ్వండి. మొబైల్ నేల పరీక్షా వ్యాన్లు కూడా ఉంటాయి.',
     icon: 'flask-outline',
-    highlights: ['Free testing', 'Crop-wise fertilizer advice', 'Every 2 years recommended'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['Free testing', 'Crop-wise fertilizer advice', 'Active'],
+    highlightsTe: ['ఉచిత పరీక్ష', 'పంటవారీ ఎరువు సలహా', 'కొనసాగుతోంది'],
+    eligibilityRules: { requiresLand: true },
+    verifiedAt: '2026-09-04',
   },
   {
     id: 'indiramma-atmiya-bharosa',
     category: 'support',
     region: 'ts',
-    titleTe: 'Indiramma Atmiya Bharosa',
-    titleEn: 'Landless farmer support (TS)',
-    amountTe: '₹12,000 / year',
+    status: 'active',
+    titleEn: 'Indiramma Atmiya Bharosa',
+    titleTe: 'ఇందిరమ్మ ఆత్మీయ భరోసా',
+    amountEn: '₹12,000 / year',
+    amountTe: 'సంవత్సరానికి ₹12,000',
+    benefitEn:
+      '₹12,000 a year financial support for registered landless agricultural labourers in Telangana.',
     benefitTe:
-      'Telangana lo land lekapoina registered agricultural laborers ki year ki ₹12,000 financial support.',
+      'తెలంగాణలో భూమి లేని నమోదిత వ్యవసాయ కూలీలకు సంవత్సరానికి ₹12,000 ఆర్థిక సహాయం.',
+    eligibilityEn:
+      'Registered landless agricultural labourers in Telangana.',
     eligibilityTe:
-      'Registered landless agricultural laborers in Telangana.',
+      'తెలంగాణలో నమోదైన భూమి లేని వ్యవసాయ కూలీలు.',
+    howToApplyEn:
+      'Register at the local revenue or agriculture office. Linked with the Rythu Bharosa system.',
     howToApplyTe:
-      'Local revenue / agriculture office lo registration. Rythu Bharosa system tho linked.',
+      'స్థానిక రెవెన్యూ / వ్యవసాయ కార్యాలయంలో నమోదు. రైతు భరోసా వ్యవస్థతో అనుసంధానం.',
     icon: 'account-group',
-    highlights: ['Landless laborers', '₹12,000/year', 'Telangana only'],
-    verifiedAt: '2026-07-22',
+    highlightsEn: ['Landless labourers', '₹12,000 a year', 'Telangana only'],
+    highlightsTe: ['భూమి లేని కూలీలు', 'సంవత్సరానికి ₹12,000', 'తెలంగాణ మాత్రమే'],
+    eligibilityRules: { landlessOnly: true },
+    verifiedAt: '2026-09-04',
   },
 ];
 
-export function categoryLabelTe(category: GovtSchemeCategory): string {
-  const map: Record<GovtSchemeCategory, string> = {
-    support: 'ఆర్థిక సహాయం',
-    subsidy: 'Subsidy',
-    loan: 'Loan',
-    insurance: 'Insurance',
-  };
-  return map[category];
+/** Schemes currently open for farmers — closed ones are never listed */
+export function getActiveGovtSchemes(): GovtScheme[] {
+  return GOVT_SCHEMES.filter((s) => s.status === 'active');
 }
 
-export function regionLabelTe(region: GovtSchemeRegion): string {
-  const map: Record<GovtSchemeRegion, string> = {
-    central: 'కేంద్రం',
-    ap: 'ఆంధ్ర ప్రదేశ్',
-    ts: 'తెలంగాణ',
+/** Telugu when language is te; otherwise English */
+export function schemeLocaleText(language: LanguageCode, en: string, te: string): string {
+  return language === 'te' ? te : en;
+}
+
+export function categoryLabel(language: LanguageCode, category: GovtSchemeCategory): string {
+  const map: Record<GovtSchemeCategory, { en: string; te: string }> = {
+    support: { en: 'Income support', te: 'ఆర్థిక సహాయం' },
+    subsidy: { en: 'Subsidy', te: 'సబ్సిడీ' },
+    loan: { en: 'Loan', te: 'రుణం' },
+    insurance: { en: 'Insurance', te: 'బీమా' },
   };
-  return map[region];
+  return schemeLocaleText(language, map[category].en, map[category].te);
+}
+
+export function regionLabel(language: LanguageCode, region: GovtSchemeRegion): string {
+  const map: Record<GovtSchemeRegion, { en: string; te: string }> = {
+    central: { en: 'Central', te: 'కేంద్రం' },
+    ap: { en: 'Andhra Pradesh', te: 'ఆంధ్ర ప్రదేశ్' },
+    ts: { en: 'Telangana', te: 'తెలంగాణ' },
+  };
+  return schemeLocaleText(language, map[region].en, map[region].te);
+}
+
+/** @deprecated use categoryLabel */
+export function categoryLabelTe(category: GovtSchemeCategory): string {
+  return categoryLabel('te', category);
+}
+
+/** @deprecated use regionLabel */
+export function regionLabelTe(region: GovtSchemeRegion): string {
+  return regionLabel('te', region);
 }

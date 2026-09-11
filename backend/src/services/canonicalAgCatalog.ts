@@ -2,6 +2,10 @@ import {
   FUNGICIDE_ACTIVES,
   INSECTICIDE_ACTIVES,
 } from '../ingestion/data/bulkMasters';
+import {
+  AGROCHEM_CATALOG_VERIFIED_AT,
+  AGROCHEM_ENRICHMENT,
+} from '../ingestion/data/agrochemEnrichment';
 import { resolveProductImageUrl } from './productImageResolver';
 
 const PPQS_URL = 'https://www.ppqs.gov.in/divisions/cib-rc/registered-products';
@@ -33,66 +37,70 @@ export interface CanonicalAgProduct {
   image: string | null;
   source: string;
   sourceUrl: string;
+  whenToUse: string | null;
+  phiDays: number | null;
+  status: 'registered' | 'banned' | 'restricted';
+  verifiedAt: string;
 }
 
-function buildPesticides(): CanonicalAgProduct[] {
-  return INSECTICIDE_ACTIVES.map((active) => ({
-    id: `ref-pest-${slug(active.name)}`,
-    name: active.name,
-    nameTe: null,
-    type: 'pesticide' as const,
-    subType: 'insecticide',
-    brand: null,
-    activeIngredient: active.name,
-    dosage: active.dose,
-    crops: [...new Set(active.crops)],
-    targetPest: active.targets.join(', '),
-    targetDisease: null,
-    applicationMethod: `Spray ${active.dose} in 200 L water/acre. Early morning or evening — bee activity tagginchandi.`,
-    precautions:
-      'Label dose follow cheyandi. PHI (pre-harvest interval) label chudandi. PPE (gloves, mask) vadandi. Same chemical group rotate cheyandi.',
-    description: `CIB&RC registered active ingredient. Targets: ${active.targets.join(', ')}. Crops: ${active.crops.join(', ')}.`,
-    price: null,
-    image: resolveProductImageUrl({
-      id: `ref-pest-${slug(active.name)}`,
-      type: 'pesticide',
+function buildFromActives(
+  type: 'pesticide' | 'fungicide',
+  subType: string,
+  actives: typeof INSECTICIDE_ACTIVES,
+): CanonicalAgProduct[] {
+  const rows: CanonicalAgProduct[] = [];
+
+  for (const active of actives) {
+    const enrich = AGROCHEM_ENRICHMENT[active.name];
+    const status = enrich?.status ?? 'registered';
+    if (status === 'banned') continue;
+
+    const when =
+      enrich?.whenToUse ??
+      (type === 'pesticide'
+        ? 'Spray at ETL. Early morning or evening — avoid bee activity.'
+        : 'Spray at first disease symptoms or as preventive in risk weather.');
+    const phi = enrich?.phiDays;
+    const phiText =
+      phi != null
+        ? ` PHI about ${phi} days (verify pack label).`
+        : ' Check pack label for PHI.';
+
+    rows.push({
+      id: `ref-${type === 'pesticide' ? 'pest' : 'fung'}-${slug(active.name)}`,
+      name: active.name,
+      nameTe: null,
+      type,
+      subType,
+      brand: null,
       activeIngredient: active.name,
-    }),
-    source: 'cibrc_reference',
-    sourceUrl: PPQS_URL,
-  }));
+      dosage: active.dose,
+      crops: [...new Set(active.crops)],
+      targetPest: type === 'pesticide' ? active.targets.join(', ') : null,
+      targetDisease: type === 'fungicide' ? active.targets.join(', ') : null,
+      applicationMethod: `Use ${active.dose} in ~200 L water/acre (or as label). ${when}`,
+      precautions: `Follow label dose.${phiText} Wear PPE (gloves, mask). Rotate chemical groups. Do not mix unknown products.`,
+      description: `CIB&RC-style registered formulation reference. Targets: ${active.targets.join(', ')}. Crops: ${active.crops.join(', ')}. Source: PPQS registered products list.`,
+      price: enrich?.packMrp ?? null,
+      image: resolveProductImageUrl({
+        id: `ref-${type === 'pesticide' ? 'pest' : 'fung'}-${slug(active.name)}`,
+        type,
+        activeIngredient: active.name,
+      }),
+      source: 'cibrc_reference',
+      sourceUrl: PPQS_URL,
+      whenToUse: when,
+      phiDays: phi ?? null,
+      status,
+      verifiedAt: AGROCHEM_CATALOG_VERIFIED_AT,
+    });
+  }
+
+  return rows;
 }
 
-function buildFungicides(): CanonicalAgProduct[] {
-  return FUNGICIDE_ACTIVES.map((active) => ({
-    id: `ref-fung-${slug(active.name)}`,
-    name: active.name,
-    nameTe: null,
-    type: 'fungicide' as const,
-    subType: 'fungicide',
-    brand: null,
-    activeIngredient: active.name,
-    dosage: active.dose,
-    crops: [...new Set(active.crops)],
-    targetPest: null,
-    targetDisease: active.targets.join(', '),
-    applicationMethod: `Spray ${active.dose}. 10–14 rojula tarvata avasaram unte malli spray cheyandi.`,
-    precautions:
-      'Alkaline products tho kalipi vadhu. PHI label chudandi. Fungicide group rotate cheyandi — resistance taggutundi.',
-    description: `CIB&RC registered fungicide. Diseases: ${active.targets.join(', ')}. Crops: ${active.crops.join(', ')}.`,
-    price: null,
-    image: resolveProductImageUrl({
-      id: `ref-fung-${slug(active.name)}`,
-      type: 'fungicide',
-      activeIngredient: active.name,
-    }),
-    source: 'cibrc_reference',
-    sourceUrl: PPQS_URL,
-  }));
-}
-
-const PESTICIDE_CACHE = buildPesticides();
-const FUNGICIDE_CACHE = buildFungicides();
+const PESTICIDE_CACHE = buildFromActives('pesticide', 'insecticide', INSECTICIDE_ACTIVES);
+const FUNGICIDE_CACHE = buildFromActives('fungicide', 'fungicide', FUNGICIDE_ACTIVES);
 
 export interface CanonicalAgQuery {
   type: 'pesticide' | 'fungicide';
@@ -110,6 +118,7 @@ function matchesSearch(p: CanonicalAgProduct, q: string): boolean {
     p.targetPest,
     p.targetDisease,
     p.description,
+    p.whenToUse,
     ...p.crops,
   ]
     .filter(Boolean)
@@ -158,5 +167,7 @@ export function canonicalAgStats() {
   return {
     pesticides: PESTICIDE_CACHE.length,
     fungicides: FUNGICIDE_CACHE.length,
+    verifiedAt: AGROCHEM_CATALOG_VERIFIED_AT,
+    source: 'cibrc_reference',
   };
 }

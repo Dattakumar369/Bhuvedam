@@ -4,7 +4,7 @@
 
 ## Tech Stack
 
-- Expo SDK 54 + React Native
+- Expo SDK 57 + React Native
 - TypeScript (strict)
 - Expo Router
 - React Native Paper (Material Design 3)

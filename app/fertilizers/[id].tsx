@@ -78,6 +78,15 @@ export default function FertilizerDetailScreen() {
           <Card variant="elevated" style={styles.priceCard}>
             <Body style={styles.price}>{product.mrp ?? 'Price on enquiry'}</Body>
             {product.packSize ? <Caption>Pack: {product.packSize}</Caption> : null}
+            {product.priceSourceLabel ? (
+              <Caption style={styles.priceSource}>{product.priceSourceLabel}</Caption>
+            ) : null}
+            {product.priceNote ? (
+              <Caption style={styles.priceNote}>{product.priceNote}</Caption>
+            ) : null}
+            {product.application?.length ? (
+              <Caption style={styles.when}>When: {product.application.join(' · ')}</Caption>
+            ) : null}
           </Card>
 
           {product.dosage ? <DetailRow icon="scale-balance" label="Motta / Dose" value={product.dosage} /> : null}
@@ -185,6 +194,9 @@ const styles = StyleSheet.create({
   subsidyTag: { backgroundColor: `${colors.success}18`, color: colors.success },
   priceCard: { alignItems: 'center', gap: 4, paddingVertical: spacing.md },
   price: { fontSize: 20, color: colors.primary, fontFamily: 'Poppins_700Bold' },
+  priceSource: { color: colors.success, textAlign: 'center', fontSize: 11 },
+  priceNote: { color: colors.textTertiary, textAlign: 'center', lineHeight: 16, fontSize: 11 },
+  when: { color: colors.textSecondary, textAlign: 'center', marginTop: 4 },
   detailRow: { gap: spacing.sm },
   detailHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   detailLabel: { color: colors.textSecondary },

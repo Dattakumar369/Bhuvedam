@@ -1,12 +1,24 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useEffect, useMemo, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Keyboard, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, PrimaryInput, SearchInput } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
 import { CROP_CATEGORY_EN, CROP_CATEGORY_TELUGU, CROPS } from '@/constants/crops';
+import {
+  GEOGRAPHY_STATE_KEYS,
+  geographyStateLabel,
+  geographyStateNameEn,
+  getDistrictOptions,
+  getMandalOptions,
+  getVillageOptions,
+  matchAddressToLgd,
+  resolveGeographyState,
+} from '@/constants/geography';
+import type { GeographyStateKey } from '@/constants/geography/types';
 import { cropLabelForLanguage, soilLabelForLanguage } from '@/constants/i18n/farmTranslations';
 import { MEEBHOOMI_URL } from '@/constants/meebhoomi';
+import { GeographySelectField } from '@/features/farm/components/GeographySelectField';
 import { useTranslation } from '@/hooks/useTranslation';
 import { searchPlaces } from '@/services/geo/placeSearchService';
 import { getCurrentLocation } from '@/services/location/locationService';
@@ -67,10 +79,111 @@ export function FarmSetupWizard({
   const [placeResults, setPlaceResults] = useState<PlaceSearchResult[]>([]);
   const [placeSearching, setPlaceSearching] = useState(false);
   const [addressHint, setAddressHint] = useState<string | null>(null);
+  const [manualAddress, setManualAddress] = useState(
+    () => !resolveGeographyState(initial.stateInput),
+  );
+
+  const geoStateKey = resolveGeographyState(stateInput);
+  const useLgdPickers = !manualAddress && geoStateKey != null;
+
+  const districtOptions = useMemo(
+    () => (geoStateKey ? getDistrictOptions(geoStateKey, language) : []),
+    [geoStateKey, language],
+  );
+  const mandalOptions = useMemo(
+    () =>
+      geoStateKey && districtInput
+        ? getMandalOptions(geoStateKey, districtInput, language)
+        : [],
+    [geoStateKey, districtInput, language],
+  );
+  const villageOptions = useMemo(
+    () =>
+      geoStateKey && districtInput && mandalInput
+        ? getVillageOptions(geoStateKey, districtInput, mandalInput, language)
+        : [],
+    [geoStateKey, districtInput, mandalInput, language],
+  );
 
   useEffect(() => {
     void hydrateCrops(language);
   }, [hydrateCrops, language]);
+
+  const applyLgdMatch = (partial: {
+    state?: string;
+    district?: string;
+    mandal?: string;
+    village?: string;
+  }) => {
+    const matched = matchAddressToLgd(partial);
+    if (matched.stateKey) {
+      setManualAddress(false);
+      setStateInput(matched.state ?? geographyStateNameEn(matched.stateKey));
+      if (matched.district) setDistrictInput(matched.district);
+      if (matched.mandal) setMandalInput(matched.mandal);
+      if (matched.village) setVillageInput(matched.village);
+      return true;
+    }
+    return false;
+  };
+
+  const selectGeographyState = (key: GeographyStateKey) => {
+    setManualAddress(false);
+    const nextName = geographyStateNameEn(key);
+    if (resolveGeographyState(stateInput) !== key) {
+      setDistrictInput('');
+      setMandalInput('');
+      setVillageInput('');
+    }
+    setStateInput(nextName);
+  };
+
+  const applyPlace = (place: PlaceSearchResult) => {
+    const matched = applyLgdMatch({
+      state: place.state,
+      district: place.district,
+      mandal: place.mandal,
+      village: place.village,
+    });
+    if (!matched) {
+      if (place.village) setVillageInput(place.village);
+      if (place.mandal) setMandalInput(place.mandal);
+      if (place.district) setDistrictInput(place.district);
+      if (place.state) setStateInput(place.state);
+      setManualAddress(true);
+    }
+    setPlaceQuery(place.label);
+    setPlaceResults([]);
+    setAddressHint(null);
+  };
+
+  const fillFromGps = async () => {
+    setGpsLoading(true);
+    setAddressHint(null);
+    try {
+      const loc = await getCurrentLocation();
+      const matched = applyLgdMatch({
+        state: loc.state,
+        district: loc.district,
+        mandal: loc.mandal,
+        village: loc.village,
+      });
+      if (!matched) {
+        if (loc.village) setVillageInput(loc.village);
+        if (loc.mandal) setMandalInput(loc.mandal);
+        if (loc.district) setDistrictInput(loc.district);
+        if (loc.state) setStateInput(loc.state);
+        setManualAddress(true);
+      }
+      if (!loc.village && !loc.mandal && loc.label) {
+        setPlaceQuery(loc.label);
+      }
+    } catch {
+      setAddressHint(farm.gpsFillFailed);
+    } finally {
+      setGpsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const q = placeQuery.trim();
@@ -90,35 +203,6 @@ export function FarmSetupWizard({
 
     return () => clearTimeout(timer);
   }, [placeQuery]);
-
-  const applyPlace = (place: PlaceSearchResult) => {
-    if (place.village) setVillageInput(place.village);
-    if (place.mandal) setMandalInput(place.mandal);
-    if (place.district) setDistrictInput(place.district);
-    if (place.state) setStateInput(place.state);
-    setPlaceQuery(place.label);
-    setPlaceResults([]);
-    setAddressHint(null);
-  };
-
-  const fillFromGps = async () => {
-    setGpsLoading(true);
-    setAddressHint(null);
-    try {
-      const loc = await getCurrentLocation();
-      if (loc.village) setVillageInput(loc.village);
-      if (loc.mandal) setMandalInput(loc.mandal);
-      if (loc.district) setDistrictInput(loc.district);
-      if (loc.state) setStateInput(loc.state);
-      if (!loc.village && !loc.mandal && loc.label) {
-        setPlaceQuery(loc.label);
-      }
-    } catch {
-      setAddressHint(farm.gpsFillFailed);
-    } finally {
-      setGpsLoading(false);
-    }
-  };
 
   const cropsByGroup = useMemo(
     () => cropsGroupedFn(cropSearch),
@@ -159,6 +243,7 @@ export function FarmSetupWizard({
 
   const goNext = () => {
     if (!canGoNext()) return;
+    Keyboard.dismiss();
     if (step === 1) {
       setCropPlantings((prev) => syncPlantingsForCrops(selectedCrops, prev));
     }
@@ -166,10 +251,12 @@ export function FarmSetupWizard({
   };
 
   const goBack = () => {
+    Keyboard.dismiss();
     if (step > 1) setStep(step - 1);
   };
 
   const handleSave = () => {
+    Keyboard.dismiss();
     void onSave({
       selectedCrops,
       cropPlantings,
@@ -266,7 +353,14 @@ export function FarmSetupWizard({
       ) : null}
 
       {step === 3 ? (
-        <View style={styles.stepBody}>
+        <ScrollView
+          style={styles.stepScroll}
+          contentContainerStyle={styles.stepBody}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator
+        >
           <Button
             label={gpsLoading ? farm.gpsFillLoading : farm.gpsFillAddress}
             onPress={() => void fillFromGps()}
@@ -299,30 +393,107 @@ export function FarmSetupWizard({
           ) : placeQuery.trim().length >= 2 && !placeSearching ? (
             <Caption style={styles.placeStatus}>{farm.placeSearchNoResults}</Caption>
           ) : null}
-          <PrimaryInput
-            label={farm.district}
-            value={districtInput}
-            onChangeText={setDistrictInput}
-            placeholder={farm.districtPh}
-          />
-          <PrimaryInput
-            label={farm.mandal}
-            value={mandalInput}
-            onChangeText={setMandalInput}
-            placeholder={farm.mandalPh}
-          />
-          <PrimaryInput
-            label={farm.village}
-            value={villageInput}
-            onChangeText={setVillageInput}
-            placeholder={farm.villagePh}
-          />
-          <PrimaryInput
-            label={farm.state}
-            value={stateInput}
-            onChangeText={setStateInput}
-            placeholder={farm.statePh}
-          />
+
+          <Caption style={styles.filterLabel}>{farm.state}</Caption>
+          <View style={styles.stateRow}>
+            {GEOGRAPHY_STATE_KEYS.map((key) => {
+              const selected = !manualAddress && geoStateKey === key;
+              return (
+                <Pressable
+                  key={key}
+                  onPress={() => selectGeographyState(key)}
+                  style={[styles.stateChip, selected && styles.stateChipSelected]}
+                >
+                  <Body style={[styles.stateChipText, selected && styles.stateChipTextSelected]}>
+                    {geographyStateLabel(key, language)}
+                  </Body>
+                </Pressable>
+              );
+            })}
+            <Pressable
+              onPress={() => {
+                setManualAddress(true);
+                if (geoStateKey) setStateInput('');
+              }}
+              style={[styles.stateChip, manualAddress && styles.stateChipSelected]}
+            >
+              <Body style={[styles.stateChipText, manualAddress && styles.stateChipTextSelected]}>
+                {farm.geographyManualEntry}
+              </Body>
+            </Pressable>
+          </View>
+
+          {useLgdPickers ? (
+            <>
+              <Caption style={styles.placeHint}>{farm.geographyLgdHint}</Caption>
+              <GeographySelectField
+                label={farm.district}
+                value={districtInput}
+                placeholder={farm.districtPh}
+                searchPlaceholder={farm.geographySearchDistrict}
+                options={districtOptions}
+                onSelect={(opt) => {
+                  setDistrictInput(opt.value);
+                  setMandalInput('');
+                  setVillageInput('');
+                }}
+              />
+              <GeographySelectField
+                label={farm.mandal}
+                value={mandalInput}
+                placeholder={farm.mandalPh}
+                searchPlaceholder={farm.geographySearchMandal}
+                options={mandalOptions}
+                disabled={!districtInput}
+                emptyMessage={farm.geographySelectDistrictFirst}
+                onSelect={(opt) => {
+                  setMandalInput(opt.value);
+                  setVillageInput('');
+                }}
+              />
+              <GeographySelectField
+                label={farm.village}
+                value={
+                  villageOptions.find((o) => o.value === villageInput)?.label || villageInput
+                }
+                placeholder={farm.villagePh}
+                searchPlaceholder={farm.geographySearchVillage}
+                options={villageOptions}
+                disabled={!mandalInput}
+                emptyMessage={farm.geographySelectMandalFirst}
+                onSelect={(opt) => setVillageInput(opt.value)}
+              />
+            </>
+          ) : (
+            <>
+              <Caption style={styles.placeHint}>{farm.geographyManualHint}</Caption>
+              <PrimaryInput
+                label={farm.state}
+                value={stateInput}
+                onChangeText={setStateInput}
+                placeholder={farm.statePh}
+              />
+              <PrimaryInput
+                label={farm.district}
+                value={districtInput}
+                onChangeText={setDistrictInput}
+                placeholder={farm.districtPh}
+              />
+              <PrimaryInput
+                label={farm.mandal}
+                value={mandalInput}
+                onChangeText={setMandalInput}
+                placeholder={farm.mandalPh}
+              />
+              <PrimaryInput
+                label={farm.village}
+                value={villageInput}
+                onChangeText={setVillageInput}
+                placeholder={farm.villagePh}
+              />
+            </>
+          )}
+
           <Caption style={styles.requiredHint}>{farm.addressRequiredHint}</Caption>
           {addressHint ? <Caption style={styles.addressError}>{addressHint}</Caption> : null}
 
@@ -357,7 +528,7 @@ export function FarmSetupWizard({
               keyboardType="numeric"
             />
           </View>
-        </View>
+        </ScrollView>
       ) : null}
 
       {step === 4 ? (
@@ -432,7 +603,8 @@ const styles = StyleSheet.create({
   stepCount: { textAlign: 'center', color: colors.textTertiary, fontSize: 12 },
   stepTitle: { textAlign: 'center', fontSize: 22, color: colors.primary },
   stepHint: { textAlign: 'center', color: colors.textSecondary, lineHeight: 22, fontSize: 15 },
-  stepBody: { gap: spacing.sm },
+  stepScroll: { maxHeight: 440 },
+  stepBody: { gap: spacing.sm, paddingBottom: spacing.md },
   cropStep: { gap: spacing.sm, maxHeight: 420 },
   cropCount: { textAlign: 'center', color: colors.textSecondary, lineHeight: 18 },
   selectedHint: { textAlign: 'center', color: colors.success, fontFamily: 'Poppins_600SemiBold' },
@@ -477,6 +649,22 @@ const styles = StyleSheet.create({
   cropCheck: { position: 'absolute', top: 6, right: 6 },
   optionalHint: { textAlign: 'center', color: colors.textTertiary },
   requiredHint: { textAlign: 'center', color: colors.textSecondary, lineHeight: 18 },
+  filterLabel: { fontFamily: 'Poppins_600SemiBold', color: colors.textSecondary, fontSize: 13 },
+  stateRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  stateChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  stateChipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  stateChipText: { fontSize: 13, fontFamily: 'Poppins_600SemiBold', color: colors.textPrimary },
+  stateChipTextSelected: { color: colors.surface },
   placeHint: { color: colors.textTertiary, lineHeight: 18, fontSize: 11 },
   placeStatus: { color: colors.textSecondary, textAlign: 'center' },
   placeList: {
@@ -533,6 +721,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
   },
   backBtn: {
     flexDirection: 'row',

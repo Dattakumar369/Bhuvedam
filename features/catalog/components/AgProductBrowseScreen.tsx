@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Chip, Header, ListSkeleton, SearchInput } from '@/components/ui';
+import { Chip, DataFreshnessBadge, Header, ListSkeleton, SearchInput } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
 import { AGRO_BRAND_FILTERS } from '@/constants/agCatalogFilters';
 import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
@@ -61,6 +61,7 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
   const [target, setTarget] = useState('all');
   const [products, setProducts] = useState<AgCatalogProduct[]>([]);
   const [source, setSource] = useState<'reference' | 'offline'>('reference');
+  const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +78,13 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
       });
       setProducts(result.products);
       setSource(result.source);
+      setVerifiedAt(
+        result.verifiedAt
+          ? result.verifiedAt.includes('T')
+            ? result.verifiedAt
+            : `${result.verifiedAt}T00:00:00.000Z`
+          : null,
+      );
       if (result.source === 'offline' && result.products.length > 0) {
         const lang = useLanguageStore.getState().language;
         setError(getUserErrorMessage('PRODUCTS_OFFLINE', lang));
@@ -141,6 +149,12 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
           <MaterialCommunityIcons name="information-outline" size={16} color={colors.info} />
           <Caption style={styles.bannerText}>{screens.catalogBanner}</Caption>
         </View>
+
+        <DataFreshnessBadge
+          label={config.type === 'fungicide' ? 'Fungicide reference' : 'Pesticide reference'}
+          updatedAt={verifiedAt}
+          icon="shield-check"
+        />
 
         <SearchInput value={search} onChangeText={setSearch} placeholder={config.searchPlaceholder} />
 

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Chip, Header, ListSkeleton, SearchInput } from '@/components/ui';
+import { Chip, DataFreshnessBadge, Header, ListSkeleton, SearchInput } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
 import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
 import { FERTILIZER_BRANDS, FERTILIZER_CATEGORIES } from '@/constants/fertilizerCatalog';
@@ -32,6 +32,7 @@ export default function FertilizersScreen() {
   const [crop, setCrop] = useState<string>('all');
   const [products, setProducts] = useState<FertilizerProduct[]>([]);
   const [source, setSource] = useState<'catalog' | 'offline'>('catalog');
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +49,7 @@ export default function FertilizersScreen() {
       });
       setProducts(result.products);
       setSource(result.source);
+      setLastSyncedAt(result.lastSyncedAt);
       if (result.source === 'offline' && result.products.length > 0) {
         const lang = useLanguageStore.getState().language;
         setError(getUserErrorMessage('PRODUCTS_OFFLINE', lang));
@@ -115,9 +117,11 @@ export default function FertilizersScreen() {
         <View style={styles.banner}>
           <MaterialCommunityIcons name="information-outline" size={16} color={colors.info} />
           <Caption style={styles.bannerText}>
-            IFFCO · Coromandel · NFL official grades — real MRP, dose, pack size. Order/cart ledu.
+            DoF statutory urea + NBS notified bag MRPs · dose & when to apply. Verify pack / POS price.
           </Caption>
         </View>
+
+        <DataFreshnessBadge label="Fertilizer prices" updatedAt={lastSyncedAt} icon="leaf" />
 
         <SearchInput
           value={search}
