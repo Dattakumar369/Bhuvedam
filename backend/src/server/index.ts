@@ -276,7 +276,12 @@ app.post('/api/auth/login-password', async (c) => {
   if (!password) return appError(c, 'PASSWORD_REQUIRED');
 
   try {
-    const farmer = await loginFarmerWithPassword(identifier, password);
+    const farmer = await Promise.race([
+      loginFarmerWithPassword(identifier, password),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('LOGIN_TIMEOUT')), 10000),
+      ),
+    ]);
     const loginKey = farmerLoginKey(farmer);
     const token = createFarmerToken(farmer.id, loginKey);
 
@@ -292,6 +297,7 @@ app.post('/api/auth/login-password', async (c) => {
     log.warn('auth/login-password', 'rejected', { code, identifier: maskPhone(identifier) });
     if (code === 'INVALID_CREDENTIALS') return appError(c, 'INVALID_CREDENTIALS');
     if (code === 'ACCOUNT_DISABLED') return appError(c, 'ACCOUNT_DISABLED');
+    if (code === 'LOGIN_TIMEOUT') return appError(c, 'SERVER_ERROR');
     log.error('auth/login-password', 'unexpected failure', { identifier: maskPhone(identifier), err });
     return appError(c, 'LOGIN_FAILED');
   }

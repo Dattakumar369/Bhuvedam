@@ -1,5 +1,5 @@
-import { createHash, randomInt } from 'node:crypto';
 import { and, desc, eq, gt, isNotNull } from 'drizzle-orm';
+import { createHash, randomInt } from 'node:crypto';
 
 import { db } from '../db';
 import { farmers } from '../db/schema/farmers';
@@ -270,7 +270,10 @@ export async function consumeOtpSession(rawPhone: string): Promise<void> {
 }
 
 export async function getFarmerByPhone(phone: string) {
-  return db.query.farmers.findFirst({
-    where: eq(farmers.phone, formatPhone(phone)),
-  });
+  const [row] = await db
+    .select()
+    .from(farmers)
+    .where(eq(farmers.phone, formatPhone(phone)))
+    .limit(1);
+  return row ?? null;
 }

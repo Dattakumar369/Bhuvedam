@@ -60,11 +60,13 @@ export async function findFarmerByIdentifier(identifier: string) {
 
   if (trimmed.includes('@')) {
     const email = normalizeEmail(trimmed);
-    return db.query.farmers.findFirst({ where: eq(farmers.email, email) });
+    const [row] = await db.select().from(farmers).where(eq(farmers.email, email)).limit(1);
+    return row ?? null;
   }
 
   const phone = formatPhone(trimmed);
-  return db.query.farmers.findFirst({ where: eq(farmers.phone, phone) });
+  const [row] = await db.select().from(farmers).where(eq(farmers.phone, phone)).limit(1);
+  return row ?? null;
 }
 
 export async function findFarmerByPhoneOrEmail(phone?: string | null, email?: string | null) {
@@ -73,9 +75,12 @@ export async function findFarmerByPhoneOrEmail(phone?: string | null, email?: st
   if (email) conditions.push(eq(farmers.email, email));
   if (!conditions.length) return null;
 
-  return db.query.farmers.findFirst({
-    where: conditions.length === 1 ? conditions[0] : or(...conditions),
-  });
+  const [row] = await db
+    .select()
+    .from(farmers)
+    .where(conditions.length === 1 ? conditions[0] : or(...conditions))
+    .limit(1);
+  return row ?? null;
 }
 
 export interface RegisterFarmerInput {
@@ -184,7 +189,7 @@ export async function changeFarmerPassword(
   currentPassword: string,
   newPassword: string,
 ) {
-  const farmer = await db.query.farmers.findFirst({ where: eq(farmers.id, farmerId) });
+  const [farmer] = await db.select().from(farmers).where(eq(farmers.id, farmerId)).limit(1);
   if (!farmer) throw new Error('NOT_FOUND');
   if (!farmer.passwordHash) throw new Error('NO_PASSWORD');
   if (!verifyPassword(currentPassword, farmer.passwordHash)) throw new Error('WRONG_PASSWORD');
