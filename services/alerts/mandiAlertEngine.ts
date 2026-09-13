@@ -1,5 +1,7 @@
 import { MANDI_PRICE_CHANGE_THRESHOLD } from '@/constants/alertConfig';
 import { MANDI_CROPS } from '@/constants/mandiCommodities';
+import { tNotif } from '@/constants/notificationCopy';
+import { useLanguageStore } from '@/store/languageStore';
 import type { FarmAlert, MandiPriceSnapshot } from '@/types/alerts';
 import type { MandiAnalytics } from '@/types/mandi';
 import { generateId } from '@/utils/format';
@@ -22,6 +24,7 @@ export function buildMandiPriceAlerts(
 ): FarmAlert[] {
   if (!previous.length) return [];
 
+  const lang = useLanguageStore.getState().language;
   const cropFilter = farmerCropIds.length ? new Set(farmerCropIds) : null;
   const alerts: FarmAlert[] = [];
 
@@ -41,13 +44,21 @@ export function buildMandiPriceAlerts(
     const crop = MANDI_CROPS.find((c) => c.id === item.cropId);
     const up = changePct > 0;
     const variety = item.varietyName ? ` (${item.varietyName})` : '';
+    const cropName = crop?.name ?? item.commodity;
+    const change = `${up ? '+' : ''}${changePct.toFixed(1)}`;
 
     alerts.push({
       id: generateId(),
       type: 'mandi_price',
       severity: Math.abs(changePct) >= 10 ? 'urgent' : 'warning',
-      title: up ? `📈 ${crop?.name ?? item.commodity} rate perigindi` : `📉 ${crop?.name ?? item.commodity} rate taggindi`,
-      body: `${item.commodity}${variety}: ₹${prev.price} → ₹${item.currentModal}/qtl (${up ? '+' : ''}${changePct.toFixed(1)}%)`,
+      title: tNotif(lang, up ? 'mandiUpTitle' : 'mandiDownTitle', { crop: cropName }),
+      body: tNotif(lang, 'mandiBody', {
+        crop: item.commodity,
+        variety,
+        old: prev.price,
+        new: item.currentModal,
+        change,
+      }),
       createdAt: new Date().toISOString(),
       read: false,
       data: {

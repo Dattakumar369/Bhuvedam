@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router, type Href } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -10,10 +10,11 @@ import { Body, Caption, Subtitle, Title } from '@/components/ui/Typography';
 import { LANGUAGES } from '@/constants/languages';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppColors } from '@/hooks/useAppColors';
+import { useFarmerContextStore } from '@/store/farmerContextStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { useThemeStore } from '@/store/themeStore';
 import { useUserStore } from '@/store/userStore';
-import { formatPhone } from '@/utils/format';
+import { formatPhone, shortLocationLabel } from '@/utils/format';
 import { layout, radius, spacing } from '@/theme';
 
 export default function ProfileScreen() {
@@ -25,9 +26,20 @@ export default function ProfileScreen() {
   const language = useLanguageStore((s) => s.language);
   const isDark = useThemeStore((s) => s.isDark);
   const setMode = useThemeStore((s) => s.setMode);
+  const village = useFarmerContextStore((s) => s.village);
+  const mandal = useFarmerContextStore((s) => s.mandal);
+  const district = useFarmerContextStore((s) => s.district);
+  const state = useFarmerContextStore((s) => s.state);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const currentLanguage = LANGUAGES.find((l) => l.code === language);
+  const displayName = user?.name?.trim() || app.farmerDefault;
+
+  const locationLabel = useMemo(() => {
+    const fromFarm = [village, mandal, district, state].filter(Boolean).join(', ');
+    const raw = fromFarm || user?.location || '';
+    return raw ? shortLocationLabel(raw, 3) : null;
+  }, [village, mandal, district, state, user?.location]);
 
   const handleLogout = async () => {
     setShowLogoutDialog(false);
@@ -37,17 +49,19 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>
-      <GradientHeader title={app.profileTitle} subtitle={app.profileSubtitle}>
+      <GradientHeader title={app.profileTitle} subtitle={app.profileSubtitle} dense>
         <View style={styles.profileHeader}>
-          <Avatar name={user?.name ?? app.farmerDefault} size={72} />
-          <Title style={styles.name}>{user?.name ?? app.farmerDefault}</Title>
+          <Avatar name={displayName} size={76} tone="onBrand" />
+          <Title style={styles.name}>{displayName}</Title>
           <Subtitle style={styles.phone}>
             {user?.phone ? formatPhone(user.phone) : '+91 XXXXX XXXXX'}
           </Subtitle>
-          {user?.location ? (
+          {locationLabel ? (
             <View style={styles.locationRow}>
-              <MaterialCommunityIcons name="map-marker" size={14} color="rgba(255,255,255,0.8)" />
-              <Caption style={styles.location}>{user.location}</Caption>
+              <MaterialCommunityIcons name="map-marker" size={14} color="rgba(255,255,255,0.85)" />
+              <Caption style={styles.location} numberOfLines={2}>
+                {locationLabel}
+              </Caption>
             </View>
           ) : null}
         </View>
@@ -88,17 +102,37 @@ export default function ProfileScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).springify()}>
-          <Caption style={styles.sectionLabel}>{app.general}</Caption>
+          <Caption style={[styles.sectionLabel, { color: c.textTertiary }]}>{app.general}</Caption>
           <Card variant="elevated" style={styles.section}>
-            <MenuItem icon="cog-outline" label={app.settingsTitle} onPress={() => router.push('/settings' as Href)} />
+            <MenuItem
+              icon="cog-outline"
+              label={app.settingsTitle}
+              onPress={() => router.push('/settings' as Href)}
+            />
             <Divider />
-            <MenuItem icon="lock-reset" label={app.changePassword} onPress={() => router.push('/change-password' as Href)} />
+            <MenuItem
+              icon="lock-reset"
+              label={app.changePassword}
+              onPress={() => router.push('/change-password' as Href)}
+            />
             <Divider />
-            <MenuItem icon="information-outline" label={app.aboutApp} onPress={() => router.push('/about' as Href)} />
+            <MenuItem
+              icon="information-outline"
+              label={app.aboutApp}
+              onPress={() => router.push('/about' as Href)}
+            />
             <Divider />
-            <MenuItem icon="shield-check-outline" label={app.privacyPolicy} onPress={() => router.push('/privacy' as Href)} />
+            <MenuItem
+              icon="shield-check-outline"
+              label={app.privacyPolicy}
+              onPress={() => router.push('/privacy' as Href)}
+            />
             <Divider />
-            <MenuItem icon="file-document-outline" label={app.termsOfService} onPress={() => router.push('/terms' as Href)} />
+            <MenuItem
+              icon="file-document-outline"
+              label={app.termsOfService}
+              onPress={() => router.push('/terms' as Href)}
+            />
           </Card>
         </Animated.View>
 
@@ -153,7 +187,11 @@ function MenuItem({
         <Body>{label}</Body>
       </View>
       <View style={styles.menuRight}>
-        {value ? <Caption style={[styles.menuValue, { color: c.textTertiary }]}>{value}</Caption> : null}
+        {value ? (
+          <Caption style={[styles.menuValue, { color: c.textTertiary }]} numberOfLines={1}>
+            {value}
+          </Caption>
+        ) : null}
         <MaterialCommunityIcons name="chevron-right" size={20} color={c.textTertiary} />
       </View>
     </Pressable>
@@ -167,14 +205,30 @@ function Divider() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  profileHeader: { alignItems: 'center', marginTop: spacing.lg },
-  name: { color: '#FFFFFF', marginTop: spacing.md },
-  phone: { color: 'rgba(255,255,255,0.85)' },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: spacing.xs },
-  location: { color: 'rgba(255,255,255,0.8)' },
+  profileHeader: {
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.sm,
+  },
+  name: { color: '#FFFFFF', marginTop: spacing.md, fontSize: 22 },
+  phone: { color: 'rgba(255,255,255,0.85)', marginTop: 2 },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: spacing.sm,
+    maxWidth: '92%',
+  },
+  location: {
+    flexShrink: 1,
+    color: 'rgba(255,255,255,0.85)',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
   content: {
     paddingHorizontal: layout.screenPadding,
-    marginTop: -spacing.xl,
+    marginTop: -spacing.lg,
     gap: spacing.lg,
   },
   sectionLabel: {
@@ -191,9 +245,9 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     minHeight: 56,
   },
-  menuLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  menuRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  menuValue: {},
+  menuLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flexShrink: 1 },
+  menuRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexShrink: 0 },
+  menuValue: { maxWidth: 120 },
   iconBox: {
     width: 36,
     height: 36,

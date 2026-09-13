@@ -308,6 +308,7 @@ app.post('/api/auth/register', async (c) => {
       INVALID_PHONE: 'INVALID_PHONE',
       PHONE_REQUIRED: 'MOBILE_REQUIRED',
       PHONE_TAKEN: 'PHONE_TAKEN',
+      EMAIL_TAKEN: 'PHONE_TAKEN',
     };
     if (map[code]) {
       log.warn('auth/register', 'rejected', { code, phone: maskPhone(phoneRaw) });

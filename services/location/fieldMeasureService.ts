@@ -1,7 +1,15 @@
 import * as Location from 'expo-location';
 
+import {
+  getFieldMeasureMessages,
+  type FieldMeasureMessages,
+} from '@/constants/i18n/fieldMeasureTranslations';
 import { requestLocationPermission } from '@/services/location/locationService';
 import type { Coordinates } from '@/types/location';
+
+function msgs(messages?: FieldMeasureMessages): FieldMeasureMessages {
+  return messages ?? getFieldMeasureMessages('en');
+}
 
 /** Target: corners within ~1–3 m in open sky. Phone GPS cannot match survey-grade 1 cm. */
 const WARMUP_MS_MAX = 8_000;
@@ -121,7 +129,6 @@ function hasStableTail(samples: GpsSample[]): boolean {
 async function readPosition(): Promise<GpsSample> {
   const position = await Location.getCurrentPositionAsync({
     accuracy: Location.Accuracy.BestForNavigation,
-    maximumAge: 0,
     mayShowUserSettingsDialog: true,
   });
   return {
@@ -134,14 +141,18 @@ async function readPosition(): Promise<GpsSample> {
 /**
  * Warm up GPS — stops early when signal is good (often 3–6 sec in open field).
  */
-async function warmUpGps(onProgress?: (p: CaptureProgress) => void): Promise<GpsSample[]> {
+async function warmUpGps(
+  onProgress?: (p: CaptureProgress) => void,
+  messages?: FieldMeasureMessages,
+): Promise<GpsSample[]> {
+  const fm = msgs(messages);
   const warmupSamples: GpsSample[] = [];
   let bestAccuracy: number | null = null;
   const started = Date.now();
 
   onProgress?.({
     phase: 'warming',
-    message: 'Moola lo nilchondi — signal bagunte 3–5 sec lo ready avutundi',
+    message: fm.cornerWarm,
     bestAccuracyMeters: null,
     sampleIndex: 0,
     totalSamples: SAMPLE_COUNT,
@@ -161,8 +172,8 @@ async function warmUpGps(onProgress?: (p: CaptureProgress) => void): Promise<Gps
       phase: 'warming',
       message:
         bestAccuracy != null && bestAccuracy <= QUICK_FIX_ACCURACY_M
-          ? `GPS bagundi (±${Math.round(bestAccuracy * 10) / 10}m) — inka konni sec…`
-          : `GPS fix… ${elapsedSec}s — phone pai ki chudandi (open sky)`,
+          ? fm.gpsGoodWait(Math.round(bestAccuracy * 10) / 10)
+          : fm.gpsFix(elapsedSec),
       bestAccuracyMeters: bestAccuracy,
       sampleIndex: warmupSamples.length,
       totalSamples: SAMPLE_COUNT,
@@ -198,18 +209,20 @@ async function warmUpGps(onProgress?: (p: CaptureProgress) => void): Promise<Gps
  */
 export async function captureFieldCorner(
   onProgress?: (progress: CaptureProgress) => void,
+  messages?: FieldMeasureMessages,
 ): Promise<CapturedCorner> {
+  const fm = msgs(messages);
   const permission = await requestLocationPermission();
   if (permission !== 'granted') {
-    throw new Error('Location permission ivvaledi — Settings lo Allow cheyandi');
+    throw new Error(fm.permissionDenied);
   }
 
   const servicesOn = await Location.hasServicesEnabledAsync();
   if (!servicesOn) {
-    throw new Error('Phone lo Location/GPS OFF undi — Settings lo ON cheyandi');
+    throw new Error(fm.gpsOff);
   }
 
-  const warmupSamples = await warmUpGps(onProgress);
+  const warmupSamples = await warmUpGps(onProgress, fm);
   const samples: GpsSample[] = [...warmupSamples];
 
   for (let i = 0; i < SAMPLE_COUNT; i++) {
@@ -223,7 +236,7 @@ export async function captureFieldCorner(
 
     onProgress?.({
       phase: 'sampling',
-      message: `Moola reading ${i + 1}/${SAMPLE_COUNT} — phone ni moola marker pai pettandi`,
+      message: fm.cornerSample(i + 1, SAMPLE_COUNT),
       bestAccuracyMeters: bestAcc,
       sampleIndex: i + 1,
       totalSamples: SAMPLE_COUNT,
@@ -234,7 +247,7 @@ export async function captureFieldCorner(
 
   onProgress?.({
     phase: 'processing',
-    message: 'Stable GPS point calculate avutundi…',
+    message: fm.processing,
     bestAccuracyMeters: null,
     sampleIndex: SAMPLE_COUNT,
     totalSamples: SAMPLE_COUNT,
@@ -249,9 +262,7 @@ export async function captureFieldCorner(
       .map((s) => s.accuracy)
       .filter((v): v is number => v != null)
       .sort((a, b) => a - b)[0];
-    throw new Error(
-      `GPS sariga fix avvaledu (best ±${Math.round(worstBest ?? 10)}m). Open sky lo nilchondi — ±3m kante baga ravali, lekapothe area tappu vastundi.`,
-    );
+    throw new Error(fm.gpsFixFailed(Math.round(worstBest ?? 10)));
   }
 
   let centroid = weightedCentroid(accurate);
@@ -272,15 +283,11 @@ export async function captureFieldCorner(
     cluster.reduce((sum, s) => sum + (s.accuracy ?? MAX_ACCEPT_ACCURACY_M), 0) / cluster.length;
 
   if (spread > MAX_CLUSTER_SPREAD_M) {
-    throw new Error(
-      `GPS readings stable kaavu (±${Math.round(spread)}m spread). Moola lo 15 sec nilchondi, malli try cheyandi.`,
-    );
+    throw new Error(fm.spreadUnstable(Math.round(spread)));
   }
 
   if (accuracyMeters > MAX_ACCEPT_ACCURACY_M) {
-    throw new Error(
-      `GPS accuracy chaala taggindi (±${Math.round(accuracyMeters)}m). Open sky lo wait chesi malli add cheyandi.`,
-    );
+    throw new Error(fm.accuracyPoor(Math.round(accuracyMeters)));
   }
 
   return {
@@ -296,20 +303,22 @@ export async function captureFieldCorner(
 export function validateCornerPoints(
   points: Coordinates[],
   newPoint: Coordinates,
+  messages?: FieldMeasureMessages,
 ): string | null {
+  const fm = msgs(messages);
   if (!points.length) return null;
 
-  const last = points[points.length - 1];
+  const last = points[points.length - 1]!;
   const dist = distanceMeters(last, newPoint);
   if (dist < 3) {
-    return 'I moola previous moola ki chaala daggaraga undi. Next moola ki walk chesi add cheyandi.';
+    return fm.validateTooClose;
   }
 
   if (points.length >= 2) {
-    const first = points[0];
+    const first = points[0]!;
     const closeDist = distanceMeters(first, newPoint);
     if (points.length >= 3 && closeDist < 3) {
-      return 'First moola ki daggaraga undi — okate place lo add avutundi.';
+      return fm.validateNearFirst;
     }
   }
 
@@ -351,17 +360,22 @@ export function simplifyWalkPoints(points: Coordinates[], minDistM = 2.5): Coord
   return out.length >= 3 ? out : points;
 }
 
-export function formatAccuracyHint(accuracyMeters: number | null, spreadMeters?: number | null): string {
+export function formatAccuracyHint(
+  accuracyMeters: number | null,
+  spreadMeters?: number | null,
+  messages?: FieldMeasureMessages,
+): string {
+  const fm = msgs(messages);
   const acc = accuracyMeters != null ? Math.round(accuracyMeters * 10) / 10 : null;
   const spread = spreadMeters != null ? Math.round(spreadMeters * 10) / 10 : null;
   if (acc != null && acc <= GOOD_ACCURACY_M) {
-    return spread != null ? `±${acc}m (spread ${spread}m) — bagundi` : `±${acc}m — bagundi`;
+    return fm.accuracyGood(acc, spread ?? undefined);
   }
   if (acc != null && acc <= OK_ACCURACY_M) {
-    return spread != null ? `±${acc}m (spread ${spread}m) — open sky lo inka wait cheste better` : `±${acc}m`;
+    return fm.accuracyOk(acc, spread ?? undefined);
   }
-  if (acc != null) return `±${acc}m — weak signal`;
-  return 'accuracy unknown';
+  if (acc != null) return fm.accuracyWeak(acc);
+  return fm.accuracyUnknown;
 }
 
 export interface WalkTrackProgress {
@@ -414,15 +428,17 @@ export async function startFieldWalkTracking(
   onProgress: (progress: WalkTrackProgress) => void,
   existingPoints: Coordinates[] = [],
   onLivePosition?: (position: Coordinates) => void,
+  messages?: FieldMeasureMessages,
 ): Promise<WalkTrackSession> {
+  const fm = msgs(messages);
   const permission = await requestLocationPermission();
   if (permission !== 'granted') {
-    throw new Error('Location permission ivvaledi — Settings lo Allow cheyandi');
+    throw new Error(fm.permissionDenied);
   }
 
   const servicesOn = await Location.hasServicesEnabledAsync();
   if (!servicesOn) {
-    throw new Error('Phone lo Location/GPS OFF undi — Settings lo ON cheyandi');
+    throw new Error(fm.gpsOff);
   }
 
   let stopped = false;
@@ -450,12 +466,7 @@ export async function startFieldWalkTracking(
     }
   };
 
-  pushProgress(
-    'Polam border chuttu tiragandi — phone chethulo pettandi, open sky chudali',
-    recorded.length,
-    null,
-    false,
-  );
+  pushProgress(fm.walkStartPlain, recorded.length, null, false);
 
   let subscription: Location.LocationSubscription;
   let burstBusy = false;
@@ -469,8 +480,8 @@ export async function startFieldWalkTracking(
     onPoint(corner);
     pushProgress(
       nearStart
-        ? 'Start point daggaraki vacharu — “Stop” nokki area kanipistundi'
-        : `Recording… ${Math.round(distanceWalkedM)}m tirigaru · ${recorded.length} points`,
+        ? fm.walkNearStop
+        : fm.walkRecording(Math.round(distanceWalkedM), recorded.length),
       recorded.length,
       acc,
       nearStart,
@@ -496,13 +507,7 @@ export async function startFieldWalkTracking(
 
       const acc = sample.accuracy;
       if (acc != null && acc > WALK_MAX_ACCURACY_M) {
-        pushProgress(
-          `GPS weak (±${Math.round(acc)}m) — open sky daggaraki vellandi`,
-          recorded.length,
-          acc,
-          false,
-          sample,
-        );
+        pushProgress(fm.gpsWeak(Math.round(acc)), recorded.length, acc, false, sample);
         return;
       }
 
@@ -512,17 +517,11 @@ export async function startFieldWalkTracking(
           .then((corner) => {
             if (stopped) return;
             if (!corner) {
-              pushProgress(
-                'GPS weak — open sky lo nilchoni malli start cheyandi',
-                0,
-                acc,
-                false,
-                sample,
-              );
+              pushProgress(fm.gpsWeakRetry, 0, acc, false, sample);
               return;
             }
             recordCorner(corner, corner.accuracyMeters, false, sample);
-            pushProgress('Start point record ayyindi — ippudu polam chuttu tiragandi', 1, corner.accuracyMeters, false, sample);
+            pushProgress(fm.walkStartRecorded, 1, corner.accuracyMeters, false, sample);
           })
           .finally(() => {
             burstBusy = false;
@@ -538,8 +537,8 @@ export async function startFieldWalkTracking(
       if (step < WALK_MIN_STEP_M) {
         pushProgress(
           nearStart
-            ? 'Start point daggaraki vacharu — “Stop” nokki area kanipistundi'
-            : `Tirugutunnaru… ${Math.round(distanceWalkedM)}m (${recorded.length} points)`,
+            ? fm.walkNearStop
+            : fm.walkWalking(Math.round(distanceWalkedM), recorded.length),
           recorded.length,
           acc,
           nearStart,
@@ -560,7 +559,7 @@ export async function startFieldWalkTracking(
     },
   );
   } catch {
-    throw new Error('GPS tracking start avvaledu — Location permission & GPS ON chudandi');
+    throw new Error(fm.walkStartFailed);
   }
 
   return {

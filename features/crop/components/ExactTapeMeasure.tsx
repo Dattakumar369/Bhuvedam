@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { PrimaryInput } from '@/components/ui';
 import { Body, Caption, Label } from '@/components/ui/Typography';
+import { useTranslation } from '@/hooks/useTranslation';
 import { areaFromRectangleMeters, formatAreaDisplay, parseMetersInput } from '@/utils/geoArea';
 import { colors, radius, spacing } from '@/theme';
 
@@ -23,6 +24,7 @@ export function ExactTapeMeasure({
   onWidthChange,
   onAreaChange,
 }: ExactTapeMeasureProps) {
+  const { language, fm } = useTranslation();
   useEffect(() => {
     const len = parseMetersInput(lengthInput);
     const wid = parseMetersInput(widthInput);
@@ -35,29 +37,27 @@ export function ExactTapeMeasure({
   const len = parseMetersInput(lengthInput);
   const wid = parseMetersInput(widthInput);
   const area = len && wid ? areaFromRectangleMeters(len, wid) : null;
-  const display = area ? formatAreaDisplay(area.areaAcres, area.areaCents, 'tape') : null;
+  const display = area
+    ? formatAreaDisplay(area.areaAcres, area.areaCents, 'tape', language)
+    : null;
 
   return (
     <View style={styles.wrap}>
-      <Label style={styles.title}>📏 లేఖీతో కొలవండి</Label>
-      <Caption style={styles.help}>
-        పొలం పొడవు × వెడల్పు ని lekha tho measure chesi meters lo enter cheyandi.
-        {'\n'}
-        2 cent ≈ 20m×20m, 3 cent ≈ 25m×25m — chinna polam ki idi best (GPS kante exact).
-      </Caption>
+      <Label style={styles.title}>{fm.badgeTape}</Label>
+      <Caption style={styles.help}>{fm.measureIntroNote}</Caption>
 
       <PrimaryInput
-        label="పొడవు (మీటర్లు)"
+        label={language === 'te' ? 'పొడవు (మీటర్లు)' : language === 'hi' ? 'लंबाई (मीटर)' : 'Length (meters)'}
         value={lengthInput}
         onChangeText={onLengthChange}
-        placeholder="ఉదా: 20"
+        placeholder={language === 'te' ? 'ఉదా: 20' : 'e.g. 20'}
         keyboardType="numeric"
       />
       <PrimaryInput
-        label="వెడల్పు (మీటర్లు)"
+        label={language === 'te' ? 'వెడల్పు (మీటర్లు)' : language === 'hi' ? 'चौड़ाई (मीटर)' : 'Width (meters)'}
         value={widthInput}
         onChangeText={onWidthChange}
-        placeholder="ఉదా: 20"
+        placeholder={language === 'te' ? 'ఉదా: 20' : 'e.g. 20'}
         keyboardType="numeric"
       />
 
@@ -67,7 +67,7 @@ export function ExactTapeMeasure({
           <Body style={styles.cents}>{display.primary}</Body>
           <Caption style={styles.acres}>{display.secondary}</Caption>
           <Caption style={styles.sub}>
-            {Math.round(area.areaSqMeters)} sq.m · {len}m × {wid}m exact
+            {Math.round(area.areaSqMeters)} sq.m · {len}m × {wid}m
           </Caption>
         </View>
       ) : null}

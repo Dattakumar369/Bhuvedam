@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -16,35 +16,28 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { userRepository } from '@/services/api/repositories';
 import { getUserFacingError } from '@/services/api/userFacingError';
 import { useUserStore } from '@/store/userStore';
+import { useLanguageStore } from '@/store/languageStore';
+import type { ApiError } from '@/types/api';
 import { colors, layout, radius, spacing } from '@/theme';
 import { logAuthApiError, logger, maskPhone } from '@/utils/logger';
 
-const mobileSchema = z
-  .string()
-  .min(10, 'Enter a valid 10-digit mobile number')
-  .max(10, 'Enter a valid 10-digit mobile number')
-  .regex(/^[6-9]\d{9}$/, 'Enter a valid Indian mobile number');
+type PasswordLoginForm = {
+  phone: string;
+  password: string;
+};
 
-const passwordLoginSchema = z.object({
-  phone: mobileSchema,
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-});
+type SignupForm = {
+  name: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+};
 
-const signupSchema = z
-  .object({
-    name: z.string().trim().min(2, 'Please enter your name').max(60, 'Name is too long'),
-    phone: mobileSchema,
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    confirmPassword: z.string().min(8, 'Confirm your password'),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
-
-type PasswordLoginForm = z.infer<typeof passwordLoginSchema>;
-type SignupForm = z.infer<typeof signupSchema>;
 type AuthTab = 'login' | 'signup';
+
+function isApiError(err: unknown): err is ApiError {
+  return Boolean(err && typeof err === 'object' && ('code' in err || 'statusCode' in err));
+}
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -56,9 +49,59 @@ export default function LoginScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const passwordLoginSchema = useMemo(
+    () =>
+      z.object({
+        phone: z
+          .string()
+          .min(10, app.invalidMobile)
+          .max(10, app.invalidMobile)
+          .regex(/^[6-9]\d{9}$/, app.invalidMobile),
+        password: z
+          .string()
+          .min(1, app.passwordRequired)
+          .min(8, app.passwordTooShort),
+      }),
+    [app.invalidMobile, app.passwordRequired, app.passwordTooShort],
+  );
+
+  const signupSchema = useMemo(
+    () =>
+      z
+        .object({
+          name: z
+            .string()
+            .trim()
+            .min(2, app.nameRequired)
+            .max(60, app.nameRequired),
+          phone: z
+            .string()
+            .min(10, app.invalidMobile)
+            .max(10, app.invalidMobile)
+            .regex(/^[6-9]\d{9}$/, app.invalidMobile),
+          password: z
+            .string()
+            .min(1, app.passwordRequired)
+            .min(8, app.passwordTooShort),
+          confirmPassword: z.string().min(1, app.passwordRequired),
+        })
+        .refine((data) => data.password === data.confirmPassword, {
+          message: app.passwordsDoNotMatch,
+          path: ['confirmPassword'],
+        }),
+    [
+      app.invalidMobile,
+      app.nameRequired,
+      app.passwordRequired,
+      app.passwordTooShort,
+      app.passwordsDoNotMatch,
+    ],
+  );
+
   const passwordForm = useForm<PasswordLoginForm>({
     resolver: zodResolver(passwordLoginSchema),
     defaultValues: { phone: sanitizePhoneInput(storedUser?.phone ?? ''), password: '' },
+    mode: 'onSubmit',
   });
 
   const signupForm = useForm<SignupForm>({
@@ -69,6 +112,7 @@ export default function LoginScreen() {
       password: '',
       confirmPassword: '',
     },
+    mode: 'onSubmit',
   });
 
   const finishLogin = async (token: string, user: Parameters<typeof login>[0]) => {
@@ -79,6 +123,8 @@ export default function LoginScreen() {
   const switchTab = (tab: AuthTab) => {
     setAuthTab(tab);
     setErrorMessage(null);
+    passwordForm.clearErrors();
+    signupForm.clearErrors();
   };
 
   const onPasswordLogin = async (data: PasswordLoginForm) => {
@@ -110,16 +156,49 @@ export default function LoginScreen() {
         name: data.name.trim(),
         phone: data.phone,
         password: data.password,
-        language: storedUser?.language ?? 'te',
+        language: useLanguageStore.getState().language || storedUser?.language || 'te',
       });
       logger.auth.info('Signup complete', { userId: result.user.id });
       await finishLogin(result.token, result.user);
     } catch (err: unknown) {
       logAuthApiError('Signup', err, { phone: maskPhone(data.phone) });
+      const code = isApiError(err) ? err.code : undefined;
+
+      if (code === 'PHONE_TAKEN') {
+        setErrorMessage(app.phoneAlreadyRegistered);
+        signupForm.setError('phone', { message: app.phoneAlreadyRegistered });
+        return;
+      }
+      if (code === 'INVALID_PHONE') {
+        setErrorMessage(app.invalidMobile);
+        signupForm.setError('phone', { message: app.invalidMobile });
+        return;
+      }
+      if (code === 'WEAK_PASSWORD' || code === 'PASSWORD_REQUIRED') {
+        const msg = code === 'WEAK_PASSWORD' ? app.passwordTooShort : app.passwordRequired;
+        setErrorMessage(msg);
+        signupForm.setError('password', { message: msg });
+        return;
+      }
+      if (code === 'INVALID_NAME' || code === 'NAME_REQUIRED') {
+        setErrorMessage(app.nameRequired);
+        signupForm.setError('name', { message: app.nameRequired });
+        return;
+      }
+      if (code === 'MOBILE_REQUIRED') {
+        setErrorMessage(app.mobileRequired);
+        signupForm.setError('phone', { message: app.mobileRequired });
+        return;
+      }
+
       setErrorMessage(getUserFacingError(err, app, app.signupFailed));
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const onSignupInvalid = () => {
+    setErrorMessage(null);
   };
 
   return (
@@ -188,8 +267,12 @@ export default function LoginScreen() {
                   label={app.password}
                   value={value ?? ''}
                   onChangeText={onChange}
-                  placeholder="••••••••"
+                  placeholder={app.passwordPlaceholder}
+                  hint={app.passwordTooShort}
                   secureTextEntry
+                  autoComplete="password"
+                  textContentType="password"
+                  autoCapitalize="none"
                   error={passwordForm.formState.errors.password?.message}
                 />
               )}
@@ -216,6 +299,10 @@ export default function LoginScreen() {
                   label={app.yourName}
                   value={value ?? ''}
                   onChangeText={onChange}
+                  placeholder={app.namePlaceholder}
+                  autoComplete="name"
+                  textContentType="name"
+                  autoCapitalize="words"
                   error={signupForm.formState.errors.name?.message}
                 />
               )}
@@ -240,8 +327,12 @@ export default function LoginScreen() {
                   label={app.password}
                   value={value ?? ''}
                   onChangeText={onChange}
-                  placeholder="••••••••"
+                  placeholder={app.passwordPlaceholder}
+                  hint={app.passwordTooShort}
                   secureTextEntry
+                  autoComplete="new-password"
+                  textContentType="newPassword"
+                  autoCapitalize="none"
                   error={signupForm.formState.errors.password?.message}
                 />
               )}
@@ -254,20 +345,28 @@ export default function LoginScreen() {
                   label={app.confirmPassword}
                   value={value ?? ''}
                   onChangeText={onChange}
-                  placeholder="••••••••"
+                  placeholder={app.confirmPasswordPlaceholder}
                   secureTextEntry
+                  autoComplete="new-password"
+                  textContentType="newPassword"
+                  autoCapitalize="none"
                   error={signupForm.formState.errors.confirmPassword?.message}
                 />
               )}
             />
             <Button
               label={isSubmitting ? app.creatingAccount : app.createAccountBtn}
-              onPress={signupForm.handleSubmit(onSignup)}
+              onPress={signupForm.handleSubmit(onSignup, onSignupInvalid)}
               loading={isSubmitting}
               fullWidth
               size="lg"
               style={styles.button}
             />
+            {errorMessage && isApiErrorHint(errorMessage, app.phoneAlreadyRegistered) ? (
+              <Pressable onPress={() => switchTab('login')} style={styles.textLink}>
+                <Text style={styles.linkText}>{app.loginTab}</Text>
+              </Pressable>
+            ) : null}
           </View>
 
           {errorMessage ? <Subtitle style={styles.error}>{errorMessage}</Subtitle> : null}
@@ -287,6 +386,10 @@ export default function LoginScreen() {
       </ScrollView>
     </KeyboardSafeView>
   );
+}
+
+function isApiErrorHint(message: string, phoneTakenMsg: string): boolean {
+  return message === phoneTakenMsg;
 }
 
 const styles = StyleSheet.create({

@@ -1,12 +1,14 @@
-import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNull, sql } from 'drizzle-orm';
 
 import { db } from '../db';
 import { cropCalendar } from '../db/schema/cropCalendar';
+import { farmers, lands } from '../db/schema/farmers';
 import { mandiPrices } from '../db/schema/mandiPrices';
 import { notifications } from '../db/schema/notifications';
 import { pushTokens } from '../db/schema/pushTokens';
 import { weather } from '../db/schema/weather';
 import { createAndPushNotification } from './notificationInboxService';
+import { tNotif } from './notificationCopy';
 import { getFarmerPushTokens } from './pushNotificationService';
 
 const WEATHER_THRESHOLDS = {
@@ -36,6 +38,27 @@ async function getFarmerCropIds(farmerId: string): Promise<string[]> {
   return [...new Set(rows.map((r) => r.cropId))];
 }
 
+async function getFarmerLanguage(farmerId: string): Promise<string> {
+  const [row] = await db
+    .select({ language: farmers.language })
+    .from(farmers)
+    .where(eq(farmers.id, farmerId))
+    .limit(1);
+  return row?.language ?? 'te';
+}
+
+async function getFarmerLandContext(farmerId: string): Promise<{
+  state: string | null;
+  district: string | null;
+}> {
+  const [land] = await db
+    .select({ state: lands.state, district: lands.district })
+    .from(lands)
+    .where(eq(lands.farmerId, farmerId))
+    .limit(1);
+  return { state: land?.state ?? null, district: land?.district ?? null };
+}
+
 async function getLatestWeatherRow(farmerId: string) {
   const [farmerRow] = await db
     .select()
@@ -45,34 +68,66 @@ async function getLatestWeatherRow(farmerId: string) {
     .limit(1);
   if (farmerRow) return farmerRow;
 
-  const [globalRow] = await db.select().from(weather).orderBy(desc(weather.fetchedAt)).limit(1);
-  return globalRow ?? null;
+  // Prefer global snapshot matching farmer state/district label — never a random other farmer's row.
+  const { state, district } = await getFarmerLandContext(farmerId);
+  const [globalRows] = await Promise.all([
+    db
+      .select()
+      .from(weather)
+      .where(isNull(weather.farmerId))
+      .orderBy(desc(weather.fetchedAt))
+      .limit(40),
+  ]);
+
+  const needle = `${district ?? ''} ${state ?? ''}`.toLowerCase();
+  if (needle.trim()) {
+    const match = globalRows.find((r) => {
+      const label = `${r.locationName ?? ''}`.toLowerCase();
+      return (
+        (district && label.includes(district.toLowerCase())) ||
+        (state && label.includes(state.toLowerCase().split(' ')[0] ?? ''))
+      );
+    });
+    if (match) return match;
+  }
+
+  // Hyderabad is the default AP/TG snapshot used by weather sync.
+  return (
+    globalRows.find((r) => `${r.locationName ?? ''}`.toLowerCase().includes('hyderabad')) ??
+    globalRows[0] ??
+    null
+  );
 }
 
-function buildWeatherAlerts(row: typeof weather.$inferSelect): PendingFarmAlert[] {
+function buildWeatherAlerts(
+  row: typeof weather.$inferSelect,
+  lang: string,
+): PendingFarmAlert[] {
   const alerts: PendingFarmAlert[] = [];
   const temp = Number(row.temperature ?? 0);
   const rain = Number(row.precipitation ?? 0);
   const wind = Number(row.windSpeed ?? 0);
   const hourly = (row.hourly ?? []) as Array<{ precipitation?: number }>;
-  const maxHourlyRain = hourly.slice(0, 8).reduce((max, h) => Math.max(max, Number(h.precipitation ?? 0)), 0);
+  const maxHourlyRain = hourly
+    .slice(0, 8)
+    .reduce((max, h) => Math.max(max, Number(h.precipitation ?? 0)), 0);
   const maxRain = Math.max(rain, maxHourlyRain);
 
   if (maxRain >= WEATHER_THRESHOLDS.heavyRainPercent) {
     alerts.push({
       alertKey: `weather-heavy-rain-${row.locationName}`,
       type: 'weather_alert',
-      title: '⛈️ Heavy rain expected',
-      body: `Next few hours ${maxRain}% rain chance — spray cheyakandi, fertilizer postpone cheyandi.`,
-      data: { rainPercent: maxRain, source: 'realtime_cron' },
+      title: tNotif(lang, 'heavyRainTitle'),
+      body: tNotif(lang, 'heavyRainBody', { rain: maxRain }),
+      data: { rainPercent: maxRain, source: 'realtime_cron', language: lang },
     });
   } else if (maxRain >= WEATHER_THRESHOLDS.rainChancePercent) {
     alerts.push({
       alertKey: `weather-rain-${row.locationName}`,
       type: 'weather_alert',
-      title: '🌧️ Rain possible today',
-      body: `${maxRain}% rain chance — pesticide spray ki manchidi kaadu. Irrigation plan check cheyandi.`,
-      data: { rainPercent: maxRain, source: 'realtime_cron' },
+      title: tNotif(lang, 'rainTitle'),
+      body: tNotif(lang, 'rainBody', { rain: maxRain }),
+      data: { rainPercent: maxRain, source: 'realtime_cron', language: lang },
     });
   }
 
@@ -80,9 +135,9 @@ function buildWeatherAlerts(row: typeof weather.$inferSelect): PendingFarmAlert[
     alerts.push({
       alertKey: `weather-heat-${row.locationName}-${Math.round(temp)}`,
       type: 'weather_alert',
-      title: '🌡️ High temperature',
-      body: `Current ${temp}°C — midday spray avoid cheyandi, irrigation morning/evening.`,
-      data: { tempC: temp, source: 'realtime_cron' },
+      title: tNotif(lang, 'heatTitle'),
+      body: tNotif(lang, 'heatBody', { temp }),
+      data: { tempC: temp, source: 'realtime_cron', language: lang },
     });
   }
 
@@ -90,27 +145,54 @@ function buildWeatherAlerts(row: typeof weather.$inferSelect): PendingFarmAlert[
     alerts.push({
       alertKey: `weather-wind-${row.locationName}`,
       type: 'weather_alert',
-      title: '💨 Strong wind',
-      body: `Wind ${wind.toFixed(0)} km/h — spraying effective kaadu.`,
-      data: { windKmh: wind, source: 'realtime_cron' },
+      title: tNotif(lang, 'windTitle'),
+      body: tNotif(lang, 'windBody', { wind: wind.toFixed(0) }),
+      data: { windKmh: wind, source: 'realtime_cron', language: lang },
     });
   }
 
   return alerts;
 }
 
-async function buildMandiAlerts(cropIds: string[]): Promise<PendingFarmAlert[]> {
+async function buildMandiAlerts(
+  cropIds: string[],
+  lang: string,
+  state: string | null,
+  district: string | null,
+): Promise<PendingFarmAlert[]> {
   if (!cropIds.length) return [];
 
   const alerts: PendingFarmAlert[] = [];
 
   for (const cropId of cropIds.slice(0, 6)) {
-    const [latest] = await db
+    const conditions = [eq(mandiPrices.cropId, cropId)];
+    if (state) conditions.push(eq(mandiPrices.state, state));
+    if (district) conditions.push(eq(mandiPrices.district, district));
+
+    let [latest] = await db
       .select()
       .from(mandiPrices)
-      .where(eq(mandiPrices.cropId, cropId))
+      .where(and(...conditions))
       .orderBy(desc(mandiPrices.fetchedAt))
       .limit(1);
+
+    // Fall back to state-only, then any market for that crop.
+    if (!latest && district && state) {
+      [latest] = await db
+        .select()
+        .from(mandiPrices)
+        .where(and(eq(mandiPrices.cropId, cropId), eq(mandiPrices.state, state)))
+        .orderBy(desc(mandiPrices.fetchedAt))
+        .limit(1);
+    }
+    if (!latest) {
+      [latest] = await db
+        .select()
+        .from(mandiPrices)
+        .where(eq(mandiPrices.cropId, cropId))
+        .orderBy(desc(mandiPrices.fetchedAt))
+        .limit(1);
+    }
     if (!latest) continue;
 
     const [older] = await db
@@ -119,6 +201,7 @@ async function buildMandiAlerts(cropIds: string[]): Promise<PendingFarmAlert[]> 
       .where(
         and(
           eq(mandiPrices.cropId, cropId),
+          eq(mandiPrices.market, latest.market),
           sql`${mandiPrices.fetchedAt} < ${latest.fetchedAt} - interval '20 hours'`,
         ),
       )
@@ -135,19 +218,30 @@ async function buildMandiAlerts(cropIds: string[]): Promise<PendingFarmAlert[]> 
 
     const up = changePct > 0;
     const variety = latest.varietyName ? ` (${latest.varietyName})` : '';
+    const change = `${up ? '+' : ''}${changePct.toFixed(1)}`;
     alerts.push({
-      alertKey: `mandi-${cropId}-${latest.varietyName ?? 'default'}-${up ? 'up' : 'down'}`,
+      alertKey: `mandi-${cropId}-${latest.market}-${latest.varietyName ?? 'default'}-${up ? 'up' : 'down'}`,
       type: 'mandi_alert',
-      title: up
-        ? `📈 ${latest.commodity} rate perigindi`
-        : `📉 ${latest.commodity} rate taggindi`,
-      body: `${latest.commodity}${variety}: ₹${oldPrice} → ₹${newPrice}/qtl (${up ? '+' : ''}${changePct.toFixed(1)}%)`,
+      title: tNotif(lang, up ? 'mandiUpTitle' : 'mandiDownTitle', {
+        crop: latest.commodity,
+      }),
+      body: tNotif(lang, 'mandiBody', {
+        crop: latest.commodity,
+        variety,
+        old: oldPrice,
+        new: newPrice,
+        change,
+      }),
       data: {
         cropId,
         changePct,
         oldPrice,
         newPrice,
+        market: latest.market,
+        district: latest.district,
+        state: latest.state,
         source: 'realtime_cron',
+        language: lang,
       },
     });
   }
@@ -166,10 +260,14 @@ async function wasAlertSentRecently(farmerId: string, alertKey: string): Promise
 }
 
 export async function collectPendingAlertsForFarmer(farmerId: string): Promise<PendingFarmAlert[]> {
-  const cropIds = await getFarmerCropIds(farmerId);
+  const [cropIds, lang, land] = await Promise.all([
+    getFarmerCropIds(farmerId),
+    getFarmerLanguage(farmerId),
+    getFarmerLandContext(farmerId),
+  ]);
   const weatherRow = await getLatestWeatherRow(farmerId);
-  const weatherAlerts = weatherRow ? buildWeatherAlerts(weatherRow) : [];
-  const mandiAlerts = await buildMandiAlerts(cropIds);
+  const weatherAlerts = weatherRow ? buildWeatherAlerts(weatherRow, lang) : [];
+  const mandiAlerts = await buildMandiAlerts(cropIds, lang, land.state, land.district);
   return [...weatherAlerts, ...mandiAlerts];
 }
 

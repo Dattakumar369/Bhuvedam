@@ -1,4 +1,6 @@
 import { CROPS } from '@/constants/crops';
+import { tNotif } from '@/constants/notificationCopy';
+import { useLanguageStore } from '@/store/languageStore';
 import type { FarmAlert } from '@/types/alerts';
 import { generateId } from '@/utils/format';
 
@@ -56,15 +58,18 @@ function seasonWindowAlert(cropId: string, kind: 'sowing' | 'harvest'): FarmAler
   const period = kind === 'sowing' ? crop.sowingPeriod : crop.harvestPeriod;
   if (!period || !periodMatchesMonth(period, month)) return null;
 
+  const lang = useLanguageStore.getState().language;
+  const cropLabel = lang === 'te' && crop.nameTe ? crop.nameTe : crop.name;
   const isSowing = kind === 'sowing';
   return {
     id: generateId(),
     type: isSowing ? 'crop_sowing' : 'crop_harvest',
     severity: isSowing ? 'info' : 'warning',
-    title: isSowing ? `${crop.nameTe} — విత్తన కాలం` : `${crop.nameTe} — కోత కాలం`,
-    body: isSowing
-      ? `ఈ నెల ${crop.name} (${crop.nameTe}) విత్తడానికి సమయం. విత్తన కాలం: ${crop.sowingPeriod}`
-      : `ఈ నెల ${crop.name} (${crop.nameTe}) కోత కాలం. Harvest: ${crop.harvestPeriod}`,
+    title: tNotif(lang, isSowing ? 'sowingTitle' : 'harvestTitle', { crop: cropLabel }),
+    body: tNotif(lang, isSowing ? 'sowingBody' : 'harvestBody', {
+      crop: cropLabel,
+      period,
+    }),
     createdAt: new Date().toISOString(),
     read: false,
     data: { cropId: crop.id, kind },
@@ -79,11 +84,9 @@ export function buildCropCalendarAlerts(farmerCropIds: string[]): FarmAlert[] {
     for (const kind of ['sowing', 'harvest'] as const) {
       const key = `${cropId}-${kind}`;
       if (seen.has(key)) continue;
+      seen.add(key);
       const alert = seasonWindowAlert(cropId, kind);
-      if (alert) {
-        seen.add(key);
-        alerts.push(alert);
-      }
+      if (alert) alerts.push(alert);
     }
   }
 

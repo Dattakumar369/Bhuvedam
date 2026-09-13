@@ -1,3 +1,5 @@
+import type { LanguageCode } from '@/constants/languages';
+import { getFieldMeasureMessages } from '@/constants/i18n/fieldMeasureTranslations';
 import type { Coordinates } from '@/types/location';
 
 const SQ_METERS_PER_ACRE = 4046.8564224;
@@ -44,30 +46,32 @@ export function formatAreaDisplay(
   areaAcres: number,
   areaCents?: number,
   source?: 'patta' | 'tape' | 'gps' | 'map',
+  language: LanguageCode = 'en',
 ): {
   primary: string;
   secondary: string;
   full: string;
   badge: string;
 } {
+  const fm = getFieldMeasureMessages(language);
   const cents = roundCents(areaCents ?? acresToCents(areaAcres));
   const acres = roundAcres(areaCents != null ? centsToAcres(cents) : areaAcres);
 
   const badge =
     source === 'gps'
-      ? 'GPS estimate / సుమారు'
+      ? fm.badgeGps
       : source === 'map'
-        ? 'Map draw / మ్యాప్ లో గీసి'
+        ? fm.badgeMap
         : source === 'tape'
-        ? 'Exact — tape measure / లేఖీ exact'
-        : source === 'patta'
-          ? 'Exact — patta / పట్టా exact'
-          : '';
+          ? fm.badgeTape
+          : source === 'patta'
+            ? fm.badgePatta
+            : '';
 
   return {
-    primary: `${cents} cents / ${cents} సెంట్లు`,
-    secondary: `${acres} acres / ${acres} ఎకరాలు`,
-    full: `${cents} cents (${acres} acres / ${acres} ఎకరాలు)${badge ? ` · ${badge}` : ''}`,
+    primary: fm.areaPrimary(cents),
+    secondary: fm.areaSecondary(acres),
+    full: fm.areaFull(cents, acres, badge),
     badge,
   };
 }
@@ -92,15 +96,19 @@ export function formatAreaLabel(
   areaAcres: number,
   areaCents?: number,
   source?: 'patta' | 'tape' | 'gps' | 'map',
+  language: LanguageCode = 'en',
 ): string {
-  return formatAreaDisplay(areaAcres, areaCents, source).full;
+  return formatAreaDisplay(areaAcres, areaCents, source, language).full;
 }
 
-export function formatAreaFromMeasurement(measurement: {
-  areaAcres: number;
-  areaCents: number;
-}): string {
-  return formatAreaLabel(measurement.areaAcres, measurement.areaCents);
+export function formatAreaFromMeasurement(
+  measurement: {
+    areaAcres: number;
+    areaCents: number;
+  },
+  language: LanguageCode = 'en',
+): string {
+  return formatAreaLabel(measurement.areaAcres, measurement.areaCents, undefined, language);
 }
 
 export function parseAcresInput(value: string): number | null {

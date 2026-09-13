@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, Header } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
 import { FieldGpsMeasure } from '@/features/crop/components/FieldGpsMeasure';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useFarmerContextStore } from '@/store/farmerContextStore';
 import type { FieldMeasurement } from '@/types/fieldMeasure';
 import { formatAreaDisplay } from '@/utils/geoArea';
@@ -13,6 +14,7 @@ import { colors, layout, spacing } from '@/theme';
 
 export default function MeasureFieldScreen() {
   const insets = useSafeAreaInsets();
+  const { fm, screens, language } = useTranslation();
   const fieldMeasurement = useFarmerContextStore((s) => s.fieldMeasurement);
   const setFieldMeasurement = useFarmerContextStore((s) => s.setFieldMeasurement);
   const [saved, setSaved] = useState(false);
@@ -24,12 +26,12 @@ export default function MeasureFieldScreen() {
 
   const lastDisplay =
     fieldMeasurement != null
-      ? formatAreaDisplay(fieldMeasurement.areaAcres, fieldMeasurement.areaCents, 'gps')
+      ? formatAreaDisplay(fieldMeasurement.areaAcres, fieldMeasurement.areaCents, 'gps', language)
       : null;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Header title="Polam Koluvu" showBack onBack={() => router.back()} />
+      <Header title={screens.measureFieldTitle} showBack onBack={() => router.back()} />
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
@@ -37,19 +39,14 @@ export default function MeasureFieldScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Card variant="elevated" style={styles.intro}>
-          <Title style={styles.introTitle}>GPS tho polam kolavandi</Title>
-          <Body style={styles.introBody}>
-            Map draw — village search chesi polam boundary giyandi. Prati moola tap chesi, pin drag
-            chesi exact shape cover cheyandi. Line madhya tap cheste extra moola add avutundi.
-          </Body>
-          <Caption style={styles.introNote}>
-            GPS ±2–5m error untundi — exact size ki patta/tape measure use cheyandi. Open sky must.
-          </Caption>
+          <Title style={styles.introTitle}>{fm.measureIntroTitle}</Title>
+          <Body style={styles.introBody}>{fm.measureIntroBody}</Body>
+          <Caption style={styles.introNote}>{fm.measureIntroNote}</Caption>
         </Card>
 
         {lastDisplay && !saved ? (
           <Card variant="outlined" style={styles.lastBox}>
-            <Caption style={styles.lastLabel}>Last GPS measurement</Caption>
+            <Caption style={styles.lastLabel}>{screens.measureLastGps}</Caption>
             <Body style={styles.lastValue}>{lastDisplay.primary}</Body>
             <Caption style={styles.lastSub}>{lastDisplay.secondary}</Caption>
           </Card>
@@ -57,7 +54,7 @@ export default function MeasureFieldScreen() {
 
         {saved && lastDisplay ? (
           <Card variant="elevated" style={styles.savedBox}>
-            <Caption style={styles.savedLabel}>✓ Saved</Caption>
+            <Caption style={styles.savedLabel}>{screens.measureSaved}</Caption>
             <Body style={styles.savedValue}>{lastDisplay.primary}</Body>
             <Caption style={styles.savedSub}>{lastDisplay.secondary}</Caption>
           </Card>

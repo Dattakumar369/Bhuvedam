@@ -11,9 +11,17 @@ interface GradientHeaderProps {
   subtitle?: string;
   greeting?: string;
   children?: React.ReactNode;
+  /** Less bottom padding when header already has a profile block */
+  dense?: boolean;
 }
 
-export function GradientHeader({ title, subtitle, greeting, children }: GradientHeaderProps) {
+export function GradientHeader({
+  title,
+  subtitle,
+  greeting,
+  children,
+  dense = false,
+}: GradientHeaderProps) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -21,7 +29,13 @@ export function GradientHeader({ title, subtitle, greeting, children }: Gradient
       colors={[...colors.gradient.header]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={[styles.gradient, { paddingTop: insets.top + spacing.lg }]}
+      style={[
+        styles.gradient,
+        {
+          paddingTop: insets.top + spacing.lg,
+          paddingBottom: dense ? spacing.xl + spacing.md : spacing.xxxl,
+        },
+      ]}
     >
       <Animated.View entering={FadeInDown.springify()}>
         {greeting ? <Caption style={styles.greeting}>{greeting}</Caption> : null}
@@ -36,7 +50,6 @@ export function GradientHeader({ title, subtitle, greeting, children }: Gradient
 const styles = StyleSheet.create({
   gradient: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxxl,
     borderBottomLeftRadius: radius.xxl,
     borderBottomRightRadius: radius.xxl,
   },

@@ -1,18 +1,14 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, UrlTile, type Region } from 'react-native-maps';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 
 import { MapErrorBoundary } from '@/components/MapErrorBoundary';
 import { SearchInput } from '@/components/ui';
 import { Caption } from '@/components/ui/Typography';
 import { isGoogleMapsConfigured } from '@/constants/mapsConfig';
-import {
-  FIELD_BASEMAP_LAYERS,
-  getFieldBasemap,
-  type FieldBasemapId,
-} from '@/constants/mapStyles';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   FIELD_CLOSE_DELTA,
   FIELD_DEFAULT_REGION,
@@ -46,6 +42,10 @@ interface FieldInteractiveMapProps {
 const MAP_HEIGHT = 420;
 const FIT_PADDING = { top: 72, right: 56, bottom: 56, left: 56 };
 
+function streetViewUrl(lat: number, lng: number): string {
+  return `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
+}
+
 function regionFromPoints(points: Coordinates[], live?: Coordinates | null): Region {
   const all = [...points];
   if (live) all.push(live);
@@ -78,14 +78,12 @@ function FieldInteractiveMapInner({
   onSelectPoint,
   onRemovePoint,
 }: FieldInteractiveMapProps) {
+  const { fm } = useTranslation();
   const mapRef = useRef<MapView>(null);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const draggingRef = useRef(false);
   const [ready, setReady] = useState(false);
-  const [mapLayer, setMapLayer] = useState<FieldBasemapId>('recent');
   const [region, setRegion] = useState<Region>(FIELD_DEFAULT_REGION);
-  const basemap = getFieldBasemap(mapLayer);
-  const usesCustomTiles = Boolean(basemap.urlTemplate);
   const [areaLabel, setAreaLabel] = useState<string | null>(null);
   const [placeQuery, setPlaceQuery] = useState('');
   const [placeResults, setPlaceResults] = useState<PlaceSearchResult[]>([]);
@@ -151,6 +149,12 @@ function FieldInteractiveMapInner({
     },
     [region],
   );
+
+  const openStreetView = useCallback(() => {
+    const lat = livePosition?.latitude ?? region.latitude;
+    const lng = livePosition?.longitude ?? region.longitude;
+    void Linking.openURL(streetViewUrl(lat, lng));
+  }, [livePosition, region.latitude, region.longitude]);
 
   useEffect(() => {
     if (mode === 'draw' || mode === 'corner') void centerOnUser();
@@ -221,21 +225,19 @@ function FieldInteractiveMapInner({
   if (!isGoogleMapsConfigured()) {
     return (
       <View style={[styles.box, styles.placeholder]}>
-        <Caption style={styles.placeholderText}>
-          Google Maps key ledu — satellite map + adjust ki new APK avasaram.
-        </Caption>
+        <Caption style={styles.placeholderText}>{fm.mapKeyMissing}</Caption>
       </View>
     );
   }
 
   const hintText =
     mode === 'draw'
-      ? 'Map tap = moola add · line meeda tap = madhya moola · pin drag = adjust'
+      ? fm.mapHintDraw
       : mode === 'corner'
-        ? 'GPS pin chesi marker drag chesi adjust cheyandi'
+        ? fm.mapHintCorner
         : walking
-          ? 'Polam chuttu tirugutunnaru — map lo live path kanipistundi'
-          : 'Walk aipoyaka moolalu drag chesi adjust cheyochu';
+          ? fm.mapHintWalkLive
+          : fm.mapHintWalkDone;
 
   return (
     <View style={styles.wrap}>
@@ -244,10 +246,10 @@ function FieldInteractiveMapInner({
           <SearchInput
             value={placeQuery}
             onChangeText={setPlaceQuery}
-            placeholder="Village / road / mandal search — polam daggaraki map vellandi"
+            placeholder={fm.mapSearchPlaceholder}
           />
           {placeSearching ? (
-            <Caption style={styles.searchStatus}>Searching…</Caption>
+            <Caption style={styles.searchStatus}>{fm.mapSearching}</Caption>
           ) : null}
           {placeResults.length > 0 ? (
             <ScrollView style={styles.results} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
@@ -276,20 +278,14 @@ function FieldInteractiveMapInner({
       <View style={styles.toolbar}>
         <Caption style={styles.hint}>{hintText}</Caption>
         <View style={styles.toolRow}>
-          {FIELD_BASEMAP_LAYERS.map((layer) => {
-            const active = mapLayer === layer.id;
-            return (
-              <Pressable
-                key={layer.id}
-                style={[styles.layerChip, active && styles.layerChipActive]}
-                onPress={() => setMapLayer(layer.id)}
-              >
-                <Caption style={[styles.layerText, active && styles.layerTextActive]}>
-                  {layer.label}
-                </Caption>
-              </Pressable>
-            );
-          })}
+          <Pressable
+            style={[styles.toolBtn, styles.streetViewBtn]}
+            onPress={openStreetView}
+            accessibilityLabel={fm.mapStreetView}
+          >
+            <MaterialCommunityIcons name="rotate-360" size={20} color={colors.surface} />
+            <Caption style={styles.streetViewText}>360°</Caption>
+          </Pressable>
           <Pressable style={styles.toolBtn} onPress={() => handleZoom('in')} accessibilityLabel="Zoom in">
             <MaterialCommunityIcons name="plus" size={22} color={colors.primary} />
           </Pressable>
@@ -303,11 +299,12 @@ function FieldInteractiveMapInner({
           <Pressable style={styles.toolBtn} onPress={() => handleZoom('out')} accessibilityLabel="Zoom out">
             <MaterialCommunityIcons name="minus" size={22} color={colors.primary} />
           </Pressable>
-          <Pressable style={styles.toolBtn} onPress={() => void centerOnUser()} accessibilityLabel="My location">
+          <Pressable style={styles.toolBtn} onPress={() => void centerOnUser()} accessibilityLabel={fm.mapCenterOnMe}>
             <MaterialCommunityIcons name="crosshairs-gps" size={22} color={colors.primary} />
           </Pressable>
         </View>
-        <Caption style={styles.layerHint}>{basemap.hint}</Caption>
+        <Caption style={styles.layerHint}>{fm.mapStreetViewHint}</Caption>
+        <Caption style={styles.layerHint}>{fm.mapRotateHint}</Caption>
       </View>
 
       <View style={styles.box}>
@@ -315,7 +312,7 @@ function FieldInteractiveMapInner({
           ref={mapRef}
           style={styles.map}
           provider={PROVIDER_GOOGLE}
-          mapType={basemap.googleMapType ?? 'hybrid'}
+          mapType="hybrid"
           initialRegion={initialRegion}
           onMapReady={() => {
             setReady(true);
@@ -325,26 +322,15 @@ function FieldInteractiveMapInner({
           onPress={ready && tappable ? handleMapPress : undefined}
           showsUserLocation
           showsMyLocationButton={false}
-          showsCompass={false}
-          rotateEnabled={false}
+          showsCompass
+          rotateEnabled
           scrollEnabled
           zoomEnabled
-          pitchEnabled={false}
+          pitchEnabled
           loadingEnabled
           minZoomLevel={FIELD_MAP_MIN_ZOOM}
-          maxZoomLevel={usesCustomTiles ? Math.min(FIELD_MAP_MAX_ZOOM, basemap.maxZoom + 2) : FIELD_MAP_MAX_ZOOM}
+          maxZoomLevel={FIELD_MAP_MAX_ZOOM}
         >
-          {usesCustomTiles && basemap.urlTemplate ? (
-            <UrlTile
-              key={basemap.id}
-              urlTemplate={basemap.urlTemplate}
-              maximumZ={basemap.maxZoom}
-              flipY={false}
-              zIndex={-1}
-              shouldReplaceMapContent
-            />
-          ) : null}
-
           {pathCoords.length >= 2 ? (
             <Polyline
               coordinates={pathCoords}
@@ -385,9 +371,6 @@ function FieldInteractiveMapInner({
                   draggingRef.current = false;
                   onMovePoint?.(index, e.nativeEvent.coordinate);
                 }}
-                onLongPress={() => {
-                  if (editable && onRemovePoint) onRemovePoint(index);
-                }}
                 tracksViewChanges={selected}
                 zIndex={selected ? 999 : index + 1}
               >
@@ -407,7 +390,7 @@ function FieldInteractiveMapInner({
           {mode === 'walk' && walking && livePosition ? (
             <Marker
               coordinate={livePosition}
-              title="Ippudu ikkada"
+              title={fm.mapLiveMarker}
               pinColor="blue"
               tracksViewChanges={false}
             />
@@ -416,18 +399,18 @@ function FieldInteractiveMapInner({
       </View>
 
       <Caption style={styles.footer}>
-        {points.length} moolalu
-        {editable ? ' · drag adjust · long-press delete' : ''}
-        {' · '}
-        {basemap.attribution}
+        {fm.pointsCorner(points.length)}
+        {editable ? ' · drag to adjust' : ''}
+        {' · Google Hybrid'}
       </Caption>
     </View>
   );
 }
 
 export function FieldInteractiveMap(props: FieldInteractiveMapProps) {
+  const { fm } = useTranslation();
   return (
-    <MapErrorBoundary fallbackMessage="Map load avvaledu — GPS modes try cheyandi.">
+    <MapErrorBoundary fallbackMessage={fm.mapLoadFailed}>
       <FieldInteractiveMapInner {...props} />
     </MapErrorBoundary>
   );
@@ -469,19 +452,22 @@ const styles = StyleSheet.create({
   toolbar: { gap: spacing.xs },
   hint: { color: colors.textSecondary, lineHeight: 18, fontSize: 11 },
   toolRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
-  layerChip: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  layerChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  layerText: { fontFamily: 'Poppins_600SemiBold', color: colors.primary, fontSize: 11 },
-  layerTextActive: { color: colors.surface },
   layerHint: { color: colors.textTertiary, fontSize: 10, lineHeight: 14 },
   ultraBtn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  streetViewBtn: {
+    width: 'auto',
+    minWidth: 64,
+    paddingHorizontal: spacing.sm,
+    flexDirection: 'row',
+    gap: 4,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  streetViewText: {
+    color: colors.surface,
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 12,
+  },
   toolBtn: {
     width: 36,
     height: 36,

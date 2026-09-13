@@ -1,4 +1,6 @@
 import { WEATHER_ALERT_THRESHOLDS } from '@/constants/alertConfig';
+import { tNotif } from '@/constants/notificationCopy';
+import { useLanguageStore } from '@/store/languageStore';
 import type { FarmAlert } from '@/types/alerts';
 import type { WeatherData } from '@/types/weather';
 import { generateId } from '@/utils/format';
@@ -6,6 +8,7 @@ import { generateId } from '@/utils/format';
 export function buildWeatherAlerts(data: WeatherData | null): FarmAlert[] {
   if (!data) return [];
 
+  const lang = useLanguageStore.getState().language;
   const alerts: FarmAlert[] = [];
   const now = new Date().toISOString();
   const { current, daily, hourly } = data;
@@ -19,8 +22,8 @@ export function buildWeatherAlerts(data: WeatherData | null): FarmAlert[] {
       id: generateId(),
       type: 'weather_rain',
       severity: 'urgent',
-      title: '⛈️ Heavy rain expected',
-      body: `Next few hours ${maxRain}% rain chance — spray cheyakandi, fertilizer postpone cheyandi.`,
+      title: tNotif(lang, 'heavyRainTitle'),
+      body: tNotif(lang, 'heavyRainBody', { rain: maxRain }),
       createdAt: now,
       read: false,
       data: { rainPercent: maxRain },
@@ -30,8 +33,8 @@ export function buildWeatherAlerts(data: WeatherData | null): FarmAlert[] {
       id: generateId(),
       type: 'weather_rain',
       severity: 'warning',
-      title: '🌧️ Rain possible today',
-      body: `${maxRain}% rain chance — pesticide spray ki manchidi kaadu. Irrigation plan check cheyandi.`,
+      title: tNotif(lang, 'rainTitle'),
+      body: tNotif(lang, 'rainBody', { rain: maxRain }),
       createdAt: now,
       read: false,
       data: { rainPercent: maxRain },
@@ -43,8 +46,8 @@ export function buildWeatherAlerts(data: WeatherData | null): FarmAlert[] {
       id: generateId(),
       type: 'weather_heat',
       severity: 'warning',
-      title: '🌡️ High temperature',
-      body: `Current ${current.temperature}°C — midday spray avoid cheyandi, irrigation morning/evening.`,
+      title: tNotif(lang, 'heatTitle'),
+      body: tNotif(lang, 'heatBody', { temp: current.temperature }),
       createdAt: now,
       read: false,
       data: { tempC: current.temperature },
@@ -56,8 +59,8 @@ export function buildWeatherAlerts(data: WeatherData | null): FarmAlert[] {
       id: generateId(),
       type: 'weather_wind',
       severity: 'info',
-      title: '💨 Strong wind',
-      body: `Wind ${maxWind.toFixed(0)} km/h — spraying effective kaadu.`,
+      title: tNotif(lang, 'windTitle'),
+      body: tNotif(lang, 'windBody', { wind: maxWind.toFixed(0) }),
       createdAt: now,
       read: false,
       data: { windKmh: maxWind },
@@ -70,8 +73,12 @@ export function buildWeatherAlerts(data: WeatherData | null): FarmAlert[] {
       id: generateId(),
       type: 'weather_rain',
       severity: 'info',
-      title: `🌧️ ${tomorrow.day}: rain expected`,
-      body: `Repu ${tomorrow.high}°/${tomorrow.low}°C, rain ${tomorrow.precipitation}% — field work plan mundu cheyandi.`,
+      title: tNotif(lang, 'tomorrowRainTitle', { day: tomorrow.day }),
+      body: tNotif(lang, 'tomorrowRainBody', {
+        high: tomorrow.high,
+        low: tomorrow.low,
+        rain: tomorrow.precipitation,
+      }),
       createdAt: now,
       read: false,
       data: { day: tomorrow.day },

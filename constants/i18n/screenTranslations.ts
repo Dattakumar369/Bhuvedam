@@ -212,8 +212,8 @@ const te: ScreenTranslations = {
   allCrops: 'అన్ని పంటలు',
   catalogBanner: 'CIB&RC reference — dealer pack label verify cheyandi.',
   tryAgain: 'మళ్లీ ప్రయత్నించండి',
-  measureLastGps: 'Last GPS measurement',
-  measureSaved: '✓ Saved',
+  measureLastGps: 'చివరి GPS కొలత',
+  measureSaved: '✓ సేవ్ అయింది',
   mandiSearchPlaceholder: 'Variety search — Masoori, 1010, BPT, hybrid...',
   mandiSubtitle:
     'Prati panta ki 100+ varieties untayi — Agmarknet nunchi live ga anni varieties fetch chestam. Okko rakam ki okko rate.',
@@ -573,7 +573,7 @@ export function getScreenTranslations(language: LanguageCode): ScreenTranslation
   return SCREEN_TRANSLATIONS[language] ?? en;
 }
 
-/** Pick localized catalog title (configs store te + en). */
+/** Pick localized catalog title (configs store te + en; hi uses English title from app). */
 export function catalogTitle(
   language: LanguageCode,
   titleTe: string,

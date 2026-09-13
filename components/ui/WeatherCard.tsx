@@ -4,20 +4,27 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Card } from '@/components/ui/Card';
-import { Caption, Display, Subtitle, Title } from '@/components/ui/Typography';
+import { Caption, Display, Subtitle } from '@/components/ui/Typography';
 import { WEATHER_CONDITIONS } from '@/constants/weather';
 import type { WeatherData } from '@/types/weather';
-import { formatPercentage, formatTemperature, formatWindSpeed } from '@/utils/format';
+import {
+  formatPercentage,
+  formatTemperature,
+  formatWindSpeed,
+  shortLocationLabel,
+} from '@/utils/format';
 import { colors, radius, spacing } from '@/theme';
 
 interface WeatherCardProps {
   data: WeatherData;
   compact?: boolean;
+  lastUpdated?: string | null;
 }
 
-export function WeatherCard({ data, compact = false }: WeatherCardProps) {
+export function WeatherCard({ data, compact = false, lastUpdated }: WeatherCardProps) {
   const condition = WEATHER_CONDITIONS[data.current.condition];
   const iconName = condition?.icon ?? 'weather-partly-cloudy';
+  const place = shortLocationLabel(data.location, 2);
 
   if (compact) {
     return (
@@ -29,9 +36,23 @@ export function WeatherCard({ data, compact = false }: WeatherCardProps) {
           style={styles.compactGradient}
         >
           <View style={styles.compactHeader}>
-            <View>
+            <View style={styles.compactHeaderText}>
               <Caption style={styles.onGradientMuted}>Today&apos;s Weather</Caption>
-              <Title style={styles.onGradient}>{data.location}</Title>
+              <View style={styles.placeRow}>
+                <MaterialCommunityIcons name="map-marker" size={14} color="rgba(255,255,255,0.9)" />
+                <Caption style={styles.placeText} numberOfLines={1}>
+                  {place}
+                </Caption>
+              </View>
+              {lastUpdated ? (
+                <Caption style={styles.updatedOnCard}>
+                  Updated{' '}
+                  {new Date(lastUpdated).toLocaleTimeString('en-IN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Caption>
+              ) : null}
             </View>
             <MaterialCommunityIcons name={iconName as never} size={48} color={colors.white} />
           </View>
@@ -50,7 +71,7 @@ export function WeatherCard({ data, compact = false }: WeatherCardProps) {
   return (
     <Animated.View entering={FadeIn.duration(600)}>
       <LinearGradient colors={[...colors.gradient.header]} style={styles.fullHeader}>
-        <Caption style={styles.onGradientMuted}>{data.location}</Caption>
+        <Caption style={styles.onGradientMuted}>{place}</Caption>
         <MaterialCommunityIcons name={iconName as never} size={80} color={colors.white} style={styles.mainIcon} />
         <Display style={[styles.onGradient, styles.mainTemp]}>
           {formatTemperature(data.current.temperature)}
@@ -82,6 +103,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+  compactHeaderText: { flex: 1, paddingRight: spacing.sm, gap: 4 },
+  placeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  placeText: {
+    flex: 1,
+    color: colors.white,
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 13,
+  },
+  updatedOnCard: { color: 'rgba(255,255,255,0.65)', fontSize: 10 },
   compactTemp: {
     color: colors.white,
     fontSize: 48,

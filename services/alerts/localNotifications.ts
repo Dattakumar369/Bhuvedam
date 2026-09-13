@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
+import { dailyReminderCopy } from '@/constants/notificationCopy';
 import type { FarmAlert } from '@/types/alerts';
 
 /** Push/local scheduling is limited in Expo Go SDK 53+ — in-app alerts still work */
@@ -91,11 +92,16 @@ export async function scheduleDailyAlertCheck(hour = 7, minute = 0): Promise<voi
 
   await Notifications.cancelAllScheduledNotificationsAsync();
 
+  // Dynamic import avoids circular dependency with languageStore.
+  const { useLanguageStore } = await import('@/store/languageStore');
+  const lang = useLanguageStore.getState().language;
+  const copy = dailyReminderCopy(lang);
+
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: 'Bhuvedam — మీ పొలం update',
-      body: 'Weather & mandi rates check cheyandi',
-      data: { type: 'daily_check' },
+      title: copy.title,
+      body: copy.body,
+      data: { type: 'daily_check', language: lang },
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,

@@ -33,3 +33,9 @@ export const BRAND_COLORS: Record<string, string> = {
 export function categoryLabelTe(category: string): string {
   return FERTILIZER_CATEGORIES.find((c) => c.id === category)?.labelTe ?? category;
 }
+
+export function categoryLabel(category: string, language: 'en' | 'te' | string = 'te'): string {
+  const row = FERTILIZER_CATEGORIES.find((c) => c.id === category);
+  if (!row) return category;
+  return language === 'te' ? row.labelTe : row.labelEn;
+}

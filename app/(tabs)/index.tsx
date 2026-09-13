@@ -14,7 +14,6 @@ import {
   WeatherSkeleton,
 } from '@/components/ui';
 import { Body, Caption } from '@/components/ui/Typography';
-import { LiveLocationBadge } from '@/features/weather/components/LocationBanner';
 import { FarmAlertsCard } from '@/features/alerts/FarmAlertsCard';
 import { getLocalizedGreeting } from '@/constants/i18n/appTranslations';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -31,7 +30,7 @@ export default function HomeScreen() {
   const c = useAppColors();
   const { app, language } = useTranslation();
   const user = useUserStore((s) => s.user);
-  const { data, isLoading, load, location, lastFetched } = useWeather();
+  const { data, isLoading, load, lastFetched } = useWeather();
   const conversations = useAIStore((s) => s.conversations);
   const initializeConversations = useAIStore((s) => s.initializeConversations);
   const refreshAlerts = useAlertStore((s) => s.refreshAlerts);
@@ -64,13 +63,10 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.weatherSection}>
-          {location ? (
-            <LiveLocationBadge location={location.label} lastUpdated={lastFetched} />
-          ) : null}
           {isLoading || !data ? (
             <WeatherSkeleton />
           ) : (
-            <WeatherCard data={data} compact />
+            <WeatherCard data={data} compact lastUpdated={lastFetched} />
           )}
         </View>
 
@@ -199,10 +195,10 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: layout.screenPadding,
-    marginTop: -spacing.xl,
+    marginTop: -spacing.lg,
     gap: spacing.xl,
   },
-  weatherSection: { marginTop: spacing.sm },
+  weatherSection: { marginTop: 0 },
   actionsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -13,13 +13,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Chip, DataFreshnessBadge, Header, ListSkeleton, SearchInput } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
 import { AGRO_BRAND_FILTERS } from '@/constants/agCatalogFilters';
+import { getCatalogBrowseCopy } from '@/constants/i18n/catalogTranslations';
 import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
-import { catalogTitle, filterLabel, getScreenTranslations } from '@/constants/i18n/screenTranslations';
-import { useLanguageStore } from '@/store/languageStore';
+import { filterLabel } from '@/constants/i18n/screenTranslations';
 import { CROPS } from '@/constants/crops';
 import { AgProductCard } from '@/features/catalog/components/AgProductCard';
 import { fetchAgCatalogProducts } from '@/services/catalog/agProductCatalogService';
 import { useFarmerContextStore } from '@/store/farmerContextStore';
+import { useLanguageStore } from '@/store/languageStore';
 import type { AgCatalogProduct, AgCatalogType } from '@/types/agCatalogProduct';
 import { colors, layout, radius, spacing } from '@/theme';
 
@@ -31,17 +32,18 @@ export interface TargetFilter {
 
 export interface CatalogBrowseConfig {
   type: AgCatalogType;
-  titleTe: string;
-  titleEn: string;
-  subtitle: string;
   heroColor: string;
   heroIcon: keyof typeof MaterialCommunityIcons.glyphMap;
-  searchPlaceholder: string;
   basePath: string;
-  sourceLabel: string;
   targetFilters?: TargetFilter[];
-  targetFilterLabel?: string;
   showBrandFilter?: boolean;
+  /** @deprecated titles/subtitles now come from catalogTranslations by language */
+  titleTe?: string;
+  titleEn?: string;
+  subtitle?: string;
+  searchPlaceholder?: string;
+  sourceLabel?: string;
+  targetFilterLabel?: string;
 }
 
 interface AgProductBrowseScreenProps {
@@ -51,9 +53,21 @@ interface AgProductBrowseScreenProps {
 export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
   const insets = useSafeAreaInsets();
   const language = useLanguageStore((s) => s.language);
-  const screens = getScreenTranslations(language);
+  const copy = useMemo(() => getCatalogBrowseCopy(language), [language]);
   const farmerCrops = useFarmerContextStore((s) => s.crops);
-  const pageTitle = catalogTitle(language, config.titleTe, config.titleEn);
+
+  const pageTitle =
+    config.type === 'fungicide' ? copy.fungicidesTitle : copy.pesticidesTitle;
+  const subtitle =
+    config.type === 'fungicide' ? copy.fungicidesSubtitle : copy.pesticidesSubtitle;
+  const searchPlaceholder =
+    config.type === 'fungicide' ? copy.fungicidesSearch : copy.pesticidesSearch;
+  const sourceOfficial =
+    config.type === 'fungicide' ? copy.fungicidesSource : copy.pesticidesSource;
+  const targetFilterLabel =
+    config.type === 'fungicide' ? copy.fungicidesTargetLabel : copy.pesticidesTargetLabel;
+  const freshnessLabel =
+    config.type === 'fungicide' ? copy.fungicidesRefLabel : copy.pesticidesRefLabel;
 
   const [search, setSearch] = useState('');
   const [brand, setBrand] = useState('all');
@@ -86,21 +100,18 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
           : null,
       );
       if (result.source === 'offline' && result.products.length > 0) {
-        const lang = useLanguageStore.getState().language;
-        setError(getUserErrorMessage('PRODUCTS_OFFLINE', lang));
+        setError(getUserErrorMessage('PRODUCTS_OFFLINE', language));
       } else if (result.source === 'offline' && !result.products.length) {
-        const lang = useLanguageStore.getState().language;
-        setError(getUserErrorMessage('PRODUCTS_LOAD_FAILED', lang));
+        setError(getUserErrorMessage('PRODUCTS_LOAD_FAILED', language));
       }
     } catch {
-      const lang = useLanguageStore.getState().language;
-      setError(getUserErrorMessage('PRODUCTS_LOAD_FAILED', lang));
+      setError(getUserErrorMessage('PRODUCTS_LOAD_FAILED', language));
       setProducts([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [config.type, search, brand, crop, target]);
+  }, [config.type, search, brand, crop, target, language]);
 
   useEffect(() => {
     setLoading(true);
@@ -111,17 +122,15 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
   const cropChips = useMemo(() => {
     const ids = farmerCrops.length ? farmerCrops.slice(0, 4) : ['rice', 'cotton', 'chilli', 'tomato'];
     return [
-      { id: 'all', label: screens.allCrops },
+      { id: 'all', label: copy.allCrops },
       ...ids.map((id) => {
         const cropInfo = CROPS.find((c) => c.id === id);
         const label =
-          language === 'te'
-            ? cropInfo?.nameTe ?? cropInfo?.name ?? id
-            : cropInfo?.name ?? id;
+          language === 'te' ? cropInfo?.nameTe ?? cropInfo?.name ?? id : cropInfo?.name ?? id;
         return { id, label };
       }),
     ];
-  }, [farmerCrops, language, screens.allCrops]);
+  }, [farmerCrops, language, copy.allCrops]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -132,7 +141,13 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              void load();
+            }}
+          />
         }
       >
         <View style={[styles.hero, { backgroundColor: config.heroColor }]}>
@@ -141,26 +156,17 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
           </View>
           <View style={styles.heroText}>
             <Title style={styles.heroTitle}>{pageTitle}</Title>
-            <Body style={styles.heroBody}>{config.subtitle}</Body>
+            <Body style={styles.heroBody}>{subtitle}</Body>
           </View>
         </View>
 
-        <View style={styles.banner}>
-          <MaterialCommunityIcons name="information-outline" size={16} color={colors.info} />
-          <Caption style={styles.bannerText}>{screens.catalogBanner}</Caption>
-        </View>
+        <DataFreshnessBadge label={freshnessLabel} updatedAt={verifiedAt} icon="shield-check" />
 
-        <DataFreshnessBadge
-          label={config.type === 'fungicide' ? 'Fungicide reference' : 'Pesticide reference'}
-          updatedAt={verifiedAt}
-          icon="shield-check"
-        />
-
-        <SearchInput value={search} onChangeText={setSearch} placeholder={config.searchPlaceholder} />
+        <SearchInput value={search} onChangeText={setSearch} placeholder={searchPlaceholder} />
 
         {config.targetFilters?.length ? (
           <>
-            <Caption style={styles.filterLabel}>{config.targetFilterLabel ?? 'Target'}</Caption>
+            <Caption style={styles.filterLabel}>{targetFilterLabel}</Caption>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={styles.chipRow}>
                 {config.targetFilters.map((t) => (
@@ -178,31 +184,43 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
 
         {config.showBrandFilter ? (
           <>
-            <Caption style={styles.filterLabel}>Brand</Caption>
+            <Caption style={styles.filterLabel}>{copy.brandLabel}</Caption>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={styles.chipRow}>
                 {AGRO_BRAND_FILTERS.map((b) => (
-                  <Chip key={b.id} label={b.label} selected={brand === b.id} onPress={() => setBrand(b.id)} />
+                  <Chip
+                    key={b.id}
+                    label={b.id === 'all' ? copy.allBrands : b.label}
+                    selected={brand === b.id}
+                    onPress={() => setBrand(b.id)}
+                  />
                 ))}
               </View>
             </ScrollView>
           </>
         ) : null}
 
-        <Caption style={styles.filterLabel}>Panta / Crop</Caption>
+        <Caption style={styles.filterLabel}>{copy.cropLabel}</Caption>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.chipRow}>
             {cropChips.map((c) => (
-              <Chip key={c.id} label={c.label} selected={crop === c.id} onPress={() => setCrop(c.id)} />
+              <Chip
+                key={c.id}
+                label={c.label}
+                selected={crop === c.id}
+                onPress={() => setCrop(c.id)}
+              />
             ))}
           </View>
         </ScrollView>
 
         <View style={styles.metaRow}>
           <Caption style={styles.resultCount}>
-            {loading ? 'Loading...' : `${products.length} products`}
+            {loading ? copy.loading : copy.productsCount(products.length)}
           </Caption>
-          <Caption style={styles.source}>{source === 'reference' ? config.sourceLabel : 'Offline'}</Caption>
+          <Caption style={styles.source}>
+            {source === 'reference' ? sourceOfficial : copy.offline}
+          </Caption>
         </View>
 
         {error ? <Caption style={styles.error}>{error}</Caption> : null}
@@ -225,7 +243,8 @@ export function AgProductBrowseScreen({ config }: AgProductBrowseScreenProps) {
         {!loading && !products.length ? (
           <View style={styles.empty}>
             <MaterialCommunityIcons name="magnify" size={40} color={colors.textTertiary} />
-            <Body style={styles.emptyText}>Products kanipinchaledu</Body>
+            <Body style={styles.emptyText}>{copy.emptyTitle}</Body>
+            <Caption>{copy.emptyHint}</Caption>
           </View>
         ) : null}
 
@@ -258,15 +277,6 @@ const styles = StyleSheet.create({
   heroText: { flex: 1, gap: 4 },
   heroTitle: { color: colors.white, fontSize: 22 },
   heroBody: { color: 'rgba(255,255,255,0.9)', fontSize: 13, lineHeight: 18 },
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: `${colors.info}12`,
-    padding: spacing.sm,
-    borderRadius: radius.md,
-  },
-  bannerText: { flex: 1, color: colors.textSecondary, lineHeight: 16 },
   filterLabel: { fontFamily: 'Poppins_600SemiBold', color: colors.textSecondary },
   chipRow: { flexDirection: 'row', gap: spacing.xs, paddingRight: spacing.md },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

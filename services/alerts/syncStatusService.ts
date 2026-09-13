@@ -35,13 +35,16 @@ export async function fetchSyncStatus(): Promise<SyncStatusSummary | null> {
 
 export function formatFreshnessLabel(iso: string | null | undefined): string {
   if (!iso) return 'Not synced yet';
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60_000);
+  const parsed = new Date(iso.includes('T') || iso.includes('Z') ? iso : iso.replace(' ', 'T'));
+  const diffMs = Date.now() - parsed.getTime();
+  if (!Number.isFinite(diffMs) || Number.isNaN(diffMs)) return 'Updated recently';
+  const mins = Math.floor(Math.max(0, diffMs) / 60_000);
   if (mins < 1) return 'Updated just now';
   if (mins < 60) return `Updated ${mins}m ago`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `Updated ${hours}h ago`;
   const days = Math.floor(hours / 24);
+  if (!Number.isFinite(days)) return 'Updated recently';
   return `Updated ${days}d ago`;
 }
 

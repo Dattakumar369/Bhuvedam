@@ -23,6 +23,26 @@ export function truncate(text: string, maxLength: number): string {
   return `${text.slice(0, maxLength - 3)}...`;
 }
 
+/** Prefer city + state for UI; keeps long reverse-geocode strings readable. */
+export function shortLocationLabel(label: string, maxParts = 2): string {
+  const parts = label
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length <= maxParts) return label;
+  return parts.slice(-maxParts).join(', ');
+}
+
+/** Prefer city + state from a long reverse-geocode label. */
+export function shortLocationLabel(label: string, maxParts = 2): string {
+  const parts = label
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length <= maxParts) return label;
+  return parts.slice(-maxParts).join(', ');
+}
+
 export function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }

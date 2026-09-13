@@ -20,7 +20,7 @@ import {
 import { WeatherMetricsGrid } from '@/features/weather/components/WeatherMetricsGrid';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useWeather } from '@/hooks/useWeather';
-import { formatPercentage, formatWindSpeed } from '@/utils/format';
+import { formatPercentage, formatWindSpeed, shortLocationLabel } from '@/utils/format';
 import {
   getHourlyForDate,
   getTodayDateKey,
@@ -99,7 +99,7 @@ export default function WeatherScreen() {
         >
           <View style={styles.locationRow}>
             <LiveLocationBadge
-              location={location?.label ?? data.location}
+              location={shortLocationLabel(location?.label ?? data.location, 3)}
               lastUpdated={lastFetched}
             />
           </View>

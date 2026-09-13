@@ -1,8 +1,12 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 
 import { db } from '../db';
+import { cropCalendar } from '../db/schema/cropCalendar';
+import { crops } from '../db/schema/crops';
+import { farmers } from '../db/schema/farmers';
 import { notifications } from '../db/schema/notifications';
 import { pushTokens } from '../db/schema/pushTokens';
+import { dailyReminderCopy } from './notificationCopy';
 import { sendPushToFarmer } from './pushNotificationService';
 
 export async function registerPushToken(
@@ -93,18 +97,49 @@ export async function createAndPushNotification(
   return { notificationId: row!.id, pushSent };
 }
 
-/** Low-cost cron: morning farm reminder to all registered devices */
+async function cropNamesForFarmer(farmerId: string, lang: string): Promise<string[]> {
+  const calendar = await db
+    .select({ cropId: cropCalendar.cropId })
+    .from(cropCalendar)
+    .where(eq(cropCalendar.farmerId, farmerId));
+  const ids = [...new Set(calendar.map((r) => r.cropId))];
+  if (!ids.length) return [];
+
+  const rows = await db.select().from(crops).where(inArray(crops.id, ids));
+  return rows.map((c) => {
+    const localized = (c.localizedNames ?? {}) as Record<string, string>;
+    if (localized[lang]) return localized[lang];
+    if (lang === 'te' && c.nameTe) return c.nameTe;
+    return c.name;
+  });
+}
+
+/** Morning reminder — one message per farmer, in that farmer's language, mentioning their crops. */
 export async function dispatchDailyFarmReminders(): Promise<{ farmers: number; sent: number }> {
   const rows = await db.select({ farmerId: pushTokens.farmerId }).from(pushTokens);
   const farmerIds = [...new Set(rows.map((r) => r.farmerId))];
 
   let sent = 0;
   for (const farmerId of farmerIds) {
+    const [farmer] = await db
+      .select({ language: farmers.language, name: farmers.name })
+      .from(farmers)
+      .where(eq(farmers.id, farmerId))
+      .limit(1);
+    const lang = farmer?.language ?? 'te';
+    const cropNames = await cropNamesForFarmer(farmerId, lang);
+    const copy = dailyReminderCopy(lang, cropNames);
+
     const result = await createAndPushNotification(farmerId, {
       type: 'crop_calendar',
-      title: 'Bhuvedam — మీ పొలం update',
-      body: 'Weather, mandi rates & crop alerts check cheyandi',
-      data: { source: 'daily_cron' },
+      title: copy.title,
+      body: copy.body,
+      data: {
+        source: 'daily_cron',
+        language: lang,
+        crops: cropNames,
+        farmerName: farmer?.name ?? null,
+      },
     });
     sent += result.pushSent;
   }

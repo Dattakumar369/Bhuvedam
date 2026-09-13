@@ -50,11 +50,17 @@ interface LiveLocationBadgeProps {
 export function LiveLocationBadge({ location, lastUpdated }: LiveLocationBadgeProps) {
   return (
     <View style={styles.badge}>
-      <MaterialCommunityIcons name="crosshairs-gps" size={14} color={colors.primaryLight} />
-      <Caption style={styles.badgeText}>{location}</Caption>
+      <MaterialCommunityIcons name="crosshairs-gps" size={14} color={colors.primary} />
+      <Caption style={styles.badgeText} numberOfLines={1}>
+        {location}
+      </Caption>
       {lastUpdated ? (
         <Caption style={styles.updatedText}>
-          · Updated {new Date(lastUpdated).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+          ·{' '}
+          {new Date(lastUpdated).toLocaleTimeString('en-IN', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
         </Caption>
       ) : null}
     </View>
@@ -89,14 +95,21 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    alignSelf: 'flex-start',
-    backgroundColor: `${colors.primary}15`,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xxs,
-    borderRadius: radius.full,
+    gap: 6,
+    alignSelf: 'stretch',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.lg,
     marginBottom: spacing.sm,
   },
-  badgeText: { color: colors.primary, fontFamily: 'Poppins_500Medium', fontSize: 11 },
+  badgeText: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 12,
+  },
   updatedText: { color: colors.textTertiary, fontSize: 10 },
 });

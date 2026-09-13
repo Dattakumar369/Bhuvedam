@@ -13,10 +13,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Chip, DataFreshnessBadge, Header, ListSkeleton, SearchInput } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
 import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
+import { getCatalogBrowseCopy } from '@/constants/i18n/catalogTranslations';
 import { FERTILIZER_BRANDS, FERTILIZER_CATEGORIES } from '@/constants/fertilizerCatalog';
-import { useLanguageStore } from '@/store/languageStore';
 import { CROPS } from '@/constants/crops';
 import { FertilizerProductCard } from '@/features/fertilizers/components/FertilizerProductCard';
+import { useTranslation } from '@/hooks/useTranslation';
 import { fetchFertilizerProducts } from '@/services/fertilizers/fertilizerProductService';
 import { useFarmerContextStore } from '@/store/farmerContextStore';
 import type { FertilizerCategory, FertilizerProduct } from '@/types/fertilizerProduct';
@@ -24,6 +25,8 @@ import { colors, layout, radius, spacing } from '@/theme';
 
 export default function FertilizersScreen() {
   const insets = useSafeAreaInsets();
+  const { language } = useTranslation();
+  const copy = useMemo(() => getCatalogBrowseCopy(language), [language]);
   const farmerCrops = useFarmerContextStore((s) => s.crops);
 
   const [search, setSearch] = useState('');
@@ -51,21 +54,18 @@ export default function FertilizersScreen() {
       setSource(result.source);
       setLastSyncedAt(result.lastSyncedAt);
       if (result.source === 'offline' && result.products.length > 0) {
-        const lang = useLanguageStore.getState().language;
-        setError(getUserErrorMessage('PRODUCTS_OFFLINE', lang));
+        setError(getUserErrorMessage('PRODUCTS_OFFLINE', language));
       } else if (result.source === 'offline' && !result.products.length) {
-        const lang = useLanguageStore.getState().language;
-        setError(getUserErrorMessage('PRODUCTS_LOAD_FAILED', lang));
+        setError(getUserErrorMessage('PRODUCTS_LOAD_FAILED', language));
       }
     } catch {
-      const lang = useLanguageStore.getState().language;
-      setError(getUserErrorMessage('PRODUCTS_LOAD_FAILED', lang));
+      setError(getUserErrorMessage('PRODUCTS_LOAD_FAILED', language));
       setProducts([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [search, category, brand, crop]);
+  }, [search, category, brand, crop, language]);
 
   useEffect(() => {
     setLoading(true);
@@ -81,20 +81,31 @@ export default function FertilizersScreen() {
   const cropChips = useMemo(() => {
     const ids = farmerCrops.length ? farmerCrops.slice(0, 4) : ['rice', 'cotton', 'chilli', 'tomato'];
     return [
-      { id: 'all', label: 'All crops' },
+      { id: 'all', label: copy.allCrops },
       ...ids.map((id) => {
         const cropInfo = CROPS.find((c) => c.id === id);
-        return { id, label: cropInfo?.nameTe ?? cropInfo?.name ?? id };
+        const label =
+          language === 'te' ? cropInfo?.nameTe ?? cropInfo?.name ?? id : cropInfo?.name ?? id;
+        return { id, label };
       }),
     ];
-  }, [farmerCrops]);
+  }, [farmerCrops, language, copy.allCrops]);
+
+  const brandChips = useMemo(
+    () =>
+      FERTILIZER_BRANDS.map((b) => ({
+        id: b.id,
+        label: b.id === 'all' ? copy.allBrands : b.label,
+      })),
+    [copy.allBrands],
+  );
 
   const sourceLabel =
-    source === 'catalog' ? 'IFFCO · Coromandel · NFL — official grades' : 'Offline — sync fertilizer catalog';
+    source === 'catalog' ? copy.fertilizersSource : copy.fertilizersOfflineSource;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Header title="ఎరువులు" showBack onBack={() => router.back()} />
+      <Header title={copy.fertilizersTitle} showBack onBack={() => router.back()} />
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
@@ -107,35 +118,35 @@ export default function FertilizersScreen() {
             <MaterialCommunityIcons name="leaf" size={28} color={colors.white} />
           </View>
           <View style={styles.heroText}>
-            <Title style={styles.heroTitle}>Fertilizers</Title>
-            <Body style={styles.heroBody}>
-              Urea, DAP, NPK, Nano — mee panta ki correct eruvulu chudandi
-            </Body>
+            <Title style={styles.heroTitle}>{copy.fertilizersTitle}</Title>
+            <Body style={styles.heroBody}>{copy.fertilizersSubtitle}</Body>
           </View>
         </View>
 
         <View style={styles.banner}>
           <MaterialCommunityIcons name="information-outline" size={16} color={colors.info} />
-          <Caption style={styles.bannerText}>
-            DoF statutory urea + NBS notified bag MRPs · dose & when to apply. Verify pack / POS price.
-          </Caption>
+          <Caption style={styles.bannerText}>{copy.fertilizersBanner}</Caption>
         </View>
 
-        <DataFreshnessBadge label="Fertilizer prices" updatedAt={lastSyncedAt} icon="leaf" />
+        <DataFreshnessBadge
+          label={copy.fertilizersPricesLabel}
+          updatedAt={lastSyncedAt}
+          icon="leaf"
+        />
 
         <SearchInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Peru tho search — Urea, DAP, Nano..."
+          placeholder={copy.fertilizersSearch}
         />
 
-        <Caption style={styles.filterLabel}>రకం / Category</Caption>
+        <Caption style={styles.filterLabel}>{copy.categoryLabel}</Caption>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.chipRow}>
             {FERTILIZER_CATEGORIES.map((c) => (
               <Chip
                 key={c.id}
-                label={c.labelTe}
+                label={copy.category(c.id)}
                 selected={category === c.id}
                 onPress={() => setCategory(c.id)}
               />
@@ -143,10 +154,10 @@ export default function FertilizersScreen() {
           </View>
         </ScrollView>
 
-        <Caption style={styles.filterLabel}>Brand</Caption>
+        <Caption style={styles.filterLabel}>{copy.brandLabel}</Caption>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.chipRow}>
-            {FERTILIZER_BRANDS.map((b) => (
+            {brandChips.map((b) => (
               <Chip
                 key={b.id}
                 label={b.label}
@@ -157,7 +168,7 @@ export default function FertilizersScreen() {
           </View>
         </ScrollView>
 
-        <Caption style={styles.filterLabel}>Panta / Crop</Caption>
+        <Caption style={styles.filterLabel}>{copy.cropLabel}</Caption>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.chipRow}>
             {cropChips.map((c) => (
@@ -173,7 +184,7 @@ export default function FertilizersScreen() {
 
         <View style={styles.metaRow}>
           <Caption style={styles.resultCount}>
-            {loading ? 'Loading...' : `${products.length} products`}
+            {loading ? copy.loading : copy.productsCount(products.length)}
           </Caption>
           <Caption style={styles.source}>{sourceLabel}</Caption>
         </View>
@@ -198,8 +209,8 @@ export default function FertilizersScreen() {
         {!loading && !products.length ? (
           <View style={styles.empty}>
             <MaterialCommunityIcons name="magnify" size={40} color={colors.textTertiary} />
-            <Body style={styles.emptyText}>Products kanipinchaledu</Body>
-            <Caption>Search or filter marchi try cheyandi</Caption>
+            <Body style={styles.emptyText}>{copy.emptyTitle}</Body>
+            <Caption>{copy.emptyHint}</Caption>
           </View>
         ) : null}
 

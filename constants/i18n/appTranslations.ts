@@ -67,6 +67,10 @@ export interface AppTranslations {
   mobileNumber: string;
   password: string;
   confirmPassword: string;
+  namePlaceholder: string;
+  passwordPlaceholder: string;
+  confirmPasswordPlaceholder: string;
+  passwordsDoNotMatch: string;
   loginBtn: string;
   loggingIn: string;
   createAccountBtn: string;
@@ -186,6 +190,10 @@ const enApp: AppTranslations = {
   mobileNumber: 'Mobile Number',
   password: 'Password',
   confirmPassword: 'Confirm Password',
+  namePlaceholder: 'Enter your full name',
+  passwordPlaceholder: 'At least 8 characters',
+  confirmPasswordPlaceholder: 'Re-enter your password',
+  passwordsDoNotMatch: 'Passwords do not match',
   loginBtn: 'Login',
   loggingIn: 'Logging in...',
   createAccountBtn: 'Create Account',
@@ -305,6 +313,10 @@ const teApp: AppTranslations = {
   mobileNumber: 'మొబైల్ నంబర్',
   password: 'Password',
   confirmPassword: 'Password confirm',
+  namePlaceholder: 'మీ పూర్తి పేరు enter cheyandi',
+  passwordPlaceholder: 'కనీసం 8 characters',
+  confirmPasswordPlaceholder: 'Password malli enter cheyandi',
+  passwordsDoNotMatch: 'Passwords match కావు',
   loginBtn: 'Login',
   loggingIn: 'Login avutundi...',
   createAccountBtn: 'Account create',

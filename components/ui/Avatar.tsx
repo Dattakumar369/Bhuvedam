@@ -1,18 +1,20 @@
-import { Image, StyleSheet, View } from 'react-native';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { StyleSheet, Text, View, Image } from 'react-native';
 
-import { colors, radius } from '@/theme';
+import { colors } from '@/theme';
 
 interface AvatarProps {
   name: string;
   uri?: string;
   size?: number;
+  /** Use on green headers — translucent ring + white initials */
+  tone?: 'solid' | 'onBrand';
 }
 
-export function Avatar({ name, uri, size = 48 }: AvatarProps) {
+export function Avatar({ name, uri, size = 48, tone = 'solid' }: AvatarProps) {
   const initials = name
     .split(' ')
     .map((n) => n[0])
+    .filter(Boolean)
     .join('')
     .slice(0, 2)
     .toUpperCase();
@@ -27,17 +29,35 @@ export function Avatar({ name, uri, size = 48 }: AvatarProps) {
     );
   }
 
+  const onBrand = tone === 'onBrand';
+
   return (
     <View
       style={[
         styles.placeholder,
-        { width: size, height: size, borderRadius: size / 2 },
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: onBrand ? 'rgba(255,255,255,0.22)' : colors.primary,
+          borderWidth: onBrand ? 2 : 0,
+          borderColor: 'rgba(255,255,255,0.55)',
+        },
       ]}
       accessibilityLabel={`${name}'s avatar`}
     >
-      {initials ? (
-        <MaterialCommunityIcons name="account" size={size * 0.5} color={colors.white} />
-      ) : null}
+      <Text
+        style={[
+          styles.initials,
+          {
+            fontSize: size * 0.36,
+            lineHeight: size * 0.42,
+            color: colors.white,
+          },
+        ]}
+      >
+        {initials || '?'}
+      </Text>
     </View>
   );
 }
@@ -45,8 +65,11 @@ export function Avatar({ name, uri, size = 48 }: AvatarProps) {
 const styles = StyleSheet.create({
   image: { backgroundColor: colors.surfaceVariant },
   placeholder: {
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  initials: {
+    fontFamily: 'Poppins_600SemiBold',
+    textAlign: 'center',
   },
 });

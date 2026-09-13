@@ -3,8 +3,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/Card';
 import { Body, Caption, Label, Title } from '@/components/ui/Typography';
-import { BRAND_COLORS, categoryLabelTe } from '@/constants/fertilizerCatalog';
+import { BRAND_COLORS } from '@/constants/fertilizerCatalog';
+import { categoryLabelForLang } from '@/constants/i18n/catalogTranslations';
 import { AgProductImage } from '@/features/catalog/components/AgProductImage';
+import { useLanguageStore } from '@/store/languageStore';
 import type { FertilizerProduct } from '@/types/fertilizerProduct';
 import { colors, radius, spacing } from '@/theme';
 
@@ -15,9 +17,10 @@ interface FertilizerProductCardProps {
 }
 
 export function FertilizerProductCard({ product, compact, onPress }: FertilizerProductCardProps) {
+  const language = useLanguageStore((s) => s.language);
   const brandColor = BRAND_COLORS[product.brand] ?? colors.primary;
-  const displayName = product.nameTe?.trim() ? product.nameTe : product.name;
-  const subtitle = product.nameTe?.trim() ? product.name : product.brand;
+  const displayName = product.nameTe?.trim() && language === 'te' ? product.nameTe : product.name;
+  const subtitle = product.nameTe?.trim() && language === 'te' ? product.name : product.brand;
 
   return (
     <Pressable onPress={onPress} disabled={!onPress} style={compact ? styles.compactWrap : undefined}>
@@ -43,7 +46,7 @@ export function FertilizerProductCard({ product, compact, onPress }: FertilizerP
             <View style={[styles.brandPill, { backgroundColor: `${brandColor}18` }]}>
               <Label style={[styles.brandText, { color: brandColor }]}>{product.brand}</Label>
             </View>
-            <Caption style={styles.category}>{categoryLabelTe(product.category)}</Caption>
+            <Caption style={styles.category}>{categoryLabelForLang(language, product.category)}</Caption>
           </View>
 
           <Title style={styles.name} numberOfLines={compact ? 2 : 3}>
