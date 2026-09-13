@@ -33,16 +33,6 @@ export function shortLocationLabel(label: string, maxParts = 2): string {
   return parts.slice(-maxParts).join(', ');
 }
 
-/** Prefer city + state from a long reverse-geocode label. */
-export function shortLocationLabel(label: string, maxParts = 2): string {
-  const parts = label
-    .split(',')
-    .map((p) => p.trim())
-    .filter(Boolean);
-  if (parts.length <= maxParts) return label;
-  return parts.slice(-maxParts).join(', ');
-}
-
 export function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
