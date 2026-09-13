@@ -68,6 +68,29 @@ function stripMarkdown(text: string): string {
     .trim();
 }
 
+function latinLetterRatio(text: string): number {
+  const letters = text.replace(/[^A-Za-z\u0C00-\u0C7F\u0900-\u097F]/g, '');
+  if (!letters.length) return 0;
+  const latin = (letters.match(/[A-Za-z]/g) ?? []).length;
+  return latin / letters.length;
+}
+
+function hasTeluguScript(text: string): boolean {
+  return /[\u0C00-\u0C7F]/.test(text);
+}
+
+function hasDevanagari(text: string): boolean {
+  return /[\u0900-\u097F]/.test(text);
+}
+
+/** Prefer a TTS language that matches the script actually in the reply. */
+export function resolveSpeechLanguage(text: string, preferred: LanguageCode): LanguageCode {
+  if (hasTeluguScript(text)) return 'te';
+  if (hasDevanagari(text) && (preferred === 'hi' || preferred === 'mr')) return preferred;
+  if (latinLetterRatio(text) > 0.55) return 'en';
+  return preferred;
+}
+
 /** Shape AI text so TTS sounds like natural speech, especially for Telugu. */
 export function prepareTextForSpeech(text: string, language: LanguageCode): string {
   let cleaned = stripMarkdown(text);
@@ -81,21 +104,32 @@ export function prepareTextForSpeech(text: string, language: LanguageCode): stri
       .replace(/:\s*/g, ', ')
       .replace(/\s{2,}/g, ' ');
 
+    // Full Telugu script only — never mix Latin into Telugu syllables (breaks TTS).
     const romanToTe: [RegExp, string][] = [
       [/\bmeeku\b/gi, 'మీకు'],
-      [/\bmeku\b/gi, 'మీకు'],
+      [/\bmee\b/gi, 'మీ'],
       [/\bcheppali\b/gi, 'చెప్పాలి'],
+      [/\bcheppandi\b/gi, 'చెప్పండి'],
+      [/\bcheyali\b/gi, 'చేయాలి'],
+      [/\bcheyandi\b/gi, 'చేయండి'],
+      [/\beppudu\b/gi, 'ఎప్పుడు'],
       [/\bmandu\b/gi, 'మందు'],
       [/\brogam\b/gi, 'రోగం'],
       [/\bpurugu\b/gi, 'పురుగు'],
       [/\braithu\b/gi, 'రైతు'],
-      [/\bgaru\b/gi, ''],
+      [/\brythu\b/gi, 'రైతు'],
       [/\bledu\b/gi, 'లేదు'],
-      [/\bcheyali\b/gi, 'చేయandi'],
-      [/\beppudu\b/gi, 'ఎప్పudu'],
-      [/\bcheppandi\b/gi, 'చెప్పandi'],
+      [/\bundi\b/gi, 'ఉంది'],
+      [/\bvellandi\b/gi, 'వెళ్లండి'],
+      [/\badagandi\b/gi, 'అడగండి'],
+      [/\bmalli\b/gi, 'మళ్లీ'],
+      [/\btry cheyandi\b/gi, 'ప్రయత్నించండి'],
       [/\bacre\b/gi, 'ఎకరం'],
+      [/\bacres\b/gi, 'ఎకరాలు'],
       [/\bml\b/gi, 'మిలీ'],
+      [/\blitre\b/gi, 'లీటరు'],
+      [/\bliter\b/gi, 'లీటరు'],
+      [/\bgaru\b/gi, ''],
     ];
     for (const [pattern, replacement] of romanToTe) {
       cleaned = cleaned.replace(pattern, replacement);
@@ -116,16 +150,39 @@ export async function warmUpSpeechVoice(language: LanguageCode): Promise<void> {
     const matching = voices.filter((v) => v.language.toLowerCase().startsWith(langPrefix));
     const enhanced = matching.find((v) => v.quality === VoiceQuality.Enhanced);
     const defaultVoice = matching.find((v) => v.identifier.toLowerCase().includes('default'));
-    voiceCache.set(language, enhanced?.identifier ?? defaultVoice?.identifier ?? matching[0]?.identifier);
+    const network = matching.find((v) => /network|google|online/i.test(v.identifier));
+    voiceCache.set(
+      language,
+      enhanced?.identifier ??
+        network?.identifier ??
+        defaultVoice?.identifier ??
+        matching[0]?.identifier,
+    );
   } catch {
     voiceCache.set(language, undefined);
   }
 }
 
+export function hasCachedSpeechVoice(language: LanguageCode): boolean {
+  return Boolean(voiceCache.get(language));
+}
+
 export function speak(text: string, language: LanguageCode = 'en', onDone?: () => void): void {
-  const cleaned = prepareTextForSpeech(text, language);
+  const speechLang = resolveSpeechLanguage(text, language);
+  const cleaned = prepareTextForSpeech(text, speechLang);
   if (!cleaned) {
     onDone?.();
+    return;
+  }
+
+  // Romanized Telugu with te-IN voice is unintelligible — speak clearly in English instead.
+  if (speechLang === 'te' && latinLetterRatio(cleaned) > 0.45 && !hasTeluguScript(cleaned)) {
+    const englishClean = prepareTextForSpeech(text, 'en');
+    stopSpeaking();
+    speakQueue = splitForTts(englishClean || cleaned);
+    speakDoneCallback = onDone;
+    isSpeaking = true;
+    speakNextChunk('en');
     return;
   }
 
@@ -134,7 +191,7 @@ export function speak(text: string, language: LanguageCode = 'en', onDone?: () =
   speakQueue = splitForTts(cleaned);
   speakDoneCallback = onDone;
   isSpeaking = true;
-  speakNextChunk(language);
+  speakNextChunk(speechLang);
 }
 
 export function stopSpeaking(): void {

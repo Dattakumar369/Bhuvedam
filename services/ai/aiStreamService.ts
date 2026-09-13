@@ -101,6 +101,7 @@ async function chatFromBackend({
   voiceMode,
   agentId,
   cropIds,
+  language,
 }: StreamOptions): Promise<string> {
   if (!(await ensureAuthToken())) {
     throwBackendError('UNAUTHORIZED');
@@ -113,6 +114,7 @@ async function chatFromBackend({
       voiceMode,
       agentId,
       cropIds,
+      language,
     },
     { timeout: AI_REQUEST_TIMEOUT_MS, signal },
   );
@@ -129,6 +131,7 @@ async function webResearchFallback(
   onChunk: (content: string) => void,
   cropIds?: string[],
   voiceMode = false,
+  language?: LanguageCode,
 ): Promise<string> {
   // Last resort — never dump raw web snippets to the farmer.
   try {
@@ -138,6 +141,7 @@ async function webResearchFallback(
         messages: [{ role: 'user', content: query }],
         voiceMode,
         cropIds,
+        language,
         agentId: 'general',
       },
       { timeout: AI_REQUEST_TIMEOUT_MS },
@@ -151,9 +155,14 @@ async function webResearchFallback(
     /* use human message below */
   }
 
-  const answer = voiceMode
-    ? `${query.slice(0, 60)} gurinchi inka details collect chestunnanu. Crop peru tho malli adagandi — meeku sariga cheptanu.`
-    : `Mee prashna **"${query.slice(0, 100)}"** gurinchi inka clear ga research chestunnanu.\n\nCrop peru, village tho malli adagandi — meeku sariga, manishi la cheptanu.`;
+  const answer =
+    language === 'en'
+      ? voiceMode
+        ? `I am still gathering details for "${query.slice(0, 60)}". Ask again with crop name and village.`
+        : `Still researching **"${query.slice(0, 100)}"**.\n\nAsk again with crop name and village.`
+      : voiceMode
+        ? `"${query.slice(0, 60)}" గురించి ఇంకా వివరాలు చూస్తున్నాను. పంట పేరు, ఊరు చెప్పి మళ్లీ అడగండి.`
+        : `మీ ప్రశ్న **"${query.slice(0, 100)}"** గురించి ఇంకా చూస్తున్నాను.\n\nపంట పేరు, ఊరు తో మళ్లీ అడగండి.`;
   onChunk(answer);
   return answer;
 }
@@ -235,7 +244,7 @@ export async function streamAIResponse(options: StreamOptions): Promise<string> 
       try {
         return await chatFromBackend(options);
       } catch {
-        return webResearchFallback(lastUser.content, options.onChunk, options.cropIds, options.voiceMode);
+        return webResearchFallback(lastUser.content, options.onChunk, options.cropIds, options.voiceMode, options.language);
       }
     }
 
@@ -246,13 +255,13 @@ export async function streamAIResponse(options: StreamOptions): Promise<string> 
         try {
           return await chatFromBackend(options);
         } catch {
-          return webResearchFallback(lastUser.content, options.onChunk, options.cropIds, options.voiceMode);
+          return webResearchFallback(lastUser.content, options.onChunk, options.cropIds, options.voiceMode, options.language);
         }
       }
       try {
         return await chatFromBackend(options);
       } catch {
-        return webResearchFallback(lastUser.content, options.onChunk, options.cropIds, options.voiceMode);
+        return webResearchFallback(lastUser.content, options.onChunk, options.cropIds, options.voiceMode, options.language);
       }
     }
   }

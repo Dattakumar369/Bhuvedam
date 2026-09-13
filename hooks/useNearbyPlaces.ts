@@ -1,8 +1,10 @@
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useState } from 'react';
 
+import { getScreenTranslations } from '@/constants/i18n/screenTranslations';
 import { fetchNearbyPlaces } from '@/services/geo/nearbyPlacesService';
 import { requestLocationPermission } from '@/services/location/locationService';
+import { useLanguageStore } from '@/store/languageStore';
 import type { NearbyPlace, NearbyPlaceFilter } from '@/types/nearbyPlace';
 
 const GPS_TIMEOUT_MS = 12000;
@@ -31,6 +33,8 @@ async function readPosition(): Promise<Location.LocationObject | null> {
 }
 
 export function useNearbyPlaces(): NearbyPlacesState {
+  const language = useLanguageStore((s) => s.language);
+  const screens = getScreenTranslations(language);
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
@@ -40,9 +44,10 @@ export function useNearbyPlaces(): NearbyPlacesState {
   const [filter, setFilter] = useState<NearbyPlaceFilter>('all');
 
   const resolveLocation = useCallback(async (): Promise<{ lat: number; lng: number } | null> => {
+    const copy = getScreenTranslations(useLanguageStore.getState().language);
     const perm = await requestLocationPermission();
     if (perm !== 'granted') {
-      setError('Location permission ivvandi — daggaralo unna mandi/shops chupistam.');
+      setError(copy.nearbyLocationError);
       return null;
     }
 
@@ -55,7 +60,7 @@ export function useNearbyPlaces(): NearbyPlacesState {
       }
     }
     if (!pos) {
-      setError('Location raaledu — GPS ON unda chudandi.');
+      setError(copy.nearbyLocationError);
       return null;
     }
 
@@ -67,19 +72,20 @@ export function useNearbyPlaces(): NearbyPlacesState {
     try {
       const [geo] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
       const label = [geo?.city ?? geo?.district, geo?.region].filter(Boolean).join(', ');
-      setLocationLabel(label || 'Current location');
+      setLocationLabel(label || copy.nearbyPlacesTitle);
     } catch {
-      setLocationLabel('Current location');
+      setLocationLabel(copy.nearbyPlacesTitle);
     }
 
     return { lat, lng };
   }, []);
 
   const loadPlaces = useCallback(async (lat: number, lng: number, activeFilter: NearbyPlaceFilter) => {
+    const copy = getScreenTranslations(useLanguageStore.getState().language);
     const results = await fetchNearbyPlaces(lat, lng, activeFilter);
     setPlaces(results);
     if (!results.length) {
-      setError('120 km lopala mandi/shops kanipinchatam ledu — location change chesi try cheyandi.');
+      setError(copy.nearbyEmptyError);
     } else {
       setError(null);
     }
@@ -90,16 +96,15 @@ export function useNearbyPlaces(): NearbyPlacesState {
     setError(null);
 
     try {
-      // Always re-read GPS on refresh — stale coords are a common empty-list cause.
       const coords = await resolveLocation();
       if (!coords) return;
       await loadPlaces(coords.lat, coords.lng, filter);
     } catch {
-      setError('Location raaledu — GPS ON unda chudandi.');
+      setError(screens.nearbyLocationError);
     } finally {
       setIsLoading(false);
     }
-  }, [filter, loadPlaces, resolveLocation]);
+  }, [filter, loadPlaces, resolveLocation, screens.nearbyLocationError]);
 
   useEffect(() => {
     void refresh();

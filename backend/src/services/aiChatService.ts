@@ -44,6 +44,7 @@ export interface AiChatOptions {
   agentId?: string;
   temperature?: number;
   cropIds?: string[];
+  language?: string;
 }
 
 function resolveTemperature(opts: AiChatOptions): number {
@@ -249,6 +250,7 @@ async function finalizeAnswer(
   const polished = await polishConversationalReply(draft, query, {
     voiceMode: opts.voiceMode,
     recentTurns: extractRecentTurns(messages),
+    language: opts.language,
   });
 
   const answer =
@@ -279,12 +281,13 @@ async function answerFromResearch(
 ): Promise<{ answer: string; provider: string; research: WebResearchResult }> {
   const synthesized = await synthesizeFarmerAnswer(query, research, {
     voiceMode: opts.voiceMode,
+    language: opts.language,
   });
   if (synthesized && !isUncertainLlmAnswer(synthesized)) {
     cacheAnswerAsync(query, synthesized, research, opts, provider);
     return { answer: synthesized, provider, research };
   }
-  const human = humanFallbackWhenNoSynthesis(query, opts.voiceMode);
+  const human = humanFallbackWhenNoSynthesis(query, opts.voiceMode, opts.language);
   cacheAnswerAsync(query, human, research, opts, provider);
   return { answer: human, provider, research };
 }
@@ -306,14 +309,14 @@ async function completeWithResearchFallback(
     if (configIssue || authFailed) {
       console.error('[ai/vision] Photo scan unavailable:', configIssue ?? 'Gemini auth failed');
       const fallback = opts.voiceMode
-        ? 'Photo scan ippudu panicheyatledu. Konni nimishalu tarvata malli try cheyandi.'
-        : '**Photo scan ippudu panicheyatledu**\n\nKonni nimishalu tarvata malli try cheyandi. Problem continue aithe app team ki cheppandi.';
+        ? 'ఫోటో స్కాన్ ఇప్పుడు పని చేయడం లేదు. కొన్ని నిమిషాల తర్వాత మళ్లీ ప్రయత్నించండి.'
+        : '**ఫోటో స్కాన్ ఇప్పుడు పని చేయడం లేదు**\n\nకొన్ని నిమిషాల తర్వాత మళ్లీ ప్రయత్నించండి. సమస్య కొనసాగితే యాప్ టీమ్‌కు చెప్పండి.';
       return { answer: fallback, provider: 'vision_unavailable', research: emptyResearch(query) };
     }
 
     const fallback = opts.voiceMode
-      ? 'Photo analyse cheyalekapoyindi. Manchamaina light lo malli try cheyandi.'
-      : '**Photo analyse cheyalekapoyindi**\n\nManchamaina light lo clear photo malli pampandi.';
+      ? 'ఫోటో సరిగ్గా చూడలేకపోయాను. మంచి వెలుతురులో క్లియర్ ఫోటో మళ్లీ పంపండి.'
+      : '**ఫోటో సరిగ్గా చూడలేకపోయాను**\n\nమంచి వెలుతురులో క్లియర్ ఫోటో మళ్లీ పంపండి.';
     return { answer: fallback, provider: 'vision_fallback', research: emptyResearch(query) };
   }
 

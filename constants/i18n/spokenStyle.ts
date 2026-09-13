@@ -11,9 +11,10 @@ export function getSpokenStylePrompt(language: LanguageCode, voiceMode: boolean)
 ${base}
 
 === VOICE MODE (phone speaker — farmer is listening) ===
-- 2-4 short spoken sentences ONLY — NO markdown, NO bullet lists, NO English words
-- Pure Telugu script (తెలుగు) — TTS will read aloud; Roman letters sound wrong
+- 2-4 short spoken sentences ONLY — NO markdown, NO bullet lists
+- Pure Telugu script (తెలుగు) only — Roman letters sound wrong on speaker
 - Warm village tone: "సరే అన్న", "మీకు చెప్పాలంటే...", "ఇలా చేయండి"
+- Give one clear action the farmer can do now
 - Max 180 words — one idea per sentence`;
     }
 

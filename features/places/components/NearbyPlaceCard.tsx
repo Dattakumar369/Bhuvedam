@@ -3,15 +3,9 @@ import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui';
 import { Body, Caption } from '@/components/ui/Typography';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { NearbyPlace } from '@/types/nearbyPlace';
-import { colors, radius, spacing } from '@/theme';
-
-function typeLabel(placeType: string): string {
-  if (placeType === 'mandi') return 'Mandi';
-  if (placeType === 'fertilizer_shop') return 'Fertilizer shop';
-  if (placeType === 'seed_shop') return 'Seed shop';
-  return 'Ag dealer';
-}
+import { colors, spacing } from '@/theme';
 
 function typeIcon(placeType: string): keyof typeof MaterialCommunityIcons.glyphMap {
   if (placeType === 'mandi') return 'storefront-outline';
@@ -28,6 +22,17 @@ interface NearbyPlaceCardProps {
 }
 
 export function NearbyPlaceCard({ place }: NearbyPlaceCardProps) {
+  const { screens } = useTranslation();
+
+  const typeLabel =
+    place.placeType === 'mandi'
+      ? screens.nearbyTypeMandi
+      : place.placeType === 'fertilizer_shop'
+        ? screens.nearbyTypeFertilizerShop
+        : place.placeType === 'seed_shop'
+          ? screens.nearbyTypeSeedShop
+          : screens.nearbyTypeDealer;
+
   return (
     <Pressable onPress={() => openDirections(place)}>
       <Card variant="outlined" style={styles.card}>
@@ -44,7 +49,7 @@ export function NearbyPlaceCard({ place }: NearbyPlaceCardProps) {
               {place.name}
             </Body>
             <Caption style={styles.meta}>
-              {typeLabel(place.placeType)}
+              {typeLabel}
               {place.district ? ` · ${place.district}` : ''}
             </Caption>
             {place.address ? (

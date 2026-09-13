@@ -214,7 +214,7 @@ export async function completeGeminiChat(
   const temperature = useVision
     ? (opts.temperature ?? 0.25)
     : (opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15));
-  const maxOutputTokens = opts.voiceMode ? 768 : 2048;
+  const maxOutputTokens = opts.voiceMode ? 1024 : 2048;
 
   // REST first — native x-goog-api-key works for both AIza and AQ auth keys.
   try {

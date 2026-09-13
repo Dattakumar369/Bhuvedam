@@ -37,6 +37,22 @@ export interface ScreenTranslations {
   mandiHistoryLastYear: string;
   mandiHistoryMissing: string;
   mandiHistoryNote: string;
+  nearbyPlacesTitle: string;
+  nearbyPlacesIntroTitle: string;
+  nearbyPlacesIntroBody: string;
+  nearbyFilterAll: string;
+  nearbyFilterMandi: string;
+  nearbyFilterShops: string;
+  nearbyLoading: string;
+  nearbyPlacesCount: (n: number) => string;
+  nearbyMapPlaceholder: string;
+  nearbyMapLoadFailed: string;
+  nearbyTypeMandi: string;
+  nearbyTypeFertilizerShop: string;
+  nearbyTypeSeedShop: string;
+  nearbyTypeDealer: string;
+  nearbyLocationError: string;
+  nearbyEmptyError: string;
   cropProtTitle: string;
   cropProtSubtitle: string;
   cropProtSelectCrop: string;
@@ -123,6 +139,23 @@ const en: ScreenTranslations = {
   mandiHistoryMissing: '—',
   mandiHistoryNote:
     'Rates are saved each sync day. Last month/year averages appear after enough daily records are stored.',
+  nearbyPlacesTitle: 'Mandi & Shops',
+  nearbyPlacesIntroTitle: 'Nearby mandi & fertilizer shops',
+  nearbyPlacesIntroBody:
+    'Based on your location we show nearby APMC markets and fertilizer/seed dealers. Tap a card to open Google Maps directions. Listing is for guidance only — confirm hours and stock with the shop.',
+  nearbyFilterAll: 'All',
+  nearbyFilterMandi: 'Mandi',
+  nearbyFilterShops: 'Shops',
+  nearbyLoading: 'Searching nearby mandi & shops…',
+  nearbyPlacesCount: (n) => `${n} places — tap for directions`,
+  nearbyMapPlaceholder: 'Map preview — use Directions from the list',
+  nearbyMapLoadFailed: 'Map failed to load — use Directions from the list.',
+  nearbyTypeMandi: 'Mandi market',
+  nearbyTypeFertilizerShop: 'Fertilizer shop',
+  nearbyTypeSeedShop: 'Seed shop',
+  nearbyTypeDealer: 'Ag dealer',
+  nearbyLocationError: 'Could not get location — check that GPS is ON.',
+  nearbyEmptyError: 'No mandi/shops within 120 km — try another location.',
   cropProtTitle: 'Fertilizer & Spray Guide',
   cropProtSubtitle:
     'Each crop has 100+ varieties. Curated varieties get full guide; others get general advice + live mandi rates. Spray & fertilizer by crop age or disease.',
@@ -216,25 +249,42 @@ const te: ScreenTranslations = {
   measureSaved: '✓ సేవ్ అయింది',
   mandiSearchPlaceholder: 'Variety search — Masoori, 1010, BPT, hybrid...',
   mandiSubtitle:
-    'Prati panta ki 100+ varieties untayi — Agmarknet nunchi live ga anni varieties fetch chestam. Okko rakam ki okko rate.',
-  mandiDataLabel: 'Mandi data',
-  mandiUpdated: 'Updated',
-  mandiSelectCrop: 'Select crop / Panta',
-  mandiSelectVariety: 'Variety / Rakam — select',
+    'ప్రతి పంటకు 100+ రకాలు — Agmarknet నుంచి live ధరలు తెస్తాము. ప్రతి రకానికి వేరే ధర.',
+  mandiDataLabel: 'మండి డేటా',
+  mandiUpdated: 'నవీకరణ',
+  mandiSelectCrop: 'పంట ఎంచుకోండి',
+  mandiSelectVariety: 'రకం — ఎంచుకోండి',
   mandiAllVarietiesToday: (crop, count) => `All ${crop} varieties today (${count})`,
   mandiSourceLive: (count) => `Live Agmarknet · ${count} varieties`,
   mandiSourceCached: 'Cached',
   mandiSourceReference: 'Reference avg — pull to refresh for live',
   mandiFooterNote:
-    'Curated varieties (Full guide) = complete fertilizer & spray data. Other varieties = live Agmarknet rates + general crop advice. Data refreshes from government mandi records daily.',
-  mandiHistoryTitle: 'Dhara charitra (roju roju save avutundi)',
-  mandiHistoryToday: 'Iroju',
-  mandiHistoryYesterday: 'Ninna',
-  mandiHistoryLastMonth: '30 rojula avg',
-  mandiHistoryLastYear: 'Last year avg',
+    'Full guide varieties = పూర్తి ఎరువు & స్ప్రే డేటా. ఇతర రకాలు = live Agmarknet ధరలు + సాధారణ సలహా. ప్రభుత్వ మండి రికార్డుల నుంచి రోజూ నవీకరణ.',
+  mandiHistoryTitle: 'ధర చరిత్ర (రోజువారీ సేవ్)',
+  mandiHistoryToday: 'ఈరోజు',
+  mandiHistoryYesterday: 'నిన్న',
+  mandiHistoryLastMonth: '30 రోజుల సగటు',
+  mandiHistoryLastYear: 'గత సంవత్సరం సగటు',
   mandiHistoryMissing: '—',
   mandiHistoryNote:
-    'Prati sync roju mandi rates save avutayi. Month/year avg ki konni rojulu data undali.',
+    'ప్రతి సింక్ రోజు మండి ధరలు సేవ్ అవుతాయి. నెల/సంవత్సరం సగటుకు కొన్ని రోజుల డేటా ఉండాలి.',
+  nearbyPlacesTitle: 'మండి & షాపులు',
+  nearbyPlacesIntroTitle: 'దగ్గరలోని మండి & ఎరువు షాపులు',
+  nearbyPlacesIntroBody:
+    'మీ లొకేషన్ ఆధారంగా దగ్గరలోని APMC మార్కెట్లు మరియు ఎరువు/విత్తన షాపులు చూపిస్తాము. కార్డ్ నొక్కితే Google Maps దిశలు తెరుచుకుంటాయి. ఇది సమాచారం మాత్రమే — సమయం, స్టాక్ షాపులో నిర్ధారించుకోండి.',
+  nearbyFilterAll: 'అన్నీ',
+  nearbyFilterMandi: 'మండి',
+  nearbyFilterShops: 'షాపులు',
+  nearbyLoading: 'దగ్గరలోని మండి/షాపులు వెతుకుతున్నాము…',
+  nearbyPlacesCount: (n) => `${n} ప్రదేశాలు — దిశల కోసం నొక్కండి`,
+  nearbyMapPlaceholder: 'మ్యాప్ ప్రివ్యూ — జాబితా నుంచి దిశలు ఉపయోగించండి',
+  nearbyMapLoadFailed: 'మ్యాప్ లోడ్ కాలేదు — జాబితా నుంచి దిశలు ఉపయోగించండి.',
+  nearbyTypeMandi: 'మండి మార్కెట్',
+  nearbyTypeFertilizerShop: 'ఎరువు షాప్',
+  nearbyTypeSeedShop: 'విత్తన షాప్',
+  nearbyTypeDealer: 'వ్యవసాయ డీలర్',
+  nearbyLocationError: 'లొకేషన్ రాలేదు — GPS ON ఉందో చూడండి.',
+  nearbyEmptyError: '120 కి.మీ.లోపు మండి/షాపులు కనిపించలేదు — లొకేషన్ మార్చి ప్రయత్నించండి.',
   cropProtTitle: 'Fertilizer & Spray Guide',
   cropProtSubtitle:
     'Prati panta ki 100+ rakalu untayi. Curated varieties ki full guide; migata varieties ki general crop advice + live mandi rates. Panta vayasu leda rogam batti spray & eruvu cheppistam.',
@@ -334,6 +384,23 @@ const hi: ScreenTranslations = {
   mandiSourceReference: 'Reference avg — live के लिए refresh करें',
   mandiFooterNote:
     'Curated varieties = पूरा fertilizer & spray guide। बाकी = live mandi rates + general advice। Government mandi records से daily update।',
+  nearbyPlacesTitle: 'मंडी और दुकानें',
+  nearbyPlacesIntroTitle: 'पास की मंडी और उर्वरक दुकानें',
+  nearbyPlacesIntroBody:
+    'आपके स्थान के आधार पर पास के APMC बाज़ार और उर्वरक/बीज दुकानें दिखाते हैं। कार्ड टैप करें तो Google Maps दिशाएँ खुलती हैं। यह केवल जानकारी है — समय और स्टॉक दुकान से पुष्टि करें।',
+  nearbyFilterAll: 'सभी',
+  nearbyFilterMandi: 'मंडी',
+  nearbyFilterShops: 'दुकानें',
+  nearbyLoading: 'पास की मंडी/दुकानें खोज रहे हैं…',
+  nearbyPlacesCount: (n) => `${n} जगहें — दिशाओं के लिए टैप करें`,
+  nearbyMapPlaceholder: 'मैप प्रीव्यू — लिस्ट से दिशाएँ उपयोग करें',
+  nearbyMapLoadFailed: 'मैप लोड नहीं हुआ — लिस्ट से दिशाएँ उपयोग करें।',
+  nearbyTypeMandi: 'मंडी बाज़ार',
+  nearbyTypeFertilizerShop: 'उर्वरक दुकान',
+  nearbyTypeSeedShop: 'बीज दुकान',
+  nearbyTypeDealer: 'कृषि डीलर',
+  nearbyLocationError: 'लोकेशन नहीं मिली — GPS ON है या नहीं देखें।',
+  nearbyEmptyError: '120 किमी में मंडी/दुकान नहीं मिली — लोकेशन बदलकर कोशिश करें।',
   cropProtTitle: 'उर्वरक और स्प्रे गाइड',
   cropProtSubtitle:
     'हर फसल में 100+ varieties। Curated = full guide; बाकी = general advice + live mandi। फसल उम्र या रोग के अनुसार spray & fertilizer।',

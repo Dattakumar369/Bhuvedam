@@ -1286,6 +1286,7 @@ app.post('/api/ai/chat', farmerAuthMiddleware, async (c) => {
     voiceMode?: boolean;
     agentId?: string;
     cropIds?: string[];
+    language?: string;
   };
 
   const messages = body.messages?.filter(isValidChatMessage) ?? [];
@@ -1296,19 +1297,21 @@ app.post('/api/ai/chat', farmerAuthMiddleware, async (c) => {
       voiceMode: body.voiceMode,
       agentId: body.agentId,
       cropIds: body.cropIds,
+      language: body.language,
     });
     log.info('ai/chat', 'completed', {
       farmerId: c.get('farmerId'),
       agentId: body.agentId ?? 'general',
       provider: getAiProvider(),
       voiceMode: Boolean(body.voiceMode),
+      language: body.language ?? 'te',
     });
     return c.json({ content });
   } catch (err) {
     log.error('ai/chat', 'AI proxy failed', { err, farmerId: c.get('farmerId'), provider: getAiProvider() });
     return c.json({
       content:
-        'I am still searching for the best answer. Please ask again with your crop name and village.',
+        'సమాధానం ఇంకా వెతుకుతున్నాను. పంట పేరు, ఊరు చెప్పి మళ్లీ అడగండి.',
     });
   }
 });
@@ -1320,6 +1323,7 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
     voiceMode?: boolean;
     agentId?: string;
     cropIds?: string[];
+    language?: string;
   };
 
   const messages = body.messages?.filter(isValidChatMessage) ?? [];
@@ -1330,6 +1334,7 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
       voiceMode: body.voiceMode,
       agentId: body.agentId,
       cropIds: body.cropIds,
+      language: body.language,
     });
     return new Response(stream, {
       headers: {
@@ -1345,6 +1350,7 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
         voiceMode: body.voiceMode,
         agentId: body.agentId,
         cropIds: body.cropIds,
+        language: body.language,
       });
       return new Response(stream, {
         headers: {
@@ -1356,7 +1362,7 @@ app.post('/api/ai/chat/stream', farmerAuthMiddleware, async (c) => {
     } catch {
       const encoder = new TextEncoder();
       const msg =
-        'I am still searching for the best answer. Please ask again with your crop name and village.';
+        'సమాధానం ఇంకా వెతుకుతున్నాను. పంట పేరు, ఊరు చెప్పి మళ్లీ అడగండి.';
       const fallback = new ReadableStream<Uint8Array>({
         start(controller) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: msg })}\n\n`));

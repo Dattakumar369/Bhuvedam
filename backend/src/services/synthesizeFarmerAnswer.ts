@@ -3,7 +3,9 @@ import { completeOllamaChat, isOllamaConfigured } from './aiProxyService';
 import { completeGeminiChat, isGeminiConfigured } from './geminiProxyService';
 import type { WebResearchResult } from './webResearchService';
 
-const SYNTHESIS_TIMEOUT_MS = 15000;
+const SYNTHESIS_TIMEOUT_MS = 18000;
+
+type ReplyLanguage = 'en' | 'te' | 'hi' | 'mr' | 'ta' | 'kn';
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -14,51 +16,82 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
+function normalizeLang(lang?: string): ReplyLanguage {
+  const code = (lang ?? 'te').toLowerCase().slice(0, 2);
+  if (code === 'en' || code === 'hi' || code === 'mr' || code === 'ta' || code === 'kn') {
+    return code;
+  }
+  return 'te';
+}
+
+function languageLabel(lang: ReplyLanguage): string {
+  switch (lang) {
+    case 'en':
+      return 'English';
+    case 'hi':
+      return 'Hindi (Devanagari script only)';
+    case 'mr':
+      return 'Marathi (Devanagari script only)';
+    case 'ta':
+      return 'Tamil (Tamil script only)';
+    case 'kn':
+      return 'Kannada (Kannada script only)';
+    default:
+      return 'Telugu (తెలుగు script only — never Roman like meeku/mandu)';
+  }
+}
+
+function voiceInstruction(lang: ReplyLanguage): string {
+  return `Reply in 2-4 short spoken sentences in ${languageLabel(lang)}. No markdown. No Romanized Indian languages. Warm field-advisor tone. Give a clear practical next step.`;
+}
+
+function textInstruction(lang: ReplyLanguage): string {
+  return `Reply in 1-3 short paragraphs in ${languageLabel(lang)}. Minimal markdown. Clear practical advice — diagnosis + what to do.`;
+}
+
 /** Turn web/DB research into a human, on-topic farmer reply — never raw snippet dump. */
 export async function synthesizeFarmerAnswer(
   query: string,
   research: WebResearchResult,
-  opts: { voiceMode?: boolean } = {},
+  opts: { voiceMode?: boolean; language?: string } = {},
 ): Promise<string | null> {
+  const lang = normalizeLang(opts.language);
   const sources = research.snippets
-    .slice(0, 4)
-    .map((s, i) => `${i + 1}. ${s.title}\n   ${s.snippet.slice(0, 320)}`)
+    .slice(0, 5)
+    .map((s, i) => `${i + 1}. ${s.title}\n   ${s.snippet.slice(0, 360)}`)
     .join('\n');
 
-  const dbHint = research.dbContext.trim().slice(0, 800);
+  const dbHint = research.dbContext.trim().slice(0, 1000);
+  const instruction = opts.voiceMode ? voiceInstruction(lang) : textInstruction(lang);
 
-  const instruction = opts.voiceMode
-    ? `Reply in 2-4 spoken sentences. Pure Telugu script only — NO Roman/English words. No markdown. Village speech like talking at the field.`
-    : `Reply in 1-3 short paragraphs. Pure Telugu script. Simple village Telugu — not textbook style. Minimal markdown.`;
-
-  const prompt = `You are a friendly local agriculture advisor — talk like a REAL person, not a robot or product catalog.
+  const prompt = `You are a skilled local agriculture advisor for Indian farmers. Talk like a real person at the field — accurate and useful.
 
 FARMER ASKED:
 "${query.slice(0, 400)}"
 
-REFERENCE NOTES (may contain irrelevant items — use ONLY what answers their question):
+REFERENCE NOTES (use matching facts; ignore unrelated catalog noise):
 ${sources || '(no web notes)'}
 ${dbHint ? `\nLibrary note:\n${dbHint}` : ''}
 
 HOW TO REPLY:
-- First understand WHAT they are asking. Answer ONLY that.
-- Do NOT mention pesticides, sprays, doses, ml/acre, or ekar/acres UNLESS they asked about those.
-- Do NOT list random products. Do NOT copy-paste article titles.
-- Analyze the reference notes — pick useful facts and explain simply.
-- If notes don't match the question, answer from general farming knowledge naturally.
+- Understand the exact question and answer THAT first.
+- If it is pest/disease/yellow leaves/crop problem: say likely cause + what to do now (cultural steps and, when relevant, medicine name + dose).
+- If they asked for spray/dose/product: include product + dose clearly.
+- Do NOT dump random product catalogs. Do NOT copy article titles.
+- Prefer actionable steps over vague "wait and see".
+- If notes are weak, still give best general farming guidance for that crop/problem — do not refuse.
 - ${instruction}
 
 Your reply to the farmer:`;
 
   const messages: ProxyChatMessage[] = [{ role: 'user', content: prompt }];
-  const chatOpts = { voiceMode: opts.voiceMode, temperature: 0.38 };
+  const chatOpts = { voiceMode: opts.voiceMode, temperature: 0.35 };
 
   if (isGeminiConfigured()) {
     try {
-      const text = (await withTimeout(
-        completeGeminiChat(messages, chatOpts),
-        SYNTHESIS_TIMEOUT_MS,
-      )).trim();
+      const text = (
+        await withTimeout(completeGeminiChat(messages, chatOpts), SYNTHESIS_TIMEOUT_MS)
+      ).trim();
       if (text.length >= 20) return text;
     } catch {
       /* fall through */
@@ -77,41 +110,40 @@ Your reply to the farmer:`;
   return null;
 }
 
-/** Rewrite a successful LLM draft into a warmer, ChatGPT-like farmer reply — keeps facts. */
+/** Rewrite a successful LLM draft into a warmer farmer reply — keeps facts. */
 export async function polishConversationalReply(
   draft: string,
   query: string,
-  opts: { voiceMode?: boolean; recentTurns?: string } = {},
+  opts: { voiceMode?: boolean; recentTurns?: string; language?: string } = {},
 ): Promise<string | null> {
   const trimmed = draft.trim();
   if (trimmed.length < 15) return null;
 
-  const instruction = opts.voiceMode
-    ? `Keep 2-4 spoken sentences. No markdown. Warm Telugu like talking at the field.`
-    : `Keep 1-3 short paragraphs. Simple Telugu or match the farmer's language. Minimal markdown.`;
+  const lang = normalizeLang(opts.language);
+  const instruction = opts.voiceMode ? voiceInstruction(lang) : textInstruction(lang);
 
-  const prompt = `You polish AI drafts into natural farmer-friendly replies — like a helpful local advisor, not a catalog.
+  const prompt = `Polish this draft into a clear farmer-friendly reply. Keep all correct facts and doses.
 
 FARMER ASKED:
 "${query.slice(0, 400)}"
 ${opts.recentTurns ? `\nRECENT CHAT:\n${opts.recentTurns.slice(0, 700)}\n` : ''}
-DRAFT (keep all correct facts — fix tone only):
+DRAFT:
 """
 ${trimmed.slice(0, 2800)}
 """
 
 RULES:
-- Talk like a real person — warm, simple, conversational.
-- Telugu reply MUST be pure Telugu script (తెలుగు) — no Roman words (meeku, mandu, raithu).
-- Answer ONLY what they asked. Remove product/spray/dose lists unless they asked about those.
-- Keep numbers, product names, and doses from the draft if they belong to the question.
-- Do NOT invent new facts. Do NOT mention being AI.
+- Warm, simple, conversational — like a local advisor.
+- Language: ${languageLabel(lang)}. Never use Romanized Telugu/Hindi (meeku, mandu, raithu).
+- Keep useful diagnosis + solution steps. Do not strip advice into vague filler.
+- Keep numbers, product names, and doses when they belong to the question.
+- Do NOT invent new chemicals. Do NOT mention being AI.
 - ${instruction}
 
 Polished reply:`;
 
   const messages: ProxyChatMessage[] = [{ role: 'user', content: prompt }];
-  const chatOpts = { voiceMode: opts.voiceMode, temperature: 0.32 };
+  const chatOpts = { voiceMode: opts.voiceMode, temperature: 0.3 };
 
   if (isGeminiConfigured()) {
     try {
@@ -136,8 +168,28 @@ Polished reply:`;
   return null;
 }
 
-export function humanFallbackWhenNoSynthesis(query: string, voiceMode = false): string {
+export function humanFallbackWhenNoSynthesis(
+  query: string,
+  voiceMode = false,
+  language?: string,
+): string {
+  const lang = normalizeLang(language);
+  const shortQ = query.slice(0, 60);
+
+  if (lang === 'en') {
+    return voiceMode
+      ? `I am still gathering the best answer for "${shortQ}". Please ask again with your crop name and village — I will explain clearly.`
+      : `I am still researching **"${query.slice(0, 100)}"**.\n\nAsk again with crop name and village — I will give a clear practical answer.`;
+  }
+
+  if (lang === 'hi') {
+    return voiceMode
+      ? `"${shortQ}" के बारे में सही जवाब जमा कर रहा हूँ। फसल का नाम और गाँव बताकर फिर पूछें — साफ बताऊँगा।`
+      : `आपका सवाल **"${query.slice(0, 100)}"** अभी और शोध में है।\n\nफसल का नाम और गाँव के साथ फिर पूछें।`;
+  }
+
+  // Default Telugu — pure script (speakable by te-IN TTS)
   return voiceMode
-    ? `${query.slice(0, 60)} gurinchi inka details collect chestunnanu. Crop peru tho malli adagandi — meeku sariga cheptanu.`
-    : `Mee prashna **"${query.slice(0, 100)}"** gurinchi inka clear ga research chestunnanu.\n\nCrop peru, village tho malli adagandi — meeku sariga, manishi la cheptanu.`;
+    ? `"${shortQ}" గురించి సరిగ్గా చెప్పడానికి ఇంకా వివరాలు చూస్తున్నాను. పంట పేరు, ఊరు చెప్పి మళ్లీ అడగండి — స్పష్టంగా చెప్తాను.`
+    : `మీ ప్రశ్న **"${query.slice(0, 100)}"** గురించి ఇంకా స్పష్టంగా చూస్తున్నాను.\n\nపంట పేరు, ఊరు తో మళ్లీ అడగండి — సరిగ్గా, మనిషిలా చెప్తాను.`;
 }

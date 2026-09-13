@@ -12,27 +12,30 @@ import { isGoogleMapsConfigured } from '@/constants/mapsConfig';
 import { NEARBY_DEFAULT_ZOOM, NEARBY_MAP_MAX_ZOOM, NEARBY_OVERVIEW_DELTA, regionAt } from '@/constants/mapViewConfig';
 import { NearbyPlaceCard } from '@/features/places/components/NearbyPlaceCard';
 import { useNearbyPlaces } from '@/hooks/useNearbyPlaces';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { NearbyPlaceFilter } from '@/types/nearbyPlace';
 import { centerMapAtZoom, stepMapZoom } from '@/utils/mapCameraZoom';
 import { reverseGeocodeMapLabel } from '@/utils/mapLocationLabel';
 import { colors, layout, radius, spacing } from '@/theme';
-
-const FILTERS: { id: NearbyPlaceFilter; label: string }[] = [
-  { id: 'all', label: 'Anni' },
-  { id: 'mandi', label: 'Mandi' },
-  { id: 'shop', label: 'Shops' },
-];
 
 function NearbyPlacesMap({
   latitude,
   longitude,
   places,
   areaLabel,
+  mapPlaceholder,
+  mapLoadFailed,
+  typeMandi,
+  typeShop,
 }: {
   latitude: number;
   longitude: number;
   places: Array<{ id: string; name: string; latitude: number; longitude: number; placeType: string }>;
   areaLabel: string | null;
+  mapPlaceholder: string;
+  mapLoadFailed: string;
+  typeMandi: string;
+  typeShop: string;
 }) {
   const mapRef = useRef<MapView>(null);
   const [ready, setReady] = useState(false);
@@ -58,7 +61,7 @@ function NearbyPlacesMap({
   if (!isGoogleMapsConfigured()) {
     return (
       <Card variant="outlined" style={styles.mapPlaceholder}>
-        <Caption style={styles.mapPlaceholderText}>Map preview — list lo directions tap cheyandi</Caption>
+        <Caption style={styles.mapPlaceholderText}>{mapPlaceholder}</Caption>
       </Card>
     );
   }
@@ -73,7 +76,7 @@ function NearbyPlacesMap({
           </Caption>
         </View>
       ) : null}
-      <MapErrorBoundary fallbackMessage="Map load avvaledu — list nunchi directions use cheyandi.">
+      <MapErrorBoundary fallbackMessage={mapLoadFailed}>
         <View style={styles.mapBox}>
           <MapView
             ref={mapRef}
@@ -83,7 +86,6 @@ function NearbyPlacesMap({
             initialRegion={region}
             onMapReady={() => {
               setReady(true);
-              // Overview zoom — do NOT use field ultra-zoom (22) or markers look "missing".
               centerMapAtZoom(mapRef, latitude, longitude, NEARBY_DEFAULT_ZOOM);
             }}
             onRegionChangeComplete={setMapRegion}
@@ -99,7 +101,7 @@ function NearbyPlacesMap({
                 key={place.id}
                 coordinate={{ latitude: place.latitude, longitude: place.longitude }}
                 title={place.name}
-                description={place.placeType === 'mandi' ? 'Mandi market' : 'Ag shop'}
+                description={place.placeType === 'mandi' ? typeMandi : typeShop}
                 pinColor={place.placeType === 'mandi' ? 'orange' : 'green'}
               />
             ))}
@@ -132,10 +134,17 @@ function NearbyPlacesMap({
 
 export default function NearbyPlacesScreen() {
   const insets = useSafeAreaInsets();
+  const { screens, app } = useTranslation();
   const { places, latitude, longitude, locationLabel, isLoading, error, filter, setFilter, refresh } =
     useNearbyPlaces();
   const [refreshing, setRefreshing] = useState(false);
   const [areaLabel, setAreaLabel] = useState<string | null>(locationLabel);
+
+  const filters: { id: NearbyPlaceFilter; label: string }[] = [
+    { id: 'all', label: screens.nearbyFilterAll },
+    { id: 'mandi', label: screens.nearbyFilterMandi },
+    { id: 'shop', label: screens.nearbyFilterShops },
+  ];
 
   useEffect(() => {
     if (latitude == null || longitude == null) return;
@@ -156,7 +165,7 @@ export default function NearbyPlacesScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Header title="Mandi & Shops" showBack onBack={() => router.back()} />
+      <Header title={app.nearbyPlaces || screens.nearbyPlacesTitle} showBack onBack={() => router.back()} />
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
@@ -164,11 +173,8 @@ export default function NearbyPlacesScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Card variant="elevated" style={styles.intro}>
-          <Body style={styles.introTitle}>Daggara unna mandi & fertilizer shops</Body>
-          <Caption style={styles.introBody}>
-            Mee location batti daggaralo unna APMC markets mariyu fertilizer/seed dealers chupistam.
-            Card tap chesi Google Maps directions open avutayi.
-          </Caption>
+          <Body style={styles.introTitle}>{screens.nearbyPlacesIntroTitle}</Body>
+          <Caption style={styles.introBody}>{screens.nearbyPlacesIntroBody}</Caption>
           {locationLabel ? (
             <View style={styles.locRow}>
               <MaterialCommunityIcons name="map-marker" size={16} color={colors.primary} />
@@ -178,7 +184,7 @@ export default function NearbyPlacesScreen() {
         </Card>
 
         <View style={styles.filterRow}>
-          {FILTERS.map((item) => (
+          {filters.map((item) => (
             <Pressable
               key={item.id}
               onPress={() => setFilter(item.id)}
@@ -194,7 +200,7 @@ export default function NearbyPlacesScreen() {
         {isLoading ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color={colors.primary} />
-            <Caption style={styles.loadingText}>Daggara mandi/shops search avutunnayi…</Caption>
+            <Caption style={styles.loadingText}>{screens.nearbyLoading}</Caption>
           </View>
         ) : null}
 
@@ -204,11 +210,15 @@ export default function NearbyPlacesScreen() {
             longitude={longitude}
             places={places}
             areaLabel={areaLabel}
+            mapPlaceholder={screens.nearbyMapPlaceholder}
+            mapLoadFailed={screens.nearbyMapLoadFailed}
+            typeMandi={screens.nearbyTypeMandi}
+            typeShop={screens.nearbyTypeFertilizerShop}
           />
         ) : null}
 
         {!isLoading && places.length > 0 ? (
-          <Caption style={styles.count}>{places.length} places — tap chesi directions</Caption>
+          <Caption style={styles.count}>{screens.nearbyPlacesCount(places.length)}</Caption>
         ) : null}
 
         {places.map((place) => (
