@@ -57,12 +57,9 @@ export default function LoginScreen() {
           .min(10, app.invalidMobile)
           .max(10, app.invalidMobile)
           .regex(/^[6-9]\d{9}$/, app.invalidMobile),
-        password: z
-          .string()
-          .min(1, app.passwordRequired)
-          .min(8, app.passwordTooShort),
+        password: z.string().min(1, app.passwordRequired),
       }),
-    [app.invalidMobile, app.passwordRequired, app.passwordTooShort],
+    [app.invalidMobile, app.passwordRequired],
   );
 
   const signupSchema = useMemo(
@@ -267,8 +264,6 @@ export default function LoginScreen() {
                   label={app.password}
                   value={value ?? ''}
                   onChangeText={onChange}
-                  placeholder={app.passwordPlaceholder}
-                  hint={app.passwordTooShort}
                   secureTextEntry
                   autoComplete="password"
                   textContentType="password"

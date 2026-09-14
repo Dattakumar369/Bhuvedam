@@ -246,7 +246,7 @@ ${getPrivacyPolicyExtra()}
 
 ## Your Rights
 
-You have the right to access, update, or delete your personal information. Contact us at **${APP.supportEmail}** to exercise these rights.
+You have the right to access, update, or delete your personal information. Delete your account in the app under **Profile → Delete account**, or contact **${APP.supportEmail}**.
 
 ## Contact Us
 

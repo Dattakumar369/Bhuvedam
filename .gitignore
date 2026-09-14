@@ -55,3 +55,6 @@ builds/
 *.apk
 tmp-*.json
 
+# Marketing site lives in its own repo (Bhuvedam-Web) — do not push from this app repo
+BhuVedam/
+

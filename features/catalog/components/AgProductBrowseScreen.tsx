@@ -2,27 +2,27 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  View,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Chip, DataFreshnessBadge, Header, ListSkeleton, SearchInput } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
 import { AGRO_BRAND_FILTERS } from '@/constants/agCatalogFilters';
-import { getCatalogBrowseCopy } from '@/constants/i18n/catalogTranslations';
-import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
-import { filterLabel } from '@/constants/i18n/screenTranslations';
 import { CROPS } from '@/constants/crops';
+import { getCatalogBrowseCopy } from '@/constants/i18n/catalogTranslations';
+import { filterLabel } from '@/constants/i18n/screenTranslations';
+import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
 import { AgProductCard } from '@/features/catalog/components/AgProductCard';
 import { fetchAgCatalogProducts } from '@/services/catalog/agProductCatalogService';
 import { useFarmerContextStore } from '@/store/farmerContextStore';
 import { useLanguageStore } from '@/store/languageStore';
-import type { AgCatalogProduct, AgCatalogType } from '@/types/agCatalogProduct';
 import { colors, layout, radius, spacing } from '@/theme';
+import type { AgCatalogProduct, AgCatalogType } from '@/types/agCatalogProduct';
 
 export interface TargetFilter {
   id: string;

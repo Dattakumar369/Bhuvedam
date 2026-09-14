@@ -1,19 +1,19 @@
 import { useEffect } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import Animated, {
-  Easing,
-  interpolate,
-  type SharedValue,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSpring,
-  withTiming,
+    Easing,
+    interpolate,
+    type SharedValue,
+    useAnimatedStyle,
+    useSharedValue,
+    withDelay,
+    withSpring,
+    withTiming,
 } from 'react-native-reanimated';
 
+import { Subtitle } from '@/components/ui/Typography';
 import { APP } from '@/constants/app';
 import { APP_ASSETS } from '@/constants/assets';
-import { Subtitle } from '@/components/ui/Typography';
 import { colors, spacing } from '@/theme';
 
 /** Total splash visibility — keep in sync with app/index.tsx */

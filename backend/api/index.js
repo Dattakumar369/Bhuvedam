@@ -12,11 +12,11 @@ var __export = (target2, all) => {
   for (var name in all)
     __defProp(target2, name, { get: all[name], enumerable: true });
 };
-var __copyProps = (to, from, except, desc7) => {
+var __copyProps = (to, from, except, desc8) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc7 = __getOwnPropDesc(from, key)) || desc7.enumerable });
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc8 = __getOwnPropDesc(from, key)) || desc8.enumerable });
   }
   return to;
 };
@@ -1173,6 +1173,70 @@ var init_pushTokens = __esm({
   }
 });
 
+// src/db/schema/govtSchemes.ts
+var import_pg_core24, govtSchemes;
+var init_govtSchemes = __esm({
+  "src/db/schema/govtSchemes.ts"() {
+    "use strict";
+    import_pg_core24 = require("drizzle-orm/pg-core");
+    govtSchemes = (0, import_pg_core24.pgTable)(
+      "govt_schemes",
+      {
+        id: (0, import_pg_core24.varchar)("id", { length: 80 }).primaryKey(),
+        category: (0, import_pg_core24.varchar)("category", { length: 40 }).notNull(),
+        region: (0, import_pg_core24.varchar)("region", { length: 20 }).notNull(),
+        status: (0, import_pg_core24.varchar)("status", { length: 20 }).notNull().default("active"),
+        titleEn: (0, import_pg_core24.varchar)("title_en", { length: 200 }).notNull(),
+        titleTe: (0, import_pg_core24.varchar)("title_te", { length: 200 }).notNull(),
+        amountEn: (0, import_pg_core24.varchar)("amount_en", { length: 120 }).notNull().default(""),
+        amountTe: (0, import_pg_core24.varchar)("amount_te", { length: 120 }).notNull().default(""),
+        benefitEn: (0, import_pg_core24.text)("benefit_en").notNull().default(""),
+        benefitTe: (0, import_pg_core24.text)("benefit_te").notNull().default(""),
+        eligibilityEn: (0, import_pg_core24.text)("eligibility_en").notNull().default(""),
+        eligibilityTe: (0, import_pg_core24.text)("eligibility_te").notNull().default(""),
+        howToApplyEn: (0, import_pg_core24.text)("how_to_apply_en").notNull().default(""),
+        howToApplyTe: (0, import_pg_core24.text)("how_to_apply_te").notNull().default(""),
+        applyUrl: (0, import_pg_core24.text)("apply_url"),
+        icon: (0, import_pg_core24.varchar)("icon", { length: 80 }).notNull().default("sprout"),
+        highlightsEn: (0, import_pg_core24.jsonb)("highlights_en").$type().notNull().default([]),
+        highlightsTe: (0, import_pg_core24.jsonb)("highlights_te").$type().notNull().default([]),
+        eligibilityRules: (0, import_pg_core24.jsonb)("eligibility_rules").$type().default({}),
+        verifiedAt: (0, import_pg_core24.varchar)("verified_at", { length: 40 }),
+        createdAt: (0, import_pg_core24.timestamp)("created_at", { withTimezone: true }).notNull().defaultNow(),
+        updatedAt: (0, import_pg_core24.timestamp)("updated_at", { withTimezone: true }).notNull().defaultNow()
+      },
+      (t) => [
+        (0, import_pg_core24.index)("govt_schemes_status_idx").on(t.status),
+        (0, import_pg_core24.index)("govt_schemes_category_idx").on(t.category),
+        (0, import_pg_core24.index)("govt_schemes_region_idx").on(t.region)
+      ]
+    );
+  }
+});
+
+// src/db/schema/adminBroadcasts.ts
+var import_pg_core25, adminBroadcasts;
+var init_adminBroadcasts = __esm({
+  "src/db/schema/adminBroadcasts.ts"() {
+    "use strict";
+    import_pg_core25 = require("drizzle-orm/pg-core");
+    adminBroadcasts = (0, import_pg_core25.pgTable)(
+      "admin_broadcasts",
+      {
+        id: (0, import_pg_core25.uuid)("id").primaryKey().defaultRandom(),
+        title: (0, import_pg_core25.varchar)("title", { length: 200 }).notNull(),
+        body: (0, import_pg_core25.text)("body").notNull(),
+        type: (0, import_pg_core25.varchar)("type", { length: 40 }).notNull().default("ai_insight"),
+        recipientCount: (0, import_pg_core25.integer)("recipient_count").notNull().default(0),
+        pushSent: (0, import_pg_core25.integer)("push_sent").notNull().default(0),
+        createdBy: (0, import_pg_core25.varchar)("created_by", { length: 255 }),
+        createdAt: (0, import_pg_core25.timestamp)("created_at", { withTimezone: true }).notNull().defaultNow()
+      },
+      (t) => [(0, import_pg_core25.index)("admin_broadcasts_created_idx").on(t.createdAt)]
+    );
+  }
+});
+
 // src/db/schema/relations.ts
 var import_drizzle_orm, farmersRelations, landsRelations, surveyNumbersRelations, cropsRelations, cropVarietiesRelations, cropCalendarRelations, weatherRelations, mandiPricesRelations, fertilizersRelations, diseasesRelations, diseaseSpraysRelations, aiPredictionsRelations, ordersRelations, orderItemsRelations, paymentsRelations, notificationsRelations, pushTokensRelations;
 var init_relations = __esm({
@@ -1276,6 +1340,7 @@ var init_relations = __esm({
 // src/db/schema/index.ts
 var schema_exports = {};
 __export(schema_exports, {
+  adminBroadcasts: () => adminBroadcasts,
   agAdvisories: () => agAdvisories,
   agKnowledge: () => agKnowledge,
   agPlaces: () => agPlaces,
@@ -1305,6 +1370,7 @@ __export(schema_exports, {
   fertilizerProducts: () => fertilizerProducts,
   fertilizers: () => fertilizers,
   fertilizersRelations: () => fertilizersRelations,
+  govtSchemes: () => govtSchemes,
   icarGuidelines: () => icarGuidelines,
   knowledgeTypeEnum: () => knowledgeTypeEnum,
   lands: () => lands,
@@ -1368,6 +1434,8 @@ var init_schema = __esm({
     init_notifications();
     init_otpCodes();
     init_pushTokens();
+    init_govtSchemes();
+    init_adminBroadcasts();
     init_relations();
   }
 });
@@ -1375,8 +1443,8 @@ var init_schema = __esm({
 // src/db/index.ts
 function createDb() {
   loadEnv();
-  const sql17 = (0, import_serverless.neon)(getDatabaseUrl());
-  return (0, import_neon_http.drizzle)(sql17, { schema: schema_exports });
+  const sql18 = (0, import_serverless.neon)(getDatabaseUrl());
+  return (0, import_neon_http.drizzle)(sql18, { schema: schema_exports });
 }
 function getDb() {
   if (!dbInstance) dbInstance = createDb();
@@ -1428,8 +1496,8 @@ var init_publicationTypes = __esm({
 });
 
 // src/ingestion/utils.ts
-function slugId(text17, prefix = "") {
-  const base = text17.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+function slugId(text19, prefix = "") {
+  const base = text19.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
   const full = prefix ? `${prefix}_${base}` : base;
   if (full.length <= 40) return full;
   const hash = (0, import_crypto.createHash)("sha256").update(full).digest("hex").slice(0, 8);
@@ -1479,10 +1547,10 @@ __export(openAlexSource_exports, {
   syncOpenAlexResearch: () => syncOpenAlexResearch,
   syncPesticideResearch: () => syncPesticideResearch
 });
-function invertAbstract2(index20) {
-  if (!index20) return "";
+function invertAbstract2(index22) {
+  if (!index22) return "";
   const pairs = [];
-  for (const [word, positions] of Object.entries(index20)) {
+  for (const [word, positions] of Object.entries(index22)) {
     for (const pos of positions) pairs.push([pos, word]);
   }
   pairs.sort((a, b) => a[0] - b[0]);
@@ -2576,8 +2644,8 @@ var import_node_server2 = require("@hono/node-server");
 var import_node_server = require("@hono/node-server");
 var import_serve_static = require("@hono/node-server/serve-static");
 var import_dotenv3 = require("dotenv");
-var import_drizzle_orm25 = require("drizzle-orm");
-var import_hono = require("hono");
+var import_drizzle_orm26 = require("drizzle-orm");
+var import_hono2 = require("hono");
 var import_cors = require("hono/cors");
 var import_node_path = __toESM(require("node:path"), 1);
 init_db();
@@ -6035,10 +6103,10 @@ async function syncIndianFertilizerCatalog() {
       }
     });
   }
-  const [{ count }] = await db.select({ count: import_drizzle_orm3.sql`count(*)::int` }).from(fertilizerProducts);
+  const [{ count: count2 }] = await db.select({ count: import_drizzle_orm3.sql`count(*)::int` }).from(fertilizerProducts);
   return {
     fetched: INDIAN_FERTILIZER_CATALOG.length,
-    upserted: count ?? 0,
+    upserted: count2 ?? 0,
     officialPricesApplied,
     priceVerifiedAt: FERTILIZER_PRICE_VERIFIED_AT
   };
@@ -6123,8 +6191,8 @@ async function syncPlantDiseases() {
       }
     }
   }
-  const [{ count }] = await db.select({ count: import_drizzle_orm3.sql`count(*)::int` }).from(plantDiseases);
-  return { fetched: PLANT_VILLAGE_DISEASES.length, upserted: count ?? 0 };
+  const [{ count: count2 }] = await db.select({ count: import_drizzle_orm3.sql`count(*)::int` }).from(plantDiseases);
+  return { fetched: PLANT_VILLAGE_DISEASES.length, upserted: count2 ?? 0 };
 }
 async function syncIcarGuidelines() {
   const now = /* @__PURE__ */ new Date();
@@ -6159,8 +6227,8 @@ async function syncIcarGuidelines() {
       }
     });
   }
-  const [{ count }] = await db.select({ count: import_drizzle_orm3.sql`count(*)::int` }).from(icarGuidelines);
-  return { fetched: ICAR_GUIDELINES.length, upserted: count ?? 0 };
+  const [{ count: count2 }] = await db.select({ count: import_drizzle_orm3.sql`count(*)::int` }).from(icarGuidelines);
+  return { fetched: ICAR_GUIDELINES.length, upserted: count2 ?? 0 };
 }
 async function syncDoaAdvisories() {
   const now = /* @__PURE__ */ new Date();
@@ -6195,8 +6263,8 @@ async function syncDoaAdvisories() {
       }
     });
   }
-  const [{ count }] = await db.select({ count: import_drizzle_orm3.sql`count(*)::int` }).from(agAdvisories);
-  return { fetched: DOA_ADVISORIES.length, upserted: count ?? 0 };
+  const [{ count: count2 }] = await db.select({ count: import_drizzle_orm3.sql`count(*)::int` }).from(agAdvisories);
+  return { fetched: DOA_ADVISORIES.length, upserted: count2 ?? 0 };
 }
 async function syncSoilHealthRecommendations() {
   const now = /* @__PURE__ */ new Date();
@@ -6233,8 +6301,8 @@ async function syncSoilHealthRecommendations() {
       }
     });
   }
-  const [{ count }] = await db.select({ count: import_drizzle_orm3.sql`count(*)::int` }).from(soilHealthRecommendations);
-  return { fetched: SOIL_HEALTH_RECOMMENDATIONS.length, upserted: count ?? 0 };
+  const [{ count: count2 }] = await db.select({ count: import_drizzle_orm3.sql`count(*)::int` }).from(soilHealthRecommendations);
+  return { fetched: SOIL_HEALTH_RECOMMENDATIONS.length, upserted: count2 ?? 0 };
 }
 async function syncIndianAgCatalog() {
   const [fertilizers2, plantDiseaseRows, icar, doa, soilHealth] = await Promise.all([
@@ -7705,10 +7773,10 @@ Weed: Hand weed 20 and 40 DAS critical for yield.`,
 // src/ingestion/sources/publicationKnowledgeSource.ts
 init_publicationTypes();
 init_utils();
-function invertAbstract(index20) {
-  if (!index20) return "";
+function invertAbstract(index22) {
+  if (!index22) return "";
   const pairs = [];
-  for (const [word, positions] of Object.entries(index20)) {
+  for (const [word, positions] of Object.entries(index22)) {
     for (const pos of positions) pairs.push([pos, word]);
   }
   pairs.sort((a, b) => a[0] - b[0]);
@@ -7887,7 +7955,7 @@ async function syncUniversityResearch(perQuery = 5) {
   }
   return { fetched, upserted };
 }
-function extractCropTags(text17) {
+function extractCropTags(text19) {
   const crops2 = [
     "rice",
     "wheat",
@@ -7903,7 +7971,7 @@ function extractCropTags(text17) {
     "sorghum",
     "mango"
   ];
-  const lower = text17.toLowerCase();
+  const lower = text19.toLowerCase();
   return crops2.filter((c) => lower.includes(c));
 }
 async function syncAllPublications() {
@@ -7933,25 +8001,25 @@ var CROP_MANDI_SEARCH_TERMS = {
   chickpea: ["Bengal Gram(Gram)(Whole)", "Bengal Gram", "Gram"]
 };
 function commodityToCropId(commodity) {
-  const text17 = commodity.toLowerCase().trim();
-  if (!text17) return null;
+  const text19 = commodity.toLowerCase().trim();
+  if (!text19) return null;
   for (const [cropId, terms] of Object.entries(CROP_MANDI_SEARCH_TERMS)) {
     for (const term of terms) {
       const t = term.toLowerCase();
       const head = t.split("(")[0]?.trim() ?? t;
-      if (text17.includes(head) || head.includes(text17.split("(")[0]?.trim() ?? text17)) {
+      if (text19.includes(head) || head.includes(text19.split("(")[0]?.trim() ?? text19)) {
         return cropId;
       }
     }
   }
-  if (/paddy|dhan|\brice\b/.test(text17)) return "rice";
-  if (/wheat/.test(text17)) return "wheat";
-  if (/cotton/.test(text17)) return "cotton";
-  if (/soy/.test(text17)) return "soybean";
-  if (/tomato/.test(text17)) return "tomato";
-  if (/sugarcane|ganna/.test(text17)) return "sugarcane";
-  if (/maize|\bcorn\b/.test(text17)) return "maize";
-  if (/gram|chickpea|bengal/.test(text17)) return "chickpea";
+  if (/paddy|dhan|\brice\b/.test(text19)) return "rice";
+  if (/wheat/.test(text19)) return "wheat";
+  if (/cotton/.test(text19)) return "cotton";
+  if (/soy/.test(text19)) return "soybean";
+  if (/tomato/.test(text19)) return "tomato";
+  if (/sugarcane|ganna/.test(text19)) return "sugarcane";
+  if (/maize|\bcorn\b/.test(text19)) return "maize";
+  if (/gram|chickpea|bengal/.test(text19)) return "chickpea";
   return null;
 }
 function normalizeMandiCropId(cropId, commodity) {
@@ -10423,12 +10491,12 @@ function buildGeminiContents(messages) {
   const contents = [];
   for (const message of messages) {
     if (message.role === "system") continue;
-    const { text: text17, images } = parseOpenAIContent(message.content);
+    const { text: text19, images } = parseOpenAIContent(message.content);
     const parts = [];
     for (const image of images) {
       parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
     }
-    if (text17) parts.push({ text: text17 });
+    if (text19) parts.push({ text: text19 });
     if (!parts.length) continue;
     contents.push({
       role: message.role === "assistant" ? "model" : "user",
@@ -10439,12 +10507,12 @@ function buildGeminiContents(messages) {
 }
 function toOllamaVisionMessages(messages) {
   return messages.map((message) => {
-    const { text: text17, images } = parseOpenAIContent(message.content);
+    const { text: text19, images } = parseOpenAIContent(message.content);
     if (message.role === "user" && images.length) {
       return {
         role: "user",
         // Ollama vision needs non-empty content; not shown in the app chat bubble.
-        content: text17 || "Analyze this image.",
+        content: text19 || "Analyze this image.",
         images: images.map((img) => img.data)
       };
     }
@@ -10478,11 +10546,11 @@ function trimMessagesForOllama(messages) {
   const maxSystemChars = 1e4;
   return messages.map((message) => {
     if (message.role !== "system") return message;
-    const text17 = messageText(message.content);
-    if (text17.length <= maxSystemChars) return message;
+    const text19 = messageText(message.content);
+    if (text19.length <= maxSystemChars) return message;
     return {
       ...message,
-      content: `${text17.slice(-maxSystemChars)}
+      content: `${text19.slice(-maxSystemChars)}
 
 [Earlier context trimmed for speed.]`
     };
@@ -10528,8 +10596,8 @@ async function requestOllamaChat(messages, opts) {
 async function completeOllamaChat(messages, opts = {}) {
   const response = await requestOllamaChat(messages, { ...opts, stream: false });
   if (!response.ok) {
-    const text17 = await response.text();
-    throw new Error(text17 || `Ollama error ${response.status}`);
+    const text19 = await response.text();
+    throw new Error(text19 || `Ollama error ${response.status}`);
   }
   const data = await response.json();
   const content = extractAssistantText(data.message);
@@ -10570,9 +10638,9 @@ function getGeminiConfigIssue() {
   if (key.length < 20) return "GEMINI_API_KEY too short";
   return null;
 }
-function trimSystemText(text17, maxChars = 1e4) {
-  if (text17.length <= maxChars) return text17;
-  return `${text17.slice(-maxChars)}
+function trimSystemText(text19, maxChars = 1e4) {
+  if (text19.length <= maxChars) return text19;
+  return `${text19.slice(-maxChars)}
 
 [Earlier context trimmed for speed.]`;
 }
@@ -10587,10 +10655,10 @@ function buildTextPrompt(messages) {
   const turns = [];
   for (const message of messages) {
     if (message.role === "system") continue;
-    const text17 = messageText(message.content);
-    if (!text17) continue;
+    const text19 = messageText(message.content);
+    if (!text19) continue;
     const label = message.role === "assistant" ? "Assistant" : "Farmer";
-    turns.push(`${label}: ${text17}`);
+    turns.push(`${label}: ${text19}`);
   }
   if (!turns.length) {
     throw new Error("No user messages for Gemini");
@@ -10644,8 +10712,8 @@ async function completeGeminiChatViaRest(messages, opts, useVision, systemInstru
     throw new Error(`Gemini REST ${response.status}: ${raw.slice(0, 400)}`);
   }
   const data = JSON.parse(raw);
-  const text17 = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("").trim() ?? "";
-  if (text17) return text17;
+  const text19 = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("").trim() ?? "";
+  if (text19) return text19;
   throw new Error("Gemini returned an empty response");
 }
 async function completeGeminiChatViaSdk(messages, opts, useVision, systemInstruction, temperature, maxOutputTokens) {
@@ -10664,8 +10732,8 @@ async function completeGeminiChatViaSdk(messages, opts, useVision, systemInstruc
         abortSignal: opts.signal
       }
     });
-    const text18 = response2.text?.trim() ?? "";
-    if (text18) return text18;
+    const text20 = response2.text?.trim() ?? "";
+    if (text20) return text20;
     throw new Error("Gemini returned an empty response");
   }
   const userPrompt = buildTextPrompt(messages);
@@ -10679,8 +10747,8 @@ async function completeGeminiChatViaSdk(messages, opts, useVision, systemInstruc
       abortSignal: opts.signal
     }
   });
-  const text17 = response.text?.trim() ?? "";
-  if (text17) return text17;
+  const text19 = response.text?.trim() ?? "";
+  if (text19) return text19;
   throw new Error("Gemini returned an empty response");
 }
 async function completeGeminiChat(messages, opts = {}) {
@@ -10689,7 +10757,7 @@ async function completeGeminiChat(messages, opts = {}) {
   const systemInstruction = extractSystemInstruction(messages);
   const useVision = historyHasVisionImage(messages);
   const temperature = useVision ? opts.temperature ?? 0.25 : opts.temperature ?? (opts.voiceMode ? 0.25 : 0.15);
-  const maxOutputTokens = opts.voiceMode ? 768 : 2048;
+  const maxOutputTokens = opts.voiceMode ? 1024 : 2048;
   try {
     return await completeGeminiChatViaRest(
       messages,
@@ -10824,14 +10892,14 @@ async function cacheAiKnowledgeAnswer(query, answer, opts = {}) {
 var CORRECTION_RE = /\b(wrong|incorrect|not correct|that's wrong|actually|correct is|fix this|tappu|tappadu|kadu|kadhu|nijam|mari|cheppaledu)\b|తప్ప|కాదు|నిజం|మార/i;
 var WEB_SEARCH_RE = /\b(search|find|google|internet|web|online|look up|browse)\b|search chey|web lo|internet lo|online lo|google lo|వెబ|ఇంటర్నెట|సెర్చ|వెత|ఆన్లైన/i;
 var UNCERTAIN_ANSWER_RE = /\b(sorry|i don't|i do not|don't have|do not have|no information|not available|cannot find|unable to|i'm not sure|don't know|do not know|teliyadu|telisadu|ledu|kanipinchaledu|dorakaledu|naku telidu|information about that|ippudu cheppalemu)\b|క్షమ|తెలియ|లేదు|దొరక|సమాచారం లే/i;
-function isCorrectionMessage(text17) {
-  return CORRECTION_RE.test(text17.trim());
+function isCorrectionMessage(text19) {
+  return CORRECTION_RE.test(text19.trim());
 }
-function wantsWebSearch(text17) {
-  return WEB_SEARCH_RE.test(text17.trim());
+function wantsWebSearch(text19) {
+  return WEB_SEARCH_RE.test(text19.trim());
 }
-function isUncertainLlmAnswer(text17) {
-  const t = text17.trim();
+function isUncertainLlmAnswer(text19) {
+  const t = text19.trim();
   if (!t) return true;
   if (t.length < 25) return true;
   return UNCERTAIN_ANSWER_RE.test(t);
@@ -10886,10 +10954,10 @@ function messageText2(content) {
 init_utils();
 init_knowledgeSearch();
 var AG_SUFFIX = " agriculture India farmer";
-function invertAbstract3(index20) {
-  if (!index20) return "";
+function invertAbstract3(index22) {
+  if (!index22) return "";
   const pairs = [];
-  for (const [word, positions] of Object.entries(index20)) {
+  for (const [word, positions] of Object.entries(index22)) {
     for (const pos of positions) pairs.push([pos, word]);
   }
   pairs.sort((a, b) => a[0] - b[0]);
@@ -11065,7 +11133,7 @@ async function researchAgricultureOnline(query, opts = {}) {
 }
 
 // src/services/synthesizeFarmerAnswer.ts
-var SYNTHESIS_TIMEOUT_MS = 15e3;
+var SYNTHESIS_TIMEOUT_MS = 18e3;
 function withTimeout(promise, ms) {
   return Promise.race([
     promise,
@@ -11074,47 +11142,75 @@ function withTimeout(promise, ms) {
     })
   ]);
 }
+function normalizeLang(lang) {
+  const code = (lang ?? "te").toLowerCase().slice(0, 2);
+  if (code === "en" || code === "hi" || code === "mr" || code === "ta" || code === "kn") {
+    return code;
+  }
+  return "te";
+}
+function languageLabel(lang) {
+  switch (lang) {
+    case "en":
+      return "English";
+    case "hi":
+      return "Hindi (Devanagari script only)";
+    case "mr":
+      return "Marathi (Devanagari script only)";
+    case "ta":
+      return "Tamil (Tamil script only)";
+    case "kn":
+      return "Kannada (Kannada script only)";
+    default:
+      return "Telugu (\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41 script only \u2014 never Roman like meeku/mandu)";
+  }
+}
+function voiceInstruction(lang) {
+  return `Reply in 2-4 short spoken sentences in ${languageLabel(lang)}. No markdown. No Romanized Indian languages. Warm field-advisor tone. Give a clear practical next step.`;
+}
+function textInstruction(lang) {
+  return `Reply in 1-3 short paragraphs in ${languageLabel(lang)}. Minimal markdown. Clear practical advice \u2014 diagnosis + what to do.`;
+}
 async function synthesizeFarmerAnswer(query, research, opts = {}) {
-  const sources = research.snippets.slice(0, 4).map((s, i) => `${i + 1}. ${s.title}
-   ${s.snippet.slice(0, 320)}`).join("\n");
-  const dbHint = research.dbContext.trim().slice(0, 800);
-  const instruction = opts.voiceMode ? `Reply in 2-4 spoken sentences. Pure Telugu script only \u2014 NO Roman/English words. No markdown. Village speech like talking at the field.` : `Reply in 1-3 short paragraphs. Pure Telugu script. Simple village Telugu \u2014 not textbook style. Minimal markdown.`;
-  const prompt = `You are a friendly local agriculture advisor \u2014 talk like a REAL person, not a robot or product catalog.
+  const lang = normalizeLang(opts.language);
+  const sources = research.snippets.slice(0, 5).map((s, i) => `${i + 1}. ${s.title}
+   ${s.snippet.slice(0, 360)}`).join("\n");
+  const dbHint = research.dbContext.trim().slice(0, 1e3);
+  const instruction = opts.voiceMode ? voiceInstruction(lang) : textInstruction(lang);
+  const prompt = `You are a skilled local agriculture advisor for Indian farmers. Talk like a real person at the field \u2014 accurate and useful.
 
 FARMER ASKED:
 "${query.slice(0, 400)}"
 
-REFERENCE NOTES (may contain irrelevant items \u2014 use ONLY what answers their question):
+REFERENCE NOTES (use matching facts; ignore unrelated catalog noise):
 ${sources || "(no web notes)"}
 ${dbHint ? `
 Library note:
 ${dbHint}` : ""}
 
 HOW TO REPLY:
-- First understand WHAT they are asking. Answer ONLY that.
-- Do NOT mention pesticides, sprays, doses, ml/acre, or ekar/acres UNLESS they asked about those.
-- Do NOT list random products. Do NOT copy-paste article titles.
-- Analyze the reference notes \u2014 pick useful facts and explain simply.
-- If notes don't match the question, answer from general farming knowledge naturally.
+- Understand the exact question and answer THAT first.
+- If it is pest/disease/yellow leaves/crop problem: say likely cause + what to do now (cultural steps and, when relevant, medicine name + dose).
+- If they asked for spray/dose/product: include product + dose clearly.
+- Do NOT dump random product catalogs. Do NOT copy article titles.
+- Prefer actionable steps over vague "wait and see".
+- If notes are weak, still give best general farming guidance for that crop/problem \u2014 do not refuse.
 - ${instruction}
 
 Your reply to the farmer:`;
   const messages = [{ role: "user", content: prompt }];
-  const chatOpts = { voiceMode: opts.voiceMode, temperature: 0.38 };
+  const chatOpts = { voiceMode: opts.voiceMode, temperature: 0.35 };
   if (isGeminiConfigured()) {
     try {
-      const text17 = (await withTimeout(
-        completeGeminiChat(messages, chatOpts),
-        SYNTHESIS_TIMEOUT_MS
-      )).trim();
-      if (text17.length >= 20) return text17;
+      const text19 = (await withTimeout(completeGeminiChat(messages, chatOpts), SYNTHESIS_TIMEOUT_MS)).trim();
+      if (text19.length >= 20) return text19;
     } catch {
     }
   }
   if (isOllamaConfigured()) {
     try {
-      const text17 = (await completeOllamaChat(messages, chatOpts)).trim();
-      if (text17.length >= 20) return text17;
+      const text19 = (await completeOllamaChat(messages, chatOpts)).trim();
+      if (text19.length >= 20) return text19;
     } catch {
     }
   }
@@ -11123,8 +11219,9 @@ Your reply to the farmer:`;
 async function polishConversationalReply(draft, query, opts = {}) {
   const trimmed = draft.trim();
   if (trimmed.length < 15) return null;
-  const instruction = opts.voiceMode ? `Keep 2-4 spoken sentences. No markdown. Warm Telugu like talking at the field.` : `Keep 1-3 short paragraphs. Simple Telugu or match the farmer's language. Minimal markdown.`;
-  const prompt = `You polish AI drafts into natural farmer-friendly replies \u2014 like a helpful local advisor, not a catalog.
+  const lang = normalizeLang(opts.language);
+  const instruction = opts.voiceMode ? voiceInstruction(lang) : textInstruction(lang);
+  const prompt = `Polish this draft into a clear farmer-friendly reply. Keep all correct facts and doses.
 
 FARMER ASKED:
 "${query.slice(0, 400)}"
@@ -11132,42 +11229,54 @@ ${opts.recentTurns ? `
 RECENT CHAT:
 ${opts.recentTurns.slice(0, 700)}
 ` : ""}
-DRAFT (keep all correct facts \u2014 fix tone only):
+DRAFT:
 """
 ${trimmed.slice(0, 2800)}
 """
 
 RULES:
-- Talk like a real person \u2014 warm, simple, conversational.
-- Telugu reply MUST be pure Telugu script (\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41) \u2014 no Roman words (meeku, mandu, raithu).
-- Answer ONLY what they asked. Remove product/spray/dose lists unless they asked about those.
-- Keep numbers, product names, and doses from the draft if they belong to the question.
-- Do NOT invent new facts. Do NOT mention being AI.
+- Warm, simple, conversational \u2014 like a local advisor.
+- Language: ${languageLabel(lang)}. Never use Romanized Telugu/Hindi (meeku, mandu, raithu).
+- Keep useful diagnosis + solution steps. Do not strip advice into vague filler.
+- Keep numbers, product names, and doses when they belong to the question.
+- Do NOT invent new chemicals. Do NOT mention being AI.
 - ${instruction}
 
 Polished reply:`;
   const messages = [{ role: "user", content: prompt }];
-  const chatOpts = { voiceMode: opts.voiceMode, temperature: 0.32 };
+  const chatOpts = { voiceMode: opts.voiceMode, temperature: 0.3 };
   if (isGeminiConfigured()) {
     try {
-      const text17 = (await withTimeout(completeGeminiChat(messages, chatOpts), SYNTHESIS_TIMEOUT_MS)).trim();
-      if (text17.length >= 15) return text17;
+      const text19 = (await withTimeout(completeGeminiChat(messages, chatOpts), SYNTHESIS_TIMEOUT_MS)).trim();
+      if (text19.length >= 15) return text19;
     } catch {
     }
   }
   if (isOllamaConfigured()) {
     try {
-      const text17 = (await completeOllamaChat(messages, chatOpts)).trim();
-      if (text17.length >= 15) return text17;
+      const text19 = (await completeOllamaChat(messages, chatOpts)).trim();
+      if (text19.length >= 15) return text19;
     } catch {
     }
   }
   return null;
 }
-function humanFallbackWhenNoSynthesis(query, voiceMode = false) {
-  return voiceMode ? `${query.slice(0, 60)} gurinchi inka details collect chestunnanu. Crop peru tho malli adagandi \u2014 meeku sariga cheptanu.` : `Mee prashna **"${query.slice(0, 100)}"** gurinchi inka clear ga research chestunnanu.
+function humanFallbackWhenNoSynthesis(query, voiceMode = false, language) {
+  const lang = normalizeLang(language);
+  const shortQ = query.slice(0, 60);
+  if (lang === "en") {
+    return voiceMode ? `I am still gathering the best answer for "${shortQ}". Please ask again with your crop name and village \u2014 I will explain clearly.` : `I am still researching **"${query.slice(0, 100)}"**.
 
-Crop peru, village tho malli adagandi \u2014 meeku sariga, manishi la cheptanu.`;
+Ask again with crop name and village \u2014 I will give a clear practical answer.`;
+  }
+  if (lang === "hi") {
+    return voiceMode ? `"${shortQ}" \u0915\u0947 \u092C\u093E\u0930\u0947 \u092E\u0947\u0902 \u0938\u0939\u0940 \u091C\u0935\u093E\u092C \u091C\u092E\u093E \u0915\u0930 \u0930\u0939\u093E \u0939\u0942\u0901\u0964 \u092B\u0938\u0932 \u0915\u093E \u0928\u093E\u092E \u0914\u0930 \u0917\u093E\u0901\u0935 \u092C\u0924\u093E\u0915\u0930 \u092B\u093F\u0930 \u092A\u0942\u091B\u0947\u0902 \u2014 \u0938\u093E\u092B \u092C\u0924\u093E\u090A\u0901\u0917\u093E\u0964` : `\u0906\u092A\u0915\u093E \u0938\u0935\u093E\u0932 **"${query.slice(0, 100)}"** \u0905\u092D\u0940 \u0914\u0930 \u0936\u094B\u0927 \u092E\u0947\u0902 \u0939\u0948\u0964
+
+\u092B\u0938\u0932 \u0915\u093E \u0928\u093E\u092E \u0914\u0930 \u0917\u093E\u0901\u0935 \u0915\u0947 \u0938\u093E\u0925 \u092B\u093F\u0930 \u092A\u0942\u091B\u0947\u0902\u0964`;
+  }
+  return voiceMode ? `"${shortQ}" \u0C17\u0C41\u0C30\u0C3F\u0C02\u0C1A\u0C3F \u0C38\u0C30\u0C3F\u0C17\u0C4D\u0C17\u0C3E \u0C1A\u0C46\u0C2A\u0C4D\u0C2A\u0C21\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u0C07\u0C02\u0C15\u0C3E \u0C35\u0C3F\u0C35\u0C30\u0C3E\u0C32\u0C41 \u0C1A\u0C42\u0C38\u0C4D\u0C24\u0C41\u0C28\u0C4D\u0C28\u0C3E\u0C28\u0C41. \u0C2A\u0C02\u0C1F \u0C2A\u0C47\u0C30\u0C41, \u0C0A\u0C30\u0C41 \u0C1A\u0C46\u0C2A\u0C4D\u0C2A\u0C3F \u0C2E\u0C33\u0C4D\u0C32\u0C40 \u0C05\u0C21\u0C17\u0C02\u0C21\u0C3F \u2014 \u0C38\u0C4D\u0C2A\u0C37\u0C4D\u0C1F\u0C02\u0C17\u0C3E \u0C1A\u0C46\u0C2A\u0C4D\u0C24\u0C3E\u0C28\u0C41.` : `\u0C2E\u0C40 \u0C2A\u0C4D\u0C30\u0C36\u0C4D\u0C28 **"${query.slice(0, 100)}"** \u0C17\u0C41\u0C30\u0C3F\u0C02\u0C1A\u0C3F \u0C07\u0C02\u0C15\u0C3E \u0C38\u0C4D\u0C2A\u0C37\u0C4D\u0C1F\u0C02\u0C17\u0C3E \u0C1A\u0C42\u0C38\u0C4D\u0C24\u0C41\u0C28\u0C4D\u0C28\u0C3E\u0C28\u0C41.
+
+\u0C2A\u0C02\u0C1F \u0C2A\u0C47\u0C30\u0C41, \u0C0A\u0C30\u0C41 \u0C24\u0C4B \u0C2E\u0C33\u0C4D\u0C32\u0C40 \u0C05\u0C21\u0C17\u0C02\u0C21\u0C3F \u2014 \u0C38\u0C30\u0C3F\u0C17\u0C4D\u0C17\u0C3E, \u0C2E\u0C28\u0C3F\u0C37\u0C3F\u0C32\u0C3E \u0C1A\u0C46\u0C2A\u0C4D\u0C24\u0C3E\u0C28\u0C41.`;
 }
 
 // src/services/aiChatService.ts
@@ -11193,12 +11302,12 @@ async function tryVisionLlmProviders(messages, chatOpts) {
   let authFailed = false;
   if (isGeminiConfigured()) {
     try {
-      const text17 = (await withTimeout2(
+      const text19 = (await withTimeout2(
         completeGeminiChat(messages, chatOpts),
         GEMINI_VISION_ATTEMPT_MS,
         "GEMINI_VISION"
       )).trim();
-      if (text17.length >= 10) return { text: text17, configIssue: null, authFailed: false };
+      if (text19.length >= 10) return { text: text19, configIssue: null, authFailed: false };
     } catch (err) {
       authFailed = isGeminiAuthError(err);
       console.error("[ai/vision] Gemini failed:", String(err instanceof Error ? err.message : err).slice(0, 300));
@@ -11206,8 +11315,8 @@ async function tryVisionLlmProviders(messages, chatOpts) {
   }
   if (isOllamaConfigured()) {
     try {
-      const text17 = (await completeOllamaChat(messages, chatOpts)).trim();
-      if (text17.length >= 10) return { text: text17, configIssue: null, authFailed: false };
+      const text19 = (await completeOllamaChat(messages, chatOpts)).trim();
+      if (text19.length >= 10) return { text: text19, configIssue: null, authFailed: false };
     } catch (err) {
       console.error("[ai/vision] Ollama vision failed:", err instanceof Error ? err.message : err);
     }
@@ -11280,8 +11389,8 @@ async function tryAllLlmProviders(messages, chatOpts) {
   }
   for (const attempt of attempts) {
     try {
-      const text17 = (await attempt()).trim();
-      if (text17.length >= 15) return text17;
+      const text19 = (await attempt()).trim();
+      if (text19.length >= 15) return text19;
     } catch {
     }
   }
@@ -11302,13 +11411,13 @@ function extractRecentTurns(messages) {
     return `${label}: ${messageText2(m.content).slice(0, 200)}`;
   }).join("\n");
 }
-function looksConversationalEnough(text17, query) {
-  if (text17.length > 850) return false;
-  const bulletCount = (text17.match(/^[\s]*[-•*]/gm) ?? []).length;
+function looksConversationalEnough(text19, query) {
+  if (text19.length > 850) return false;
+  const bulletCount = (text19.match(/^[\s]*[-•*]/gm) ?? []).length;
   if (bulletCount >= 4) return false;
-  const doseSpam = (text17.match(/\d+\s*ml\s*\/\s*acre/gi) ?? []).length;
+  const doseSpam = (text19.match(/\d+\s*ml\s*\/\s*acre/gi) ?? []).length;
   if (doseSpam >= 2 && !/mandu|spray|dose|purugu|rogam|pest|fertil/i.test(query)) return false;
-  return text17.length < 380 && bulletCount <= 1;
+  return text19.length < 380 && bulletCount <= 1;
 }
 async function finalizeAnswer(draft, query, messages, opts, research, provider) {
   if (opts.agentId === "time" || looksConversationalEnough(draft, query)) {
@@ -11317,7 +11426,8 @@ async function finalizeAnswer(draft, query, messages, opts, research, provider) 
   }
   const polished = await polishConversationalReply(draft, query, {
     voiceMode: opts.voiceMode,
-    recentTurns: extractRecentTurns(messages)
+    recentTurns: extractRecentTurns(messages),
+    language: opts.language
   });
   const answer = polished && !isUncertainLlmAnswer(polished) && polished.length >= 15 ? polished : draft;
   cacheAnswerAsync(query, answer, research, opts, provider);
@@ -11333,13 +11443,14 @@ async function loadWebResearch(query, opts, correction, correctionNote) {
 }
 async function answerFromResearch(query, research, opts, provider) {
   const synthesized = await synthesizeFarmerAnswer(query, research, {
-    voiceMode: opts.voiceMode
+    voiceMode: opts.voiceMode,
+    language: opts.language
   });
   if (synthesized && !isUncertainLlmAnswer(synthesized)) {
     cacheAnswerAsync(query, synthesized, research, opts, provider);
     return { answer: synthesized, provider, research };
   }
-  const human = humanFallbackWhenNoSynthesis(query, opts.voiceMode);
+  const human = humanFallbackWhenNoSynthesis(query, opts.voiceMode, opts.language);
   cacheAnswerAsync(query, human, research, opts, provider);
   return { answer: human, provider, research };
 }
@@ -11353,10 +11464,10 @@ async function completeWithResearchFallback(messages, opts) {
     }
     if (configIssue || authFailed) {
       console.error("[ai/vision] Photo scan unavailable:", configIssue ?? "Gemini auth failed");
-      const fallback2 = opts.voiceMode ? "Photo scan ippudu panicheyatledu. Konni nimishalu tarvata malli try cheyandi." : "**Photo scan ippudu panicheyatledu**\n\nKonni nimishalu tarvata malli try cheyandi. Problem continue aithe app team ki cheppandi.";
+      const fallback2 = opts.voiceMode ? "\u0C2B\u0C4B\u0C1F\u0C4B \u0C38\u0C4D\u0C15\u0C3E\u0C28\u0C4D \u0C07\u0C2A\u0C4D\u0C2A\u0C41\u0C21\u0C41 \u0C2A\u0C28\u0C3F \u0C1A\u0C47\u0C2F\u0C21\u0C02 \u0C32\u0C47\u0C26\u0C41. \u0C15\u0C4A\u0C28\u0C4D\u0C28\u0C3F \u0C28\u0C3F\u0C2E\u0C3F\u0C37\u0C3E\u0C32 \u0C24\u0C30\u0C4D\u0C35\u0C3E\u0C24 \u0C2E\u0C33\u0C4D\u0C32\u0C40 \u0C2A\u0C4D\u0C30\u0C2F\u0C24\u0C4D\u0C28\u0C3F\u0C02\u0C1A\u0C02\u0C21\u0C3F." : "**\u0C2B\u0C4B\u0C1F\u0C4B \u0C38\u0C4D\u0C15\u0C3E\u0C28\u0C4D \u0C07\u0C2A\u0C4D\u0C2A\u0C41\u0C21\u0C41 \u0C2A\u0C28\u0C3F \u0C1A\u0C47\u0C2F\u0C21\u0C02 \u0C32\u0C47\u0C26\u0C41**\n\n\u0C15\u0C4A\u0C28\u0C4D\u0C28\u0C3F \u0C28\u0C3F\u0C2E\u0C3F\u0C37\u0C3E\u0C32 \u0C24\u0C30\u0C4D\u0C35\u0C3E\u0C24 \u0C2E\u0C33\u0C4D\u0C32\u0C40 \u0C2A\u0C4D\u0C30\u0C2F\u0C24\u0C4D\u0C28\u0C3F\u0C02\u0C1A\u0C02\u0C21\u0C3F. \u0C38\u0C2E\u0C38\u0C4D\u0C2F \u0C15\u0C4A\u0C28\u0C38\u0C3E\u0C17\u0C3F\u0C24\u0C47 \u0C2F\u0C3E\u0C2A\u0C4D \u0C1F\u0C40\u0C2E\u0C4D\u200C\u0C15\u0C41 \u0C1A\u0C46\u0C2A\u0C4D\u0C2A\u0C02\u0C21\u0C3F.";
       return { answer: fallback2, provider: "vision_unavailable", research: emptyResearch(query) };
     }
-    const fallback = opts.voiceMode ? "Photo analyse cheyalekapoyindi. Manchamaina light lo malli try cheyandi." : "**Photo analyse cheyalekapoyindi**\n\nManchamaina light lo clear photo malli pampandi.";
+    const fallback = opts.voiceMode ? "\u0C2B\u0C4B\u0C1F\u0C4B \u0C38\u0C30\u0C3F\u0C17\u0C4D\u0C17\u0C3E \u0C1A\u0C42\u0C21\u0C32\u0C47\u0C15\u0C2A\u0C4B\u0C2F\u0C3E\u0C28\u0C41. \u0C2E\u0C02\u0C1A\u0C3F \u0C35\u0C46\u0C32\u0C41\u0C24\u0C41\u0C30\u0C41\u0C32\u0C4B \u0C15\u0C4D\u0C32\u0C3F\u0C2F\u0C30\u0C4D \u0C2B\u0C4B\u0C1F\u0C4B \u0C2E\u0C33\u0C4D\u0C32\u0C40 \u0C2A\u0C02\u0C2A\u0C02\u0C21\u0C3F." : "**\u0C2B\u0C4B\u0C1F\u0C4B \u0C38\u0C30\u0C3F\u0C17\u0C4D\u0C17\u0C3E \u0C1A\u0C42\u0C21\u0C32\u0C47\u0C15\u0C2A\u0C4B\u0C2F\u0C3E\u0C28\u0C41**\n\n\u0C2E\u0C02\u0C1A\u0C3F \u0C35\u0C46\u0C32\u0C41\u0C24\u0C41\u0C30\u0C41\u0C32\u0C4B \u0C15\u0C4D\u0C32\u0C3F\u0C2F\u0C30\u0C4D \u0C2B\u0C4B\u0C1F\u0C4B \u0C2E\u0C33\u0C4D\u0C32\u0C40 \u0C2A\u0C02\u0C2A\u0C02\u0C21\u0C3F.";
     return { answer: fallback, provider: "vision_fallback", research: emptyResearch(query) };
   }
   const chatOpts = { ...opts, temperature: resolveTemperature(opts) };
@@ -12047,6 +12158,7 @@ function parseLocalizeMode(raw, limit = 500) {
 var import_drizzle_orm19 = require("drizzle-orm");
 init_db();
 init_cropCalendar();
+init_farmers();
 init_mandiPrices();
 init_notifications();
 init_pushTokens();
@@ -12055,8 +12167,91 @@ init_weather();
 // src/services/notificationInboxService.ts
 var import_drizzle_orm18 = require("drizzle-orm");
 init_db();
+init_cropCalendar();
+init_crops();
+init_farmers();
 init_notifications();
 init_pushTokens();
+
+// src/services/notificationCopy.ts
+var EN = {
+  dailyTitle: "Bhuvedam \u2014 Your farm update",
+  dailyBody: "Check weather, mandi rates and crop alerts for today.",
+  dailyBodyCrops: "Check weather & mandi for your crops: {crops}.",
+  heavyRainTitle: "\u26C8\uFE0F Heavy rain expected",
+  heavyRainBody: "Next few hours {rain}% rain chance \u2014 avoid spraying, postpone fertilizer.",
+  rainTitle: "\u{1F327}\uFE0F Rain possible today",
+  rainBody: "{rain}% rain chance \u2014 not good for pesticide spray. Check irrigation plan.",
+  heatTitle: "\u{1F321}\uFE0F High temperature",
+  heatBody: "Current {temp}\xB0C \u2014 avoid midday spray; irrigate morning/evening.",
+  windTitle: "\u{1F4A8} Strong wind",
+  windBody: "Wind {wind} km/h \u2014 spraying will not be effective.",
+  mandiUpTitle: "\u{1F4C8} {crop} price rose",
+  mandiDownTitle: "\u{1F4C9} {crop} price fell",
+  mandiBody: "{crop}{variety}: \u20B9{old} \u2192 \u20B9{new}/qtl ({change}%)"
+};
+var HI = {
+  dailyTitle: "Bhuvedam \u2014 \u0906\u092A\u0915\u0947 \u0916\u0947\u0924 \u0915\u093E \u0905\u092A\u0921\u0947\u091F",
+  dailyBody: "\u0906\u091C \u092E\u094C\u0938\u092E, \u092E\u0902\u0921\u0940 \u092D\u093E\u0935 \u0914\u0930 \u092B\u0938\u0932 \u0905\u0932\u0930\u094D\u091F \u0926\u0947\u0916\u0947\u0902\u0964",
+  dailyBodyCrops: "\u0906\u092A\u0915\u0940 \u092B\u0938\u0932\u094B\u0902 \u0915\u0947 \u0932\u093F\u090F \u092E\u094C\u0938\u092E \u0914\u0930 \u092E\u0902\u0921\u0940 \u0926\u0947\u0916\u0947\u0902: {crops}\u0964",
+  heavyRainTitle: "\u26C8\uFE0F \u092D\u093E\u0930\u0940 \u092C\u093E\u0930\u093F\u0936 \u0915\u0940 \u0938\u0902\u092D\u093E\u0935\u0928\u093E",
+  heavyRainBody: "\u0905\u0917\u0932\u0947 \u0915\u0941\u091B \u0918\u0902\u091F\u094B\u0902 \u092E\u0947\u0902 {rain}% \u092C\u093E\u0930\u093F\u0936 \u2014 \u091B\u093F\u0921\u093C\u0915\u093E\u0935 \u0928 \u0915\u0930\u0947\u0902, \u0916\u093E\u0926 \u091F\u093E\u0932\u0947\u0902\u0964",
+  rainTitle: "\u{1F327}\uFE0F \u0906\u091C \u092C\u093E\u0930\u093F\u0936 \u0938\u0902\u092D\u0935",
+  rainBody: "{rain}% \u092C\u093E\u0930\u093F\u0936 \u2014 \u0915\u0940\u091F\u0928\u093E\u0936\u0915 \u091B\u093F\u0921\u093C\u0915\u093E\u0935 \u0920\u0940\u0915 \u0928\u0939\u0940\u0902\u0964 \u0938\u093F\u0902\u091A\u093E\u0908 \u092F\u094B\u091C\u0928\u093E \u091C\u093E\u0901\u091A\u0947\u0902\u0964",
+  heatTitle: "\u{1F321}\uFE0F \u0924\u0947\u091C\u093C \u0917\u0930\u094D\u092E\u0940",
+  heatBody: "\u0905\u092D\u0940 {temp}\xB0C \u2014 \u0926\u094B\u092A\u0939\u0930 \u092E\u0947\u0902 \u091B\u093F\u0921\u093C\u0915\u093E\u0935 \u0928 \u0915\u0930\u0947\u0902; \u0938\u0941\u092C\u0939/\u0936\u093E\u092E \u0938\u093F\u0902\u091A\u093E\u0908 \u0915\u0930\u0947\u0902\u0964",
+  windTitle: "\u{1F4A8} \u0924\u0947\u091C\u093C \u0939\u0935\u093E",
+  windBody: "\u0939\u0935\u093E {wind} km/h \u2014 \u091B\u093F\u0921\u093C\u0915\u093E\u0935 \u0905\u0938\u0930\u0926\u093E\u0930 \u0928\u0939\u0940\u0902 \u0939\u094B\u0917\u093E\u0964",
+  mandiUpTitle: "\u{1F4C8} {crop} \u092D\u093E\u0935 \u092C\u0922\u093C\u093E",
+  mandiDownTitle: "\u{1F4C9} {crop} \u092D\u093E\u0935 \u0918\u091F\u093E",
+  mandiBody: "{crop}{variety}: \u20B9{old} \u2192 \u20B9{new}/qtl ({change}%)"
+};
+var TE = {
+  dailyTitle: "Bhuvedam \u2014 \u0C2E\u0C40 \u0C2A\u0C4A\u0C32\u0C02 update",
+  dailyBody: "\u0C08\u0C30\u0C4B\u0C1C\u0C41 \u0C35\u0C3E\u0C24\u0C3E\u0C35\u0C30\u0C23\u0C02, \u0C2E\u0C3E\u0C30\u0C4D\u0C15\u0C46\u0C1F\u0C4D \u0C30\u0C47\u0C1F\u0C4D\u0C32\u0C41 & \u0C2A\u0C02\u0C1F alerts \u0C1A\u0C42\u0C21\u0C02\u0C21\u0C3F.",
+  dailyBodyCrops: "\u0C2E\u0C40 \u0C2A\u0C02\u0C1F\u0C32\u0C15\u0C41 \u0C35\u0C3E\u0C24\u0C3E\u0C35\u0C30\u0C23\u0C02 & \u0C2E\u0C3E\u0C30\u0C4D\u0C15\u0C46\u0C1F\u0C4D \u0C1A\u0C42\u0C21\u0C02\u0C21\u0C3F: {crops}.",
+  heavyRainTitle: "\u26C8\uFE0F \u0C2D\u0C3E\u0C30\u0C40 \u0C35\u0C30\u0C4D\u0C37\u0C02 \u0C05\u0C35\u0C15\u0C3E\u0C36\u0C02",
+  heavyRainBody: "\u0C24\u0C30\u0C4D\u0C35\u0C3E\u0C24\u0C3F \u0C17\u0C02\u0C1F\u0C32\u0C4D\u0C32\u0C4B {rain}% \u0C35\u0C30\u0C4D\u0C37\u0C02 \u2014 \u0C38\u0C4D\u0C2A\u0C4D\u0C30\u0C47 \u0C1A\u0C47\u0C2F\u0C35\u0C26\u0C4D\u0C26\u0C41, \u0C0E\u0C30\u0C41\u0C35\u0C41 \u0C35\u0C3E\u0C2F\u0C3F\u0C26\u0C3E \u0C35\u0C47\u0C2F\u0C02\u0C21\u0C3F.",
+  rainTitle: "\u{1F327}\uFE0F \u0C08\u0C30\u0C4B\u0C1C\u0C41 \u0C35\u0C30\u0C4D\u0C37\u0C02 \u0C05\u0C35\u0C15\u0C3E\u0C36\u0C02",
+  rainBody: "{rain}% \u0C35\u0C30\u0C4D\u0C37\u0C02 \u2014 \u0C2A\u0C41\u0C30\u0C41\u0C17\u0C41\u0C2E\u0C02\u0C26\u0C41 \u0C38\u0C4D\u0C2A\u0C4D\u0C30\u0C47\u0C15\u0C3F \u0C2E\u0C02\u0C1A\u0C3F\u0C26\u0C3F \u0C15\u0C3E\u0C26\u0C41. \u0C28\u0C40\u0C1F\u0C3F\u0C2A\u0C3E\u0C30\u0C41\u0C26\u0C32 \u0C2A\u0C4D\u0C32\u0C3E\u0C28\u0C4D \u0C1A\u0C42\u0C21\u0C02\u0C21\u0C3F.",
+  heatTitle: "\u{1F321}\uFE0F \u0C0E\u0C15\u0C4D\u0C15\u0C41\u0C35 \u0C09\u0C37\u0C4D\u0C23\u0C4B\u0C17\u0C4D\u0C30\u0C24",
+  heatBody: "\u0C2A\u0C4D\u0C30\u0C38\u0C4D\u0C24\u0C41\u0C24\u0C02 {temp}\xB0C \u2014 \u0C2E\u0C27\u0C4D\u0C2F\u0C3E\u0C39\u0C4D\u0C28\u0C02 \u0C38\u0C4D\u0C2A\u0C4D\u0C30\u0C47 \u0C1A\u0C47\u0C2F\u0C35\u0C26\u0C4D\u0C26\u0C41; \u0C09\u0C26\u0C2F\u0C02/\u0C38\u0C3E\u0C2F\u0C02\u0C24\u0C4D\u0C30\u0C02 \u0C28\u0C40\u0C30\u0C41 \u0C2A\u0C46\u0C1F\u0C4D\u0C1F\u0C02\u0C21\u0C3F.",
+  windTitle: "\u{1F4A8} \u0C2C\u0C32\u0C2E\u0C48\u0C28 \u0C17\u0C3E\u0C32\u0C3F",
+  windBody: "\u0C17\u0C3E\u0C32\u0C3F {wind} km/h \u2014 \u0C38\u0C4D\u0C2A\u0C4D\u0C30\u0C47 \u0C2A\u0C28\u0C3F \u0C1A\u0C47\u0C2F\u0C26\u0C41.",
+  mandiUpTitle: "\u{1F4C8} {crop} \u0C30\u0C47\u0C1F\u0C41 \u0C2A\u0C46\u0C30\u0C3F\u0C17\u0C3F\u0C02\u0C26\u0C3F",
+  mandiDownTitle: "\u{1F4C9} {crop} \u0C30\u0C47\u0C1F\u0C41 \u0C24\u0C17\u0C4D\u0C17\u0C3F\u0C02\u0C26\u0C3F",
+  mandiBody: "{crop}{variety}: \u20B9{old} \u2192 \u20B9{new}/qtl ({change}%)"
+};
+var BY_LANG = {
+  en: EN,
+  hi: HI,
+  te: TE,
+  mr: HI,
+  ta: TE,
+  kn: TE
+};
+function normalizeNotifLang(code) {
+  const c = (code ?? "te").trim().toLowerCase().slice(0, 2);
+  return c in BY_LANG ? c : "te";
+}
+function tNotif(lang, key, vars) {
+  const code = normalizeNotifLang(lang);
+  const dict = BY_LANG[code] ?? TE;
+  let out = dict[key] ?? EN[key] ?? TE[key] ?? key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      out = out.split(`{${k}}`).join(String(v));
+    }
+  }
+  return out;
+}
+function dailyReminderCopy(lang, cropNames) {
+  const crops2 = (cropNames ?? []).filter(Boolean).slice(0, 4).join(", ");
+  return {
+    title: tNotif(lang, "dailyTitle"),
+    body: crops2 ? tNotif(lang, "dailyBodyCrops", { crops: crops2 }) : tNotif(lang, "dailyBody")
+  };
+}
 
 // src/services/pushNotificationService.ts
 var import_expo_server_sdk = require("expo-server-sdk");
@@ -12141,16 +12336,37 @@ async function createAndPushNotification(farmerId, input) {
   }
   return { notificationId: row.id, pushSent };
 }
+async function cropNamesForFarmer(farmerId, lang) {
+  const calendar = await db.select({ cropId: cropCalendar.cropId }).from(cropCalendar).where((0, import_drizzle_orm18.eq)(cropCalendar.farmerId, farmerId));
+  const ids = [...new Set(calendar.map((r) => r.cropId))];
+  if (!ids.length) return [];
+  const rows = await db.select().from(crops).where((0, import_drizzle_orm18.inArray)(crops.id, ids));
+  return rows.map((c) => {
+    const localized = c.localizedNames ?? {};
+    if (localized[lang]) return localized[lang];
+    if (lang === "te" && c.nameTe) return c.nameTe;
+    return c.name;
+  });
+}
 async function dispatchDailyFarmReminders() {
   const rows = await db.select({ farmerId: pushTokens.farmerId }).from(pushTokens);
   const farmerIds = [...new Set(rows.map((r) => r.farmerId))];
   let sent = 0;
   for (const farmerId of farmerIds) {
+    const [farmer] = await db.select({ language: farmers.language, name: farmers.name }).from(farmers).where((0, import_drizzle_orm18.eq)(farmers.id, farmerId)).limit(1);
+    const lang = farmer?.language ?? "te";
+    const cropNames = await cropNamesForFarmer(farmerId, lang);
+    const copy = dailyReminderCopy(lang, cropNames);
     const result = await createAndPushNotification(farmerId, {
       type: "crop_calendar",
-      title: "Bhuvedam \u2014 \u0C2E\u0C40 \u0C2A\u0C4A\u0C32\u0C02 update",
-      body: "Weather, mandi rates & crop alerts check cheyandi",
-      data: { source: "daily_cron" }
+      title: copy.title,
+      body: copy.body,
+      data: {
+        source: "daily_cron",
+        language: lang,
+        crops: cropNames,
+        farmerName: farmer?.name ?? null
+      }
     });
     sent += result.pushSent;
   }
@@ -12171,13 +12387,32 @@ async function getFarmerCropIds(farmerId) {
   const rows = await db.select({ cropId: cropCalendar.cropId }).from(cropCalendar).where((0, import_drizzle_orm19.eq)(cropCalendar.farmerId, farmerId));
   return [...new Set(rows.map((r) => r.cropId))];
 }
+async function getFarmerLanguage(farmerId) {
+  const [row] = await db.select({ language: farmers.language }).from(farmers).where((0, import_drizzle_orm19.eq)(farmers.id, farmerId)).limit(1);
+  return row?.language ?? "te";
+}
+async function getFarmerLandContext(farmerId) {
+  const [land] = await db.select({ state: lands.state, district: lands.district }).from(lands).where((0, import_drizzle_orm19.eq)(lands.farmerId, farmerId)).limit(1);
+  return { state: land?.state ?? null, district: land?.district ?? null };
+}
 async function getLatestWeatherRow(farmerId) {
   const [farmerRow] = await db.select().from(weather).where((0, import_drizzle_orm19.eq)(weather.farmerId, farmerId)).orderBy((0, import_drizzle_orm19.desc)(weather.fetchedAt)).limit(1);
   if (farmerRow) return farmerRow;
-  const [globalRow] = await db.select().from(weather).orderBy((0, import_drizzle_orm19.desc)(weather.fetchedAt)).limit(1);
-  return globalRow ?? null;
+  const { state, district } = await getFarmerLandContext(farmerId);
+  const [globalRows] = await Promise.all([
+    db.select().from(weather).where((0, import_drizzle_orm19.isNull)(weather.farmerId)).orderBy((0, import_drizzle_orm19.desc)(weather.fetchedAt)).limit(40)
+  ]);
+  const needle = `${district ?? ""} ${state ?? ""}`.toLowerCase();
+  if (needle.trim()) {
+    const match = globalRows.find((r) => {
+      const label = `${r.locationName ?? ""}`.toLowerCase();
+      return district && label.includes(district.toLowerCase()) || state && label.includes(state.toLowerCase().split(" ")[0] ?? "");
+    });
+    if (match) return match;
+  }
+  return globalRows.find((r) => `${r.locationName ?? ""}`.toLowerCase().includes("hyderabad")) ?? globalRows[0] ?? null;
 }
-function buildWeatherAlerts(row) {
+function buildWeatherAlerts(row, lang) {
   const alerts = [];
   const temp = Number(row.temperature ?? 0);
   const rain = Number(row.precipitation ?? 0);
@@ -12189,48 +12424,58 @@ function buildWeatherAlerts(row) {
     alerts.push({
       alertKey: `weather-heavy-rain-${row.locationName}`,
       type: "weather_alert",
-      title: "\u26C8\uFE0F Heavy rain expected",
-      body: `Next few hours ${maxRain}% rain chance \u2014 spray cheyakandi, fertilizer postpone cheyandi.`,
-      data: { rainPercent: maxRain, source: "realtime_cron" }
+      title: tNotif(lang, "heavyRainTitle"),
+      body: tNotif(lang, "heavyRainBody", { rain: maxRain }),
+      data: { rainPercent: maxRain, source: "realtime_cron", language: lang }
     });
   } else if (maxRain >= WEATHER_THRESHOLDS.rainChancePercent) {
     alerts.push({
       alertKey: `weather-rain-${row.locationName}`,
       type: "weather_alert",
-      title: "\u{1F327}\uFE0F Rain possible today",
-      body: `${maxRain}% rain chance \u2014 pesticide spray ki manchidi kaadu. Irrigation plan check cheyandi.`,
-      data: { rainPercent: maxRain, source: "realtime_cron" }
+      title: tNotif(lang, "rainTitle"),
+      body: tNotif(lang, "rainBody", { rain: maxRain }),
+      data: { rainPercent: maxRain, source: "realtime_cron", language: lang }
     });
   }
   if (temp >= WEATHER_THRESHOLDS.heatTempC) {
     alerts.push({
       alertKey: `weather-heat-${row.locationName}-${Math.round(temp)}`,
       type: "weather_alert",
-      title: "\u{1F321}\uFE0F High temperature",
-      body: `Current ${temp}\xB0C \u2014 midday spray avoid cheyandi, irrigation morning/evening.`,
-      data: { tempC: temp, source: "realtime_cron" }
+      title: tNotif(lang, "heatTitle"),
+      body: tNotif(lang, "heatBody", { temp }),
+      data: { tempC: temp, source: "realtime_cron", language: lang }
     });
   }
   if (wind >= WEATHER_THRESHOLDS.highWindKmh) {
     alerts.push({
       alertKey: `weather-wind-${row.locationName}`,
       type: "weather_alert",
-      title: "\u{1F4A8} Strong wind",
-      body: `Wind ${wind.toFixed(0)} km/h \u2014 spraying effective kaadu.`,
-      data: { windKmh: wind, source: "realtime_cron" }
+      title: tNotif(lang, "windTitle"),
+      body: tNotif(lang, "windBody", { wind: wind.toFixed(0) }),
+      data: { windKmh: wind, source: "realtime_cron", language: lang }
     });
   }
   return alerts;
 }
-async function buildMandiAlerts(cropIds) {
+async function buildMandiAlerts(cropIds, lang, state, district) {
   if (!cropIds.length) return [];
   const alerts = [];
   for (const cropId of cropIds.slice(0, 6)) {
-    const [latest] = await db.select().from(mandiPrices).where((0, import_drizzle_orm19.eq)(mandiPrices.cropId, cropId)).orderBy((0, import_drizzle_orm19.desc)(mandiPrices.fetchedAt)).limit(1);
+    const conditions = [(0, import_drizzle_orm19.eq)(mandiPrices.cropId, cropId)];
+    if (state) conditions.push((0, import_drizzle_orm19.eq)(mandiPrices.state, state));
+    if (district) conditions.push((0, import_drizzle_orm19.eq)(mandiPrices.district, district));
+    let [latest] = await db.select().from(mandiPrices).where((0, import_drizzle_orm19.and)(...conditions)).orderBy((0, import_drizzle_orm19.desc)(mandiPrices.fetchedAt)).limit(1);
+    if (!latest && district && state) {
+      [latest] = await db.select().from(mandiPrices).where((0, import_drizzle_orm19.and)((0, import_drizzle_orm19.eq)(mandiPrices.cropId, cropId), (0, import_drizzle_orm19.eq)(mandiPrices.state, state))).orderBy((0, import_drizzle_orm19.desc)(mandiPrices.fetchedAt)).limit(1);
+    }
+    if (!latest) {
+      [latest] = await db.select().from(mandiPrices).where((0, import_drizzle_orm19.eq)(mandiPrices.cropId, cropId)).orderBy((0, import_drizzle_orm19.desc)(mandiPrices.fetchedAt)).limit(1);
+    }
     if (!latest) continue;
     const [older] = await db.select().from(mandiPrices).where(
       (0, import_drizzle_orm19.and)(
         (0, import_drizzle_orm19.eq)(mandiPrices.cropId, cropId),
+        (0, import_drizzle_orm19.eq)(mandiPrices.market, latest.market),
         import_drizzle_orm19.sql`${mandiPrices.fetchedAt} < ${latest.fetchedAt} - interval '20 hours'`
       )
     ).orderBy((0, import_drizzle_orm19.desc)(mandiPrices.fetchedAt)).limit(1);
@@ -12242,17 +12487,30 @@ async function buildMandiAlerts(cropIds) {
     if (Math.abs(changePct) < MANDI_PRICE_CHANGE_THRESHOLD) continue;
     const up = changePct > 0;
     const variety = latest.varietyName ? ` (${latest.varietyName})` : "";
+    const change = `${up ? "+" : ""}${changePct.toFixed(1)}`;
     alerts.push({
-      alertKey: `mandi-${cropId}-${latest.varietyName ?? "default"}-${up ? "up" : "down"}`,
+      alertKey: `mandi-${cropId}-${latest.market}-${latest.varietyName ?? "default"}-${up ? "up" : "down"}`,
       type: "mandi_alert",
-      title: up ? `\u{1F4C8} ${latest.commodity} rate perigindi` : `\u{1F4C9} ${latest.commodity} rate taggindi`,
-      body: `${latest.commodity}${variety}: \u20B9${oldPrice} \u2192 \u20B9${newPrice}/qtl (${up ? "+" : ""}${changePct.toFixed(1)}%)`,
+      title: tNotif(lang, up ? "mandiUpTitle" : "mandiDownTitle", {
+        crop: latest.commodity
+      }),
+      body: tNotif(lang, "mandiBody", {
+        crop: latest.commodity,
+        variety,
+        old: oldPrice,
+        new: newPrice,
+        change
+      }),
       data: {
         cropId,
         changePct,
         oldPrice,
         newPrice,
-        source: "realtime_cron"
+        market: latest.market,
+        district: latest.district,
+        state: latest.state,
+        source: "realtime_cron",
+        language: lang
       }
     });
   }
@@ -12264,10 +12522,14 @@ async function wasAlertSentRecently(farmerId, alertKey) {
   return rows.some((r) => r.data?.alertKey === alertKey);
 }
 async function collectPendingAlertsForFarmer(farmerId) {
-  const cropIds = await getFarmerCropIds(farmerId);
+  const [cropIds, lang, land] = await Promise.all([
+    getFarmerCropIds(farmerId),
+    getFarmerLanguage(farmerId),
+    getFarmerLandContext(farmerId)
+  ]);
   const weatherRow = await getLatestWeatherRow(farmerId);
-  const weatherAlerts = weatherRow ? buildWeatherAlerts(weatherRow) : [];
-  const mandiAlerts = await buildMandiAlerts(cropIds);
+  const weatherAlerts = weatherRow ? buildWeatherAlerts(weatherRow, lang) : [];
+  const mandiAlerts = await buildMandiAlerts(cropIds, lang, land.state, land.district);
   return [...weatherAlerts, ...mandiAlerts];
 }
 async function dispatchRealtimeAlertsForFarmer(farmerId) {
@@ -12947,8 +13209,8 @@ var import_drizzle_orm24 = require("drizzle-orm");
 init_db();
 init_schema();
 function dateOnly(value) {
-  const text17 = typeof value === "string" ? value : value.toISOString();
-  return text17.slice(0, 10);
+  const text19 = typeof value === "string" ? value : value.toISOString();
+  return text19.slice(0, 10);
 }
 function average(values) {
   if (!values.length) return null;
@@ -13069,11 +13331,1314 @@ async function fetchMandiAnalyticsFromDb(options) {
 
 // src/server/index.ts
 init_nearbyAgPlacesService();
+
+// src/server/adminRoutes.ts
+var import_hono = require("hono");
+
+// src/services/adminAuth.ts
+var import_node_crypto5 = require("node:crypto");
+var ADMIN_TOKEN_TTL_SEC = 60 * 60 * 24 * 7;
+function jwtSecret2() {
+  const secret = process.env.JWT_SECRET?.trim();
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET is required in production");
+  }
+  return "bhuvedam-dev-jwt-secret-change-me";
+}
+function b64urlJson2(obj) {
+  return Buffer.from(JSON.stringify(obj)).toString("base64url");
+}
+function adminEmail() {
+  return (process.env.ADMIN_EMAIL?.trim() || "admin@bhuvedam.app").toLowerCase();
+}
+function verifyAdminCredentials(email, password) {
+  const expectedEmail = adminEmail();
+  if (email.trim().toLowerCase() !== expectedEmail) return false;
+  const hash = process.env.ADMIN_PASSWORD_HASH?.trim();
+  if (hash) {
+    return verifyPassword(password, hash);
+  }
+  const plain = process.env.ADMIN_PASSWORD?.trim();
+  if (!plain) {
+    return process.env.NODE_ENV !== "production" && password === "admin123";
+  }
+  try {
+    const a = Buffer.from(password);
+    const b = Buffer.from(plain);
+    if (a.length !== b.length) return false;
+    return (0, import_node_crypto5.timingSafeEqual)(a, b);
+  } catch {
+    return false;
+  }
+}
+function createAdminToken(email) {
+  const header = b64urlJson2({ alg: "HS256", typ: "JWT" });
+  const now = Math.floor(Date.now() / 1e3);
+  const payload = b64urlJson2({
+    sub: "admin",
+    role: "admin",
+    email: email.toLowerCase(),
+    iat: now,
+    exp: now + ADMIN_TOKEN_TTL_SEC
+  });
+  const unsigned = `${header}.${payload}`;
+  const sig = (0, import_node_crypto5.createHmac)("sha256", jwtSecret2()).update(unsigned).digest("base64url");
+  return `${unsigned}.${sig}`;
+}
+function parseAdminToken(token) {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  const [header, payload, sig] = parts;
+  if (!header || !payload || !sig) return null;
+  const expected = (0, import_node_crypto5.createHmac)("sha256", jwtSecret2()).update(`${header}.${payload}`).digest("base64url");
+  try {
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !(0, import_node_crypto5.timingSafeEqual)(a, b)) return null;
+  } catch {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    if (parsed.exp != null && parsed.exp < Math.floor(Date.now() / 1e3)) return null;
+    if (parsed.role === "admin" && parsed.sub === "admin" && parsed.email) {
+      return { email: parsed.email };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+// src/middleware/adminSessionAuth.ts
+async function adminSessionAuthMiddleware(c, next) {
+  const auth = c.req.header("Authorization");
+  if (!auth?.startsWith("Bearer ")) {
+    return appError(c, "UNAUTHORIZED");
+  }
+  const parsed = parseAdminToken(auth.slice(7).trim());
+  if (!parsed) {
+    return appError(c, "SESSION_EXPIRED");
+  }
+  c.set("adminEmail", parsed.email);
+  await next();
+}
+
+// src/services/adminDashboardService.ts
+var import_drizzle_orm25 = require("drizzle-orm");
+init_db();
+init_adminBroadcasts();
+init_cropCalendar();
+init_crops();
+init_farmers();
+init_fertilizerProducts();
+init_govtSchemes();
+init_mandiPrices();
+init_weather();
+init_syncJobs();
+
+// src/ingestion/data/govtSchemes.seed.json
+var govtSchemes_seed_default = [
+  {
+    id: "pm-kisan",
+    category: "support",
+    region: "central",
+    status: "active",
+    titleEn: "PM-KISAN Samman Nidhi",
+    titleTe: "\u0C2A\u0C40\u0C0E\u0C02-\u0C15\u0C3F\u0C38\u0C3E\u0C28\u0C4D \u0C38\u0C2E\u0C4D\u0C2E\u0C3E\u0C28\u0C4D \u0C28\u0C3F\u0C27\u0C3F",
+    amountEn: "\u20B96,000 / year",
+    amountTe: "\u0C38\u0C02\u0C35\u0C24\u0C4D\u0C38\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u20B96,000",
+    benefitEn: "Landholding farmer families receive \u20B96,000 a year in three equal installments of \u20B92,000 each, transferred directly to the bank account.",
+    benefitTe: "\u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C2D\u0C42\u0C2E\u0C3F \u0C09\u0C28\u0C4D\u0C28 \u0C30\u0C48\u0C24\u0C41 \u0C15\u0C41\u0C1F\u0C41\u0C02\u0C2C\u0C3E\u0C32\u0C15\u0C41 \u0C38\u0C02\u0C35\u0C24\u0C4D\u0C38\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u20B96,000 \u2014 \u0C2E\u0C42\u0C21\u0C41 \u0C38\u0C2E\u0C3E\u0C28 \u0C35\u0C3E\u0C2F\u0C3F\u0C26\u0C3E\u0C32\u0C41\u0C17\u0C3E (\u0C12\u0C15\u0C4D\u0C15\u0C4A\u0C15\u0C4D\u0C15\u0C1F\u0C3F \u20B92,000) \u0C2C\u0C4D\u0C2F\u0C3E\u0C02\u0C15\u0C41 \u0C16\u0C3E\u0C24\u0C3E\u0C32\u0C4B \u0C28\u0C47\u0C30\u0C41\u0C17\u0C3E \u0C1C\u0C2E \u0C05\u0C35\u0C41\u0C24\u0C41\u0C02\u0C26\u0C3F.",
+    eligibilityEn: "Farmer families with agricultural land (husband, wife, minor children). Institutional landholders, income-tax payers, and government employees are excluded. AgriStack Farmer ID / eKYC is important.",
+    eligibilityTe: "\u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C2D\u0C42\u0C2E\u0C3F \u0C09\u0C28\u0C4D\u0C28 \u0C30\u0C48\u0C24\u0C41 \u0C15\u0C41\u0C1F\u0C41\u0C02\u0C2C\u0C02 (\u0C2D\u0C30\u0C4D\u0C24, \u0C2D\u0C3E\u0C30\u0C4D\u0C2F, \u0C2E\u0C48\u0C28\u0C30\u0C4D \u0C2A\u0C3F\u0C32\u0C4D\u0C32\u0C32\u0C41). \u0C38\u0C02\u0C38\u0C4D\u0C25\u0C3E\u0C17\u0C24 \u0C2D\u0C42\u0C2E\u0C3F \u0C39\u0C4B\u0C32\u0C4D\u0C21\u0C30\u0C4D\u0C32\u0C41, \u0C06\u0C26\u0C3E\u0C2F\u0C2A\u0C41 \u0C2A\u0C28\u0C4D\u0C28\u0C41 \u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C3F\u0C02\u0C1A\u0C47\u0C35\u0C3E\u0C30\u0C41, \u0C2A\u0C4D\u0C30\u0C2D\u0C41\u0C24\u0C4D\u0C35 \u0C09\u0C26\u0C4D\u0C2F\u0C4B\u0C17\u0C41\u0C32\u0C41 \u0C2E\u0C3F\u0C28\u0C39\u0C3E\u0C2F\u0C3F\u0C02\u0C2A\u0C41. \u0C05\u0C17\u0C4D\u0C30\u0C3F\u0C38\u0C4D\u0C1F\u0C3E\u0C15\u0C4D \u0C30\u0C48\u0C24\u0C41 \u0C10\u0C21\u0C3F / \u0C08\u0C15\u0C47\u0C35\u0C48\u0C38\u0C3F \u0C2E\u0C41\u0C16\u0C4D\u0C2F\u0C02.",
+    howToApplyEn: "Register or check status at pmkisan.gov.in. Annual eKYC is mandatory \u2014 do biometric eKYC on the portal or at the nearest CSC. In Andhra Pradesh, link Farmer ID at apfr.agristack.gov.in.",
+    howToApplyTe: "pmkisan.gov.in\u0C32\u0C4B \u0C28\u0C2E\u0C4B\u0C26\u0C41 \u0C1A\u0C47\u0C38\u0C41\u0C15\u0C4B\u0C02\u0C21\u0C3F \u0C32\u0C47\u0C26\u0C3E \u0C38\u0C4D\u0C25\u0C3F\u0C24\u0C3F \u0C1A\u0C42\u0C21\u0C02\u0C21\u0C3F. \u0C35\u0C3E\u0C30\u0C4D\u0C37\u0C3F\u0C15 \u0C08\u0C15\u0C47\u0C35\u0C48\u0C38\u0C3F \u0C24\u0C2A\u0C4D\u0C2A\u0C28\u0C3F\u0C38\u0C30\u0C3F \u2014 \u0C2A\u0C4B\u0C30\u0C4D\u0C1F\u0C32\u0C4D\u200C\u0C32\u0C4B \u0C32\u0C47\u0C26\u0C3E \u0C38\u0C2E\u0C40\u0C2A \u0C38\u0C40\u0C0E\u0C38\u0C4D\u200C\u0C38\u0C40\u0C32\u0C4B \u0C2C\u0C2F\u0C4B\u0C2E\u0C46\u0C1F\u0C4D\u0C30\u0C3F\u0C15\u0C4D \u0C08\u0C15\u0C47\u0C35\u0C48\u0C38\u0C3F \u0C1A\u0C47\u0C2F\u0C02\u0C21\u0C3F. \u0C06\u0C02\u0C27\u0C4D\u0C30\u0C2A\u0C4D\u0C30\u0C26\u0C47\u0C36\u0C4D\u200C\u0C32\u0C4B apfr.agristack.gov.in\u0C32\u0C4B \u0C30\u0C48\u0C24\u0C41 \u0C10\u0C21\u0C3F \u0C32\u0C3F\u0C02\u0C15\u0C4D \u0C1A\u0C47\u0C2F\u0C02\u0C21\u0C3F.",
+    applyUrl: "https://www.pmkisan.gov.in/",
+    icon: "cash-multiple",
+    highlightsEn: [
+      "eKYC mandatory",
+      "Farmer ID / AgriStack",
+      "Know Your Status portal"
+    ],
+    highlightsTe: [
+      "\u0C08\u0C15\u0C47\u0C35\u0C48\u0C38\u0C3F \u0C24\u0C2A\u0C4D\u0C2A\u0C28\u0C3F\u0C38\u0C30\u0C3F",
+      "\u0C30\u0C48\u0C24\u0C41 \u0C10\u0C21\u0C3F / \u0C05\u0C17\u0C4D\u0C30\u0C3F\u0C38\u0C4D\u0C1F\u0C3E\u0C15\u0C4D",
+      "\u0C38\u0C4D\u0C25\u0C3F\u0C24\u0C3F \u0C24\u0C46\u0C32\u0C41\u0C38\u0C41\u0C15\u0C41\u0C28\u0C47 \u0C2A\u0C4B\u0C30\u0C4D\u0C1F\u0C32\u0C4D"
+    ],
+    eligibilityRules: {
+      requiresLand: true,
+      prefersLandRecords: true
+    },
+    verifiedAt: "2026-09-04"
+  },
+  {
+    id: "annadata-sukhibhava",
+    category: "support",
+    region: "ap",
+    status: "active",
+    titleEn: "Annadata Sukhibhava + PM-KISAN",
+    titleTe: "\u0C05\u0C28\u0C4D\u0C28\u0C26\u0C3E\u0C24 \u0C38\u0C41\u0C16\u0C40\u0C2D\u0C35 + \u0C2A\u0C40\u0C0E\u0C02-\u0C15\u0C3F\u0C38\u0C3E\u0C28\u0C4D",
+    amountEn: "\u20B920,000 / family / year",
+    amountTe: "\u0C15\u0C41\u0C1F\u0C41\u0C02\u0C2C\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u0C38\u0C02\u0C35\u0C24\u0C4D\u0C38\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u20B920,000",
+    benefitEn: "Eligible farmer families in Andhra Pradesh receive \u20B920,000 a year (State \u20B914,000 + Central PM-KISAN \u20B96,000). Installments continue in 2026 \u2014 first tranche \u20B97,000 (\u20B95,000 state + \u20B92,000 PM-KISAN) has been released.",
+    benefitTe: "\u0C06\u0C02\u0C27\u0C4D\u0C30\u0C2A\u0C4D\u0C30\u0C26\u0C47\u0C36\u0C4D\u200C\u0C32\u0C4B \u0C05\u0C30\u0C4D\u0C39\u0C24 \u0C09\u0C28\u0C4D\u0C28 \u0C30\u0C48\u0C24\u0C41 \u0C15\u0C41\u0C1F\u0C41\u0C02\u0C2C\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u0C38\u0C02\u0C35\u0C24\u0C4D\u0C38\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u20B920,000 (\u0C30\u0C3E\u0C37\u0C4D\u0C1F\u0C4D\u0C30\u0C02 \u20B914,000 + \u0C15\u0C47\u0C02\u0C26\u0C4D\u0C30 \u0C2A\u0C40\u0C0E\u0C02-\u0C15\u0C3F\u0C38\u0C3E\u0C28\u0C4D \u20B96,000). 2026\u0C32\u0C4B \u0C35\u0C3E\u0C2F\u0C3F\u0C26\u0C3E\u0C32\u0C41 \u0C15\u0C4A\u0C28\u0C38\u0C3E\u0C17\u0C41\u0C24\u0C41\u0C28\u0C4D\u0C28\u0C3E\u0C2F\u0C3F \u2014 \u0C2E\u0C4A\u0C26\u0C1F\u0C3F \u0C35\u0C3E\u0C2F\u0C3F\u0C26\u0C3E \u20B97,000 (\u0C30\u0C3E\u0C37\u0C4D\u0C1F\u0C4D\u0C30\u0C02 \u20B95,000 + \u0C2A\u0C40\u0C0E\u0C02-\u0C15\u0C3F\u0C38\u0C3E\u0C28\u0C4D \u20B92,000) \u0C35\u0C3F\u0C21\u0C41\u0C26\u0C32\u0C48\u0C02\u0C26\u0C3F.",
+    eligibilityEn: "Farmer families with agricultural land in Andhra Pradesh. Tribal farmers cultivating under RoFR (Forest Rights) are also eligible. Farmer ID / land records should be linked.",
+    eligibilityTe: "\u0C06\u0C02\u0C27\u0C4D\u0C30\u0C2A\u0C4D\u0C30\u0C26\u0C47\u0C36\u0C4D\u200C\u0C32\u0C4B \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C2D\u0C42\u0C2E\u0C3F \u0C09\u0C28\u0C4D\u0C28 \u0C30\u0C48\u0C24\u0C41 \u0C15\u0C41\u0C1F\u0C41\u0C02\u0C2C\u0C3E\u0C32\u0C41. \u0C05\u0C1F\u0C35\u0C40 \u0C39\u0C15\u0C4D\u0C15\u0C41\u0C32\u0C41 (RoFR) \u0C15\u0C3F\u0C02\u0C26 \u0C38\u0C3E\u0C17\u0C41 \u0C1A\u0C47\u0C38\u0C4D\u0C24\u0C41\u0C28\u0C4D\u0C28 \u0C17\u0C3F\u0C30\u0C3F\u0C1C\u0C28 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C41 \u0C15\u0C42\u0C21\u0C3E \u0C05\u0C30\u0C4D\u0C39\u0C41\u0C32\u0C41. \u0C30\u0C48\u0C24\u0C41 \u0C10\u0C21\u0C3F / \u0C2D\u0C42\u0C2E\u0C3F \u0C30\u0C3F\u0C15\u0C3E\u0C30\u0C4D\u0C21\u0C41\u0C32\u0C41 \u0C32\u0C3F\u0C02\u0C15\u0C4D \u0C05\u0C2F\u0C3F \u0C09\u0C02\u0C21\u0C3E\u0C32\u0C3F.",
+    howToApplyEn: "The state identifies beneficiaries automatically \u2014 keep bank account, Aadhaar, and land linked. Confirm Farmer ID at the AP Farmer Registry (apfr.agristack.gov.in) or your RSK.",
+    howToApplyTe: "\u0C30\u0C3E\u0C37\u0C4D\u0C1F\u0C4D\u0C30\u0C02 \u0C38\u0C4D\u0C35\u0C2F\u0C02\u0C1A\u0C3E\u0C32\u0C15\u0C02\u0C17\u0C3E \u0C17\u0C41\u0C30\u0C4D\u0C24\u0C3F\u0C38\u0C4D\u0C24\u0C41\u0C02\u0C26\u0C3F \u2014 \u0C2C\u0C4D\u0C2F\u0C3E\u0C02\u0C15\u0C41 \u0C16\u0C3E\u0C24\u0C3E, \u0C06\u0C27\u0C3E\u0C30\u0C4D, \u0C2D\u0C42\u0C2E\u0C3F \u0C32\u0C3F\u0C02\u0C15\u0C4D \u0C05\u0C2F\u0C3F \u0C09\u0C02\u0C21\u0C3E\u0C32\u0C3F. \u0C0F\u0C2A\u0C40 \u0C30\u0C48\u0C24\u0C41 \u0C30\u0C3F\u0C1C\u0C3F\u0C38\u0C4D\u0C1F\u0C4D\u0C30\u0C40 (apfr.agristack.gov.in) \u0C32\u0C47\u0C26\u0C3E \u0C06\u0C30\u0C4D\u0C0E\u0C38\u0C4D\u200C\u0C15\u0C47\u0C32\u0C4B \u0C30\u0C48\u0C24\u0C41 \u0C10\u0C21\u0C3F \u0C28\u0C3F\u0C30\u0C4D\u0C27\u0C3E\u0C30\u0C3F\u0C02\u0C1A\u0C41\u0C15\u0C4B\u0C02\u0C21\u0C3F.",
+    applyUrl: "https://apfr.agristack.gov.in/",
+    icon: "hand-heart",
+    highlightsEn: [
+      "\u20B920,000 per family",
+      "Active in 2026",
+      "Farmer ID recommended"
+    ],
+    highlightsTe: [
+      "\u0C15\u0C41\u0C1F\u0C41\u0C02\u0C2C\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u20B920,000",
+      "2026\u0C32\u0C4B \u0C15\u0C4A\u0C28\u0C38\u0C3E\u0C17\u0C41\u0C24\u0C4B\u0C02\u0C26\u0C3F",
+      "\u0C30\u0C48\u0C24\u0C41 \u0C10\u0C21\u0C3F \u0C38\u0C3F\u0C2B\u0C3E\u0C30\u0C4D\u0C38\u0C41"
+    ],
+    eligibilityRules: {
+      requiresLand: true,
+      prefersLandRecords: true
+    },
+    verifiedAt: "2026-09-04"
+  },
+  {
+    id: "rythu-bharosa-ts",
+    category: "support",
+    region: "ts",
+    status: "active",
+    titleEn: "Rythu Bharosa",
+    titleTe: "\u0C30\u0C48\u0C24\u0C41 \u0C2D\u0C30\u0C4B\u0C38\u0C3E",
+    amountEn: "\u20B912,000 / acre / year",
+    amountTe: "\u0C0E\u0C15\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u0C38\u0C02\u0C35\u0C24\u0C4D\u0C38\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u20B912,000",
+    benefitEn: "Cultivable land in Telangana gets \u20B912,000 per acre per year \u2014 \u20B96,000 each for Kharif and Rabi. Extra bonus may apply for paddy.",
+    benefitTe: "\u0C24\u0C46\u0C32\u0C02\u0C17\u0C3E\u0C23\u0C32\u0C4B \u0C38\u0C3E\u0C17\u0C41 \u0C2D\u0C42\u0C2E\u0C3F\u0C15\u0C3F \u0C0E\u0C15\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u0C38\u0C02\u0C35\u0C24\u0C4D\u0C38\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u20B912,000. \u0C16\u0C30\u0C40\u0C2B\u0C4D \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C30\u0C2C\u0C40\u0C32\u0C4B \u0C12\u0C15\u0C4D\u0C15\u0C4A\u0C15\u0C4D\u0C15\u0C1F\u0C3F \u20B96,000. \u0C35\u0C30\u0C3F\u0C15\u0C3F \u0C05\u0C26\u0C28\u0C2A\u0C41 \u0C2C\u0C4B\u0C28\u0C38\u0C4D \u0C09\u0C02\u0C21\u0C35\u0C1A\u0C4D\u0C1A\u0C41.",
+    eligibilityEn: "Arable land registered in Telangana (Bhu Bharati portal). Tenant farmers with a valid lease are also eligible. Real estate and industrial plots are excluded.",
+    eligibilityTe: "\u0C24\u0C46\u0C32\u0C02\u0C17\u0C3E\u0C23\u0C32\u0C4B \u0C28\u0C2E\u0C4B\u0C26\u0C48\u0C28 \u0C38\u0C3E\u0C17\u0C41 \u0C2D\u0C42\u0C2E\u0C3F (\u0C2D\u0C42 \u0C2D\u0C3E\u0C30\u0C24\u0C3F \u0C2A\u0C4B\u0C30\u0C4D\u0C1F\u0C32\u0C4D). \u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C41\u0C2C\u0C3E\u0C1F\u0C41 \u0C05\u0C2F\u0C4D\u0C2F\u0C47 \u0C32\u0C40\u0C1C\u0C41 \u0C09\u0C28\u0C4D\u0C28 \u0C15\u0C4C\u0C32\u0C41 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C41 \u0C15\u0C42\u0C21\u0C3E \u0C05\u0C30\u0C4D\u0C39\u0C41\u0C32\u0C41. \u0C30\u0C3F\u0C2F\u0C32\u0C4D \u0C0E\u0C38\u0C4D\u0C1F\u0C47\u0C1F\u0C4D / \u0C2A\u0C3E\u0C30\u0C3F\u0C36\u0C4D\u0C30\u0C3E\u0C2E\u0C3F\u0C15 \u0C2A\u0C4D\u0C32\u0C3E\u0C1F\u0C4D\u0C32\u0C41 \u0C2E\u0C3F\u0C28\u0C39\u0C3E\u0C2F\u0C3F\u0C02\u0C2A\u0C41.",
+    howToApplyEn: "Usually through revenue records and Bhu Bharati verification. Landless agricultural labour may get linked Indiramma Atmiya Bharosa \u2014 \u20B912,000 a year.",
+    howToApplyTe: "\u0C38\u0C3E\u0C27\u0C3E\u0C30\u0C23\u0C02\u0C17\u0C3E \u0C30\u0C46\u0C35\u0C46\u0C28\u0C4D\u0C2F\u0C42 \u0C30\u0C3F\u0C15\u0C3E\u0C30\u0C4D\u0C21\u0C41\u0C32\u0C41 \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C2D\u0C42 \u0C2D\u0C3E\u0C30\u0C24\u0C3F \u0C27\u0C43\u0C35\u0C40\u0C15\u0C30\u0C23 \u0C26\u0C4D\u0C35\u0C3E\u0C30\u0C3E. \u0C2D\u0C42\u0C2E\u0C3F \u0C32\u0C47\u0C28\u0C3F \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C15\u0C42\u0C32\u0C40\u0C32\u0C15\u0C41 \u0C07\u0C02\u0C26\u0C3F\u0C30\u0C2E\u0C4D\u0C2E \u0C06\u0C24\u0C4D\u0C2E\u0C40\u0C2F \u0C2D\u0C30\u0C4B\u0C38\u0C3E \u2014 \u0C38\u0C02\u0C35\u0C24\u0C4D\u0C38\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u20B912,000 \u0C05\u0C28\u0C41\u0C38\u0C02\u0C27\u0C3E\u0C28\u0C02 \u0C15\u0C3E\u0C35\u0C1A\u0C4D\u0C1A\u0C41.",
+    icon: "sprout",
+    highlightsEn: [
+      "Per acre basis",
+      "Tenant farmers eligible",
+      "Telangana only"
+    ],
+    highlightsTe: [
+      "\u0C0E\u0C15\u0C30\u0C02 \u0C2A\u0C4D\u0C30\u0C3E\u0C24\u0C3F\u0C2A\u0C26\u0C3F\u0C15",
+      "\u0C15\u0C4C\u0C32\u0C41 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C41 \u0C05\u0C30\u0C4D\u0C39\u0C41\u0C32\u0C41",
+      "\u0C24\u0C46\u0C32\u0C02\u0C17\u0C3E\u0C23 \u0C2E\u0C3E\u0C24\u0C4D\u0C30\u0C2E\u0C47"
+    ],
+    eligibilityRules: {
+      requiresLand: true,
+      prefersLandRecords: true
+    },
+    verifiedAt: "2026-09-04"
+  },
+  {
+    id: "kcc",
+    category: "loan",
+    region: "central",
+    status: "active",
+    titleEn: "Kisan Credit Card (KCC)",
+    titleTe: "\u0C15\u0C3F\u0C38\u0C3E\u0C28\u0C4D \u0C15\u0C4D\u0C30\u0C46\u0C21\u0C3F\u0C1F\u0C4D \u0C15\u0C3E\u0C30\u0C4D\u0C21\u0C41 (\u0C15\u0C46\u0C38\u0C3F\u0C38\u0C3F)",
+    amountEn: "Limit about \u20B93\u20135 lakh",
+    amountTe: "\u0C2A\u0C30\u0C3F\u0C2E\u0C3F\u0C24\u0C3F \u0C38\u0C41\u0C2E\u0C3E\u0C30\u0C41 \u20B93\u20135 \u0C32\u0C15\u0C4D\u0C37\u0C32\u0C41",
+    benefitEn: "Revolving credit for short-term crop loans and allied activities. Limit up to about \u20B95 lakh. With timely repayment, effective interest can be around 4% a year.",
+    benefitTe: "\u0C38\u0C4D\u0C35\u0C32\u0C4D\u0C2A\u0C15\u0C3E\u0C32\u0C3F\u0C15 \u0C2A\u0C02\u0C1F \u0C30\u0C41\u0C23\u0C3E\u0C32\u0C41 \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C05\u0C28\u0C41\u0C2C\u0C02\u0C27 \u0C15\u0C3E\u0C30\u0C4D\u0C2F\u0C15\u0C32\u0C3E\u0C2A\u0C3E\u0C32\u0C15\u0C41 \u0C30\u0C3F\u0C35\u0C3E\u0C32\u0C4D\u0C35\u0C3F\u0C02\u0C17\u0C4D \u0C15\u0C4D\u0C30\u0C46\u0C21\u0C3F\u0C1F\u0C4D. \u0C2A\u0C30\u0C3F\u0C2E\u0C3F\u0C24\u0C3F \u0C38\u0C41\u0C2E\u0C3E\u0C30\u0C41 \u20B95 \u0C32\u0C15\u0C4D\u0C37\u0C32 \u0C35\u0C30\u0C15\u0C41. \u0C38\u0C15\u0C3E\u0C32\u0C02\u0C32\u0C4B \u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C3F\u0C38\u0C4D\u0C24\u0C47 \u0C2A\u0C4D\u0C30\u0C2D\u0C3E\u0C35\u0C35\u0C02\u0C24\u0C2E\u0C48\u0C28 \u0C35\u0C21\u0C4D\u0C21\u0C40 \u0C38\u0C02\u0C35\u0C24\u0C4D\u0C38\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u0C38\u0C41\u0C2E\u0C3E\u0C30\u0C41 4%.",
+    eligibilityEn: "Farmers, sharecroppers, and tenant farmers with land or crop details. Dairy, fishery, and other allied activities are also covered.",
+    eligibilityTe: "\u0C30\u0C48\u0C24\u0C41\u0C32\u0C41, \u0C35\u0C3E\u0C1F\u0C3E\u0C26\u0C3E\u0C30\u0C41\u0C32\u0C41, \u0C15\u0C4C\u0C32\u0C41 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C41 \u2014 \u0C2D\u0C42\u0C2E\u0C3F \u0C32\u0C47\u0C26\u0C3E \u0C2A\u0C02\u0C1F \u0C35\u0C3F\u0C35\u0C30\u0C3E\u0C32\u0C24\u0C4B. \u0C2A\u0C3E\u0C21\u0C3F, \u0C1A\u0C47\u0C2A\u0C32 \u0C2A\u0C46\u0C02\u0C2A\u0C15\u0C02 \u0C35\u0C02\u0C1F\u0C3F \u0C05\u0C28\u0C41\u0C2C\u0C02\u0C27 \u0C30\u0C02\u0C17\u0C3E\u0C32\u0C41 \u0C15\u0C42\u0C21\u0C3E \u0C15\u0C35\u0C30\u0C4D \u0C05\u0C35\u0C41\u0C24\u0C3E\u0C2F\u0C3F.",
+    howToApplyEn: "Apply for a KCC at your bank, cooperative, or RRB branch. Keep Farmer ID and land records ready.",
+    howToApplyTe: "\u0C2E\u0C40 \u0C2C\u0C4D\u0C2F\u0C3E\u0C02\u0C15\u0C41 / \u0C38\u0C39\u0C15\u0C3E\u0C30 / \u0C06\u0C30\u0C4D\u0C06\u0C30\u0C4D\u0C2C\u0C3F \u0C36\u0C3E\u0C16\u0C32\u0C4B \u0C15\u0C46\u0C38\u0C3F\u0C38\u0C3F \u0C15\u0C4B\u0C38\u0C02 \u0C26\u0C30\u0C16\u0C3E\u0C38\u0C4D\u0C24\u0C41 \u0C1A\u0C47\u0C2F\u0C02\u0C21\u0C3F. \u0C30\u0C48\u0C24\u0C41 \u0C10\u0C21\u0C3F \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C2D\u0C42\u0C2E\u0C3F \u0C30\u0C3F\u0C15\u0C3E\u0C30\u0C4D\u0C21\u0C41\u0C32\u0C41 \u0C38\u0C3F\u0C26\u0C4D\u0C27\u0C02\u0C17\u0C3E \u0C09\u0C02\u0C1A\u0C02\u0C21\u0C3F.",
+    icon: "credit-card-outline",
+    highlightsEn: [
+      "About 4% with timely repayment",
+      "Limit up to \u20B95 lakh",
+      "Crop and allied"
+    ],
+    highlightsTe: [
+      "\u0C38\u0C15\u0C3E\u0C32 \u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C3F\u0C02\u0C2A\u0C41\u0C24\u0C4B \u0C38\u0C41\u0C2E\u0C3E\u0C30\u0C41 4%",
+      "\u20B95 \u0C32\u0C15\u0C4D\u0C37\u0C32 \u0C35\u0C30\u0C15\u0C41 \u0C2A\u0C30\u0C3F\u0C2E\u0C3F\u0C24\u0C3F",
+      "\u0C2A\u0C02\u0C1F \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C05\u0C28\u0C41\u0C2C\u0C02\u0C27\u0C02"
+    ],
+    eligibilityRules: {
+      requiresLand: true,
+      prefersLandRecords: true
+    },
+    verifiedAt: "2026-09-04"
+  },
+  {
+    id: "miss-interest-subvention",
+    category: "loan",
+    region: "central",
+    status: "active",
+    titleEn: "Interest Subvention (MISS)",
+    titleTe: "\u0C35\u0C21\u0C4D\u0C21\u0C40 \u0C30\u0C3E\u0C2F\u0C3F\u0C24\u0C40 (\u0C0E\u0C02\u0C10\u0C0E\u0C38\u0C4D\u0C0E\u0C38\u0C4D)",
+    amountEn: "7% \u2192 about 4% effective",
+    amountTe: "7% \u0C28\u0C41\u0C02\u0C1A\u0C3F \u0C38\u0C41\u0C2E\u0C3E\u0C30\u0C41 4% \u0C2A\u0C4D\u0C30\u0C2D\u0C3E\u0C35\u0C35\u0C02\u0C24\u0C02",
+    benefitEn: "Interest subvention on short-term KCC loans. With the Prompt Repayment Incentive, the effective rate can be around 4% a year. The scheme continues.",
+    benefitTe: "\u0C15\u0C46\u0C38\u0C3F\u0C38\u0C3F \u0C38\u0C4D\u0C35\u0C32\u0C4D\u0C2A\u0C15\u0C3E\u0C32\u0C3F\u0C15 \u0C30\u0C41\u0C23\u0C3E\u0C32\u0C2A\u0C48 \u0C35\u0C21\u0C4D\u0C21\u0C40 \u0C30\u0C3E\u0C2F\u0C3F\u0C24\u0C40. \u0C38\u0C15\u0C3E\u0C32 \u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C3F\u0C02\u0C2A\u0C41 \u0C2A\u0C4D\u0C30\u0C4B\u0C24\u0C4D\u0C38\u0C3E\u0C39\u0C15\u0C02\u0C24\u0C4B \u0C2A\u0C4D\u0C30\u0C2D\u0C3E\u0C35\u0C35\u0C02\u0C24\u0C2E\u0C48\u0C28 \u0C30\u0C47\u0C1F\u0C41 \u0C38\u0C02\u0C35\u0C24\u0C4D\u0C38\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u0C38\u0C41\u0C2E\u0C3E\u0C30\u0C41 4%. \u0C2A\u0C25\u0C15\u0C02 \u0C15\u0C4A\u0C28\u0C38\u0C3E\u0C17\u0C41\u0C24\u0C4B\u0C02\u0C26\u0C3F.",
+    eligibilityEn: "Short-term crop loans through KCC. Farmers who repay on time get the full benefit.",
+    eligibilityTe: "\u0C15\u0C46\u0C38\u0C3F\u0C38\u0C3F \u0C26\u0C4D\u0C35\u0C3E\u0C30\u0C3E \u0C38\u0C4D\u0C35\u0C32\u0C4D\u0C2A\u0C15\u0C3E\u0C32\u0C3F\u0C15 \u0C2A\u0C02\u0C1F \u0C30\u0C41\u0C23\u0C3E\u0C32\u0C41. \u0C38\u0C15\u0C3E\u0C32\u0C02\u0C32\u0C4B \u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C3F\u0C02\u0C1A\u0C47 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C15\u0C41 \u0C2A\u0C42\u0C30\u0C4D\u0C24\u0C3F \u0C2A\u0C4D\u0C30\u0C2F\u0C4B\u0C1C\u0C28\u0C02.",
+    howToApplyEn: "The bank applies it automatically when you take a KCC loan. Timely repayment is important.",
+    howToApplyTe: "\u0C15\u0C46\u0C38\u0C3F\u0C38\u0C3F \u0C30\u0C41\u0C23\u0C02 \u0C24\u0C40\u0C38\u0C41\u0C15\u0C41\u0C28\u0C4D\u0C28\u0C2A\u0C4D\u0C2A\u0C41\u0C21\u0C41 \u0C2C\u0C4D\u0C2F\u0C3E\u0C02\u0C15\u0C41 \u0C38\u0C4D\u0C35\u0C2F\u0C02\u0C1A\u0C3E\u0C32\u0C15\u0C02\u0C17\u0C3E \u0C35\u0C30\u0C4D\u0C24\u0C3F\u0C02\u0C2A\u0C1C\u0C47\u0C38\u0C4D\u0C24\u0C41\u0C02\u0C26\u0C3F. \u0C38\u0C15\u0C3E\u0C32\u0C02\u0C32\u0C4B \u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C3F\u0C02\u0C1A\u0C21\u0C02 \u0C2E\u0C41\u0C16\u0C4D\u0C2F\u0C02.",
+    icon: "percent",
+    highlightsEn: [
+      "Active with KCC",
+      "About 4% with prompt repayment",
+      "Timely repayment"
+    ],
+    highlightsTe: [
+      "\u0C15\u0C46\u0C38\u0C3F\u0C38\u0C3F\u0C24\u0C4B \u0C15\u0C4A\u0C28\u0C38\u0C3E\u0C17\u0C41\u0C24\u0C4B\u0C02\u0C26\u0C3F",
+      "\u0C38\u0C15\u0C3E\u0C32 \u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C3F\u0C02\u0C2A\u0C41\u0C24\u0C4B \u0C38\u0C41\u0C2E\u0C3E\u0C30\u0C41 4%",
+      "\u0C38\u0C15\u0C3E\u0C32 \u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C3F\u0C02\u0C2A\u0C41"
+    ],
+    eligibilityRules: {
+      requiresLand: true
+    },
+    verifiedAt: "2026-09-04"
+  },
+  {
+    id: "ap-zero-interest-loan",
+    category: "loan",
+    region: "ap",
+    status: "active",
+    titleEn: "AP Interest-free Crop Loan",
+    titleTe: "\u0C06\u0C02\u0C27\u0C4D\u0C30\u0C2A\u0C4D\u0C30\u0C26\u0C47\u0C36\u0C4D \u0C35\u0C21\u0C4D\u0C21\u0C40 \u0C30\u0C39\u0C3F\u0C24 \u0C2A\u0C02\u0C1F \u0C30\u0C41\u0C23\u0C02",
+    amountEn: "0% up to \u20B93 lakh",
+    amountTe: "\u20B93 \u0C32\u0C15\u0C4D\u0C37\u0C32 \u0C35\u0C30\u0C15\u0C41 0%",
+    benefitEn: "Andhra Pradesh provides additional state subvention on crop loans so eligible KCC loans can effectively become 0% interest when repaid on time.",
+    benefitTe: "\u0C06\u0C02\u0C27\u0C4D\u0C30\u0C2A\u0C4D\u0C30\u0C26\u0C47\u0C36\u0C4D\u200C\u0C32\u0C4B \u0C05\u0C30\u0C4D\u0C39\u0C24 \u0C09\u0C28\u0C4D\u0C28 \u0C30\u0C48\u0C24\u0C41\u0C32 \u0C2A\u0C02\u0C1F \u0C30\u0C41\u0C23\u0C3E\u0C32\u0C15\u0C41 \u0C30\u0C3E\u0C37\u0C4D\u0C1F\u0C4D\u0C30 \u0C05\u0C26\u0C28\u0C2A\u0C41 \u0C30\u0C3E\u0C2F\u0C3F\u0C24\u0C40 \u2014 \u0C38\u0C15\u0C3E\u0C32 \u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C3F\u0C02\u0C2A\u0C41 \u0C37\u0C30\u0C24\u0C41\u0C24\u0C4B \u0C15\u0C46\u0C38\u0C3F\u0C38\u0C3F \u0C30\u0C41\u0C23\u0C3E\u0C32\u0C41 \u0C06\u0C1A\u0C30\u0C23\u0C32\u0C4B 0% \u0C35\u0C21\u0C4D\u0C21\u0C40 \u0C15\u0C3E\u0C35\u0C1A\u0C4D\u0C1A\u0C41.",
+    eligibilityEn: "Registered farmers in Andhra Pradesh with valid land records and a bank KCC or crop loan account.",
+    eligibilityTe: "\u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C41\u0C2C\u0C3E\u0C1F\u0C41 \u0C05\u0C2F\u0C4D\u0C2F\u0C47 \u0C2D\u0C42\u0C2E\u0C3F \u0C30\u0C3F\u0C15\u0C3E\u0C30\u0C4D\u0C21\u0C41\u0C32\u0C41 \u0C09\u0C28\u0C4D\u0C28 \u0C06\u0C02\u0C27\u0C4D\u0C30\u0C2A\u0C4D\u0C30\u0C26\u0C47\u0C36\u0C4D \u0C28\u0C2E\u0C4B\u0C26\u0C3F\u0C24 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C41. \u0C2C\u0C4D\u0C2F\u0C3E\u0C02\u0C15\u0C41 \u0C15\u0C46\u0C38\u0C3F\u0C38\u0C3F / \u0C2A\u0C02\u0C1F \u0C30\u0C41\u0C23 \u0C16\u0C3E\u0C24\u0C3E \u0C09\u0C02\u0C21\u0C3E\u0C32\u0C3F.",
+    howToApplyEn: "Apply for a crop loan or KCC at a local cooperative or nationalised bank. State subvention is adjusted through the bank.",
+    howToApplyTe: "\u0C38\u0C4D\u0C25\u0C3E\u0C28\u0C3F\u0C15 \u0C38\u0C39\u0C15\u0C3E\u0C30 \u0C32\u0C47\u0C26\u0C3E \u0C1C\u0C3E\u0C24\u0C40\u0C2F \u0C2C\u0C4D\u0C2F\u0C3E\u0C02\u0C15\u0C41\u0C32\u0C4B \u0C2A\u0C02\u0C1F \u0C30\u0C41\u0C23\u0C02 \u0C32\u0C47\u0C26\u0C3E \u0C15\u0C46\u0C38\u0C3F\u0C38\u0C3F\u0C15\u0C3F \u0C26\u0C30\u0C16\u0C3E\u0C38\u0C4D\u0C24\u0C41 \u0C1A\u0C47\u0C2F\u0C02\u0C21\u0C3F. \u0C30\u0C3E\u0C37\u0C4D\u0C1F\u0C4D\u0C30 \u0C30\u0C3E\u0C2F\u0C3F\u0C24\u0C40 \u0C2C\u0C4D\u0C2F\u0C3E\u0C02\u0C15\u0C41 \u0C26\u0C4D\u0C35\u0C3E\u0C30\u0C3E \u0C38\u0C30\u0C4D\u0C26\u0C41\u0C2C\u0C3E\u0C1F\u0C41 \u0C05\u0C35\u0C41\u0C24\u0C41\u0C02\u0C26\u0C3F.",
+    icon: "bank-outline",
+    highlightsEn: [
+      "AP state top-up",
+      "Up to \u20B93 lakh",
+      "Timely repayment"
+    ],
+    highlightsTe: [
+      "\u0C06\u0C02\u0C27\u0C4D\u0C30\u0C2A\u0C4D\u0C30\u0C26\u0C47\u0C36\u0C4D \u0C30\u0C3E\u0C37\u0C4D\u0C1F\u0C4D\u0C30 \u0C05\u0C26\u0C28\u0C2A\u0C41 \u0C30\u0C3E\u0C2F\u0C3F\u0C24\u0C40",
+      "\u20B93 \u0C32\u0C15\u0C4D\u0C37\u0C32 \u0C35\u0C30\u0C15\u0C41",
+      "\u0C38\u0C15\u0C3E\u0C32 \u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C3F\u0C02\u0C2A\u0C41"
+    ],
+    eligibilityRules: {
+      requiresLand: true,
+      prefersLandRecords: true
+    },
+    verifiedAt: "2026-09-04"
+  },
+  {
+    id: "pmfby",
+    category: "insurance",
+    region: "central",
+    status: "active",
+    titleEn: "PM Fasal Bima Yojana (PMFBY)",
+    titleTe: "\u0C2A\u0C40\u0C0E\u0C02 \u0C2B\u0C38\u0C32\u0C4D \u0C2C\u0C40\u0C2E\u0C3E \u0C2F\u0C4B\u0C1C\u0C28 (\u0C2A\u0C40\u0C0E\u0C02\u0C0E\u0C2B\u0C4D\u200C\u0C2C\u0C40\u0C35\u0C48)",
+    amountEn: "Farmer premium: 2% / 1.5%",
+    amountTe: "\u0C30\u0C48\u0C24\u0C41 \u0C2A\u0C4D\u0C30\u0C40\u0C2E\u0C3F\u0C2F\u0C02: 2% / 1.5%",
+    benefitEn: "Crop insurance for natural disasters, drought, flood, and pest damage. Farmer premium: Kharif 2%, Rabi 1.5%, commercial/horticulture 5%. The government pays the remaining premium.",
+    benefitTe: "\u0C2A\u0C4D\u0C30\u0C15\u0C43\u0C24\u0C3F \u0C35\u0C48\u0C2A\u0C30\u0C40\u0C24\u0C4D\u0C2F\u0C3E\u0C32\u0C41, \u0C15\u0C30\u0C41\u0C35\u0C41, \u0C35\u0C30\u0C26, \u0C1A\u0C40\u0C21\u0C2A\u0C40\u0C21 \u0C28\u0C37\u0C4D\u0C1F\u0C3E\u0C32\u0C15\u0C41 \u0C2A\u0C02\u0C1F \u0C2C\u0C40\u0C2E\u0C3E. \u0C30\u0C48\u0C24\u0C41 \u0C2A\u0C4D\u0C30\u0C40\u0C2E\u0C3F\u0C2F\u0C02: \u0C16\u0C30\u0C40\u0C2B\u0C4D 2%, \u0C30\u0C2C\u0C40 1.5%, \u0C35\u0C3E\u0C23\u0C3F\u0C1C\u0C4D\u0C2F/\u0C39\u0C3E\u0C30\u0C4D\u0C1F\u0C3F\u0C15\u0C32\u0C4D\u0C1A\u0C30\u0C4D 5%. \u0C2E\u0C3F\u0C17\u0C3F\u0C32\u0C3F\u0C28 \u0C2A\u0C4D\u0C30\u0C40\u0C2E\u0C3F\u0C2F\u0C02 \u0C2A\u0C4D\u0C30\u0C2D\u0C41\u0C24\u0C4D\u0C35\u0C02 \u0C1A\u0C46\u0C32\u0C4D\u0C32\u0C3F\u0C38\u0C4D\u0C24\u0C41\u0C02\u0C26\u0C3F.",
+    eligibilityEn: "All farmers including sharecroppers and tenant farmers \u2014 for notified crops in notified areas. From 2026, land-owning farmers need AgriStack Farmer ID for enrollment.",
+    eligibilityTe: "\u0C35\u0C3E\u0C1F\u0C3E\u0C26\u0C3E\u0C30\u0C41\u0C32\u0C41 \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C15\u0C4C\u0C32\u0C41 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C24\u0C4B \u0C38\u0C39\u0C3E \u0C05\u0C28\u0C4D\u0C28\u0C3F \u0C30\u0C48\u0C24\u0C41\u0C32\u0C41 \u2014 \u0C28\u0C4B\u0C1F\u0C3F\u0C2B\u0C48 \u0C1A\u0C47\u0C38\u0C3F\u0C28 \u0C2A\u0C4D\u0C30\u0C3E\u0C02\u0C24\u0C3E\u0C32\u0C4D\u0C32\u0C4B \u0C28\u0C4B\u0C1F\u0C3F\u0C2B\u0C48 \u0C1A\u0C47\u0C38\u0C3F\u0C28 \u0C2A\u0C02\u0C1F\u0C32\u0C15\u0C41. 2026 \u0C28\u0C41\u0C02\u0C1A\u0C3F \u0C2D\u0C42\u0C2E\u0C3F \u0C09\u0C28\u0C4D\u0C28 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C15\u0C41 \u0C28\u0C2E\u0C4B\u0C26\u0C41\u0C15\u0C41 \u0C05\u0C17\u0C4D\u0C30\u0C3F\u0C38\u0C4D\u0C1F\u0C3E\u0C15\u0C4D \u0C30\u0C48\u0C24\u0C41 \u0C10\u0C21\u0C3F \u0C05\u0C35\u0C38\u0C30\u0C02.",
+    howToApplyEn: "Through the bank (for farmers with loans) or at pmfby.gov.in. Enrol before the sowing season starts. Generate your Farmer ID.",
+    howToApplyTe: "\u0C2C\u0C4D\u0C2F\u0C3E\u0C02\u0C15\u0C41 \u0C26\u0C4D\u0C35\u0C3E\u0C30\u0C3E (\u0C30\u0C41\u0C23\u0C02 \u0C09\u0C28\u0C4D\u0C28 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C41) \u0C32\u0C47\u0C26\u0C3E pmfby.gov.in\u0C32\u0C4B. \u0C35\u0C3F\u0C24\u0C4D\u0C24\u0C28 \u0C38\u0C40\u0C1C\u0C28\u0C4D \u0C2E\u0C41\u0C02\u0C26\u0C41 \u0C28\u0C2E\u0C4B\u0C26\u0C41 \u0C1A\u0C47\u0C38\u0C41\u0C15\u0C4B\u0C02\u0C21\u0C3F. \u0C30\u0C48\u0C24\u0C41 \u0C10\u0C21\u0C3F \u0C24\u0C2F\u0C3E\u0C30\u0C41 \u0C1A\u0C47\u0C38\u0C41\u0C15\u0C4B\u0C02\u0C21\u0C3F.",
+    applyUrl: "https://pmfby.gov.in/",
+    icon: "shield-check",
+    highlightsEn: [
+      "Active for Kharif and Rabi",
+      "Farmer ID for landowners",
+      "Low premium"
+    ],
+    highlightsTe: [
+      "\u0C16\u0C30\u0C40\u0C2B\u0C4D \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C30\u0C2C\u0C40\u0C15\u0C3F \u0C15\u0C4A\u0C28\u0C38\u0C3E\u0C17\u0C41\u0C24\u0C4B\u0C02\u0C26\u0C3F",
+      "\u0C2D\u0C42\u0C2E\u0C3F \u0C09\u0C28\u0C4D\u0C28\u0C35\u0C3E\u0C30\u0C3F\u0C15\u0C3F \u0C30\u0C48\u0C24\u0C41 \u0C10\u0C21\u0C3F",
+      "\u0C24\u0C15\u0C4D\u0C15\u0C41\u0C35 \u0C2A\u0C4D\u0C30\u0C40\u0C2E\u0C3F\u0C2F\u0C02"
+    ],
+    eligibilityRules: {
+      requiresLand: true,
+      prefersLandRecords: true
+    },
+    verifiedAt: "2026-09-04"
+  },
+  {
+    id: "rythu-bima-ts",
+    category: "insurance",
+    region: "ts",
+    status: "active",
+    titleEn: "Rythu Bima",
+    titleTe: "\u0C30\u0C48\u0C24\u0C41 \u0C2C\u0C40\u0C2E\u0C3E",
+    amountEn: "\u20B95 lakh to nominee",
+    amountTe: "\u0C28\u0C3E\u0C2E\u0C3F\u0C28\u0C40\u0C15\u0C3F \u20B95 \u0C32\u0C15\u0C4D\u0C37\u0C32\u0C41",
+    benefitEn: "Life cover for registered Telangana farmers \u2014 if the farmer dies, the nominee receives \u20B95 lakh. Linked for farmers registered under Rythu Bharosa.",
+    benefitTe: "\u0C28\u0C2E\u0C4B\u0C26\u0C3F\u0C24 \u0C24\u0C46\u0C32\u0C02\u0C17\u0C3E\u0C23 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C15\u0C41 \u0C1C\u0C40\u0C35\u0C3F\u0C24 \u0C2C\u0C40\u0C2E\u0C3E \u2014 \u0C30\u0C48\u0C24\u0C41 \u0C2E\u0C30\u0C23\u0C3F\u0C38\u0C4D\u0C24\u0C47 \u0C28\u0C3E\u0C2E\u0C3F\u0C28\u0C40\u0C15\u0C3F \u20B95 \u0C32\u0C15\u0C4D\u0C37\u0C32\u0C41. \u0C30\u0C48\u0C24\u0C41 \u0C2D\u0C30\u0C4B\u0C38\u0C3E \u0C28\u0C2E\u0C4B\u0C26\u0C48\u0C28 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C15\u0C41 \u0C05\u0C28\u0C41\u0C38\u0C02\u0C27\u0C3E\u0C28\u0C02.",
+    eligibilityEn: "Farmers in Telangana with Rythu Bharosa or agriculture registration.",
+    eligibilityTe: "\u0C24\u0C46\u0C32\u0C02\u0C17\u0C3E\u0C23\u0C32\u0C4B \u0C30\u0C48\u0C24\u0C41 \u0C2D\u0C30\u0C4B\u0C38\u0C3E \u0C32\u0C47\u0C26\u0C3E \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C28\u0C2E\u0C4B\u0C26\u0C41 \u0C09\u0C28\u0C4D\u0C28 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C41.",
+    howToApplyEn: "Usually linked automatically with Rythu Bharosa registration. Confirm details at your local agriculture office.",
+    howToApplyTe: "\u0C38\u0C3E\u0C27\u0C3E\u0C30\u0C23\u0C02\u0C17\u0C3E \u0C30\u0C48\u0C24\u0C41 \u0C2D\u0C30\u0C4B\u0C38\u0C3E \u0C28\u0C2E\u0C4B\u0C26\u0C41\u0C24\u0C4B \u0C38\u0C4D\u0C35\u0C2F\u0C02\u0C1A\u0C3E\u0C32\u0C15\u0C02\u0C17\u0C3E \u0C32\u0C3F\u0C02\u0C15\u0C4D \u0C05\u0C35\u0C41\u0C24\u0C41\u0C02\u0C26\u0C3F. \u0C35\u0C3F\u0C35\u0C30\u0C3E\u0C32\u0C41 \u0C38\u0C4D\u0C25\u0C3E\u0C28\u0C3F\u0C15 \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C15\u0C3E\u0C30\u0C4D\u0C2F\u0C3E\u0C32\u0C2F\u0C02\u0C32\u0C4B \u0C28\u0C3F\u0C30\u0C4D\u0C27\u0C3E\u0C30\u0C3F\u0C02\u0C1A\u0C41\u0C15\u0C4B\u0C02\u0C21\u0C3F.",
+    icon: "heart-pulse",
+    highlightsEn: [
+      "\u20B95 lakh to nominee",
+      "Linked to Rythu Bharosa",
+      "Telangana only"
+    ],
+    highlightsTe: [
+      "\u0C28\u0C3E\u0C2E\u0C3F\u0C28\u0C40\u0C15\u0C3F \u20B95 \u0C32\u0C15\u0C4D\u0C37\u0C32\u0C41",
+      "\u0C30\u0C48\u0C24\u0C41 \u0C2D\u0C30\u0C4B\u0C38\u0C3E\u0C15\u0C41 \u0C32\u0C3F\u0C02\u0C15\u0C4D",
+      "\u0C24\u0C46\u0C32\u0C02\u0C17\u0C3E\u0C23 \u0C2E\u0C3E\u0C24\u0C4D\u0C30\u0C2E\u0C47"
+    ],
+    eligibilityRules: {
+      requiresLand: true
+    },
+    verifiedAt: "2026-09-04"
+  },
+  {
+    id: "pmksy-micro-irrigation",
+    category: "subsidy",
+    region: "central",
+    status: "active",
+    titleEn: "PM Krishi Sinchai \u2014 Drip / Sprinkler",
+    titleTe: "\u0C2A\u0C40\u0C0E\u0C02 \u0C15\u0C43\u0C37\u0C3F \u0C38\u0C3F\u0C02\u0C1A\u0C3E\u0C2F\u0C3F \u2014 \u0C21\u0C4D\u0C30\u0C3F\u0C2A\u0C4D / \u0C38\u0C4D\u0C2A\u0C4D\u0C30\u0C3F\u0C02\u0C15\u0C4D\u0C32\u0C30\u0C4D",
+    amountEn: "Subsidy up to 55%",
+    amountTe: "55% \u0C35\u0C30\u0C15\u0C41 \u0C38\u0C2C\u0C4D\u0C38\u0C3F\u0C21\u0C40",
+    benefitEn: "Capital subsidy for drip and sprinkler systems. Small and marginal farmers: up to 55%. Others: about 45%. Helps save water and improve yield.",
+    benefitTe: "\u0C21\u0C4D\u0C30\u0C3F\u0C2A\u0C4D \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C38\u0C4D\u0C2A\u0C4D\u0C30\u0C3F\u0C02\u0C15\u0C4D\u0C32\u0C30\u0C4D \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C4D\u0C25\u0C32\u0C15\u0C41 \u0C2E\u0C42\u0C32\u0C27\u0C28 \u0C38\u0C2C\u0C4D\u0C38\u0C3F\u0C21\u0C40. \u0C1A\u0C3F\u0C28\u0C4D\u0C28 \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C38\u0C28\u0C4D\u0C28\u0C15\u0C3E\u0C30\u0C41 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C15\u0C41 55% \u0C35\u0C30\u0C15\u0C41. \u0C07\u0C24\u0C30\u0C41\u0C32\u0C15\u0C41 \u0C38\u0C41\u0C2E\u0C3E\u0C30\u0C41 45%. \u0C28\u0C40\u0C1F\u0C3F \u0C2A\u0C4A\u0C26\u0C41\u0C2A\u0C41 \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C26\u0C3F\u0C17\u0C41\u0C2C\u0C21\u0C3F \u0C2A\u0C46\u0C02\u0C2A\u0C41\u0C26\u0C32\u0C15\u0C41 \u0C38\u0C39\u0C3E\u0C2F\u0C02.",
+    eligibilityEn: "Farmers with cultivable land who will install a micro-irrigation system through an empaneled company.",
+    eligibilityTe: "\u0C38\u0C3E\u0C17\u0C41 \u0C2D\u0C42\u0C2E\u0C3F \u0C09\u0C28\u0C4D\u0C28 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C41 \u2014 \u0C0E\u0C02\u0C2A\u0C28\u0C46\u0C32\u0C4D\u0C21\u0C4D \u0C15\u0C02\u0C2A\u0C46\u0C28\u0C40 \u0C26\u0C4D\u0C35\u0C3E\u0C30\u0C3E \u0C2E\u0C48\u0C15\u0C4D\u0C30\u0C4B \u0C07\u0C30\u0C3F\u0C17\u0C47\u0C37\u0C28\u0C4D \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C4D\u0C25 \u0C0F\u0C30\u0C4D\u0C2A\u0C3E\u0C1F\u0C41 \u0C1A\u0C47\u0C2F\u0C3E\u0C32\u0C3F.",
+    howToApplyEn: "Apply at the District Agriculture Office or horticulture department. Online portals are available state-wise.",
+    howToApplyTe: "\u0C1C\u0C3F\u0C32\u0C4D\u0C32\u0C3E \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C15\u0C3E\u0C30\u0C4D\u0C2F\u0C3E\u0C32\u0C2F\u0C02 / \u0C09\u0C26\u0C4D\u0C2F\u0C3E\u0C28\u0C35\u0C28 \u0C36\u0C3E\u0C16\u0C32\u0C4B \u0C26\u0C30\u0C16\u0C3E\u0C38\u0C4D\u0C24\u0C41 \u0C1A\u0C47\u0C2F\u0C02\u0C21\u0C3F. \u0C30\u0C3E\u0C37\u0C4D\u0C1F\u0C4D\u0C30\u0C3E\u0C32 \u0C35\u0C3E\u0C30\u0C40\u0C17\u0C3E \u0C06\u0C28\u0C4D\u200C\u0C32\u0C48\u0C28\u0C4D \u0C2A\u0C4B\u0C30\u0C4D\u0C1F\u0C32\u0C4D\u0C38\u0C4D \u0C09\u0C28\u0C4D\u0C28\u0C3E\u0C2F\u0C3F.",
+    icon: "water",
+    highlightsEn: [
+      "Drip and sprinkler",
+      "55% for small farmers",
+      "Active"
+    ],
+    highlightsTe: [
+      "\u0C21\u0C4D\u0C30\u0C3F\u0C2A\u0C4D \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C38\u0C4D\u0C2A\u0C4D\u0C30\u0C3F\u0C02\u0C15\u0C4D\u0C32\u0C30\u0C4D",
+      "\u0C1A\u0C3F\u0C28\u0C4D\u0C28 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C15\u0C41 55%",
+      "\u0C15\u0C4A\u0C28\u0C38\u0C3E\u0C17\u0C41\u0C24\u0C4B\u0C02\u0C26\u0C3F"
+    ],
+    eligibilityRules: {
+      requiresLand: true
+    },
+    verifiedAt: "2026-09-04"
+  },
+  {
+    id: "smam-machinery",
+    category: "subsidy",
+    region: "central",
+    status: "active",
+    titleEn: "SMAM \u2014 Farm Machinery Subsidy",
+    titleTe: "\u0C0E\u0C38\u0C4D\u200C\u0C0E\u0C02\u0C0F\u0C0E\u0C02 \u2014 \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C2F\u0C02\u0C24\u0C4D\u0C30\u0C3E\u0C32 \u0C38\u0C2C\u0C4D\u0C38\u0C3F\u0C21\u0C40",
+    amountEn: "Subsidy up to 50%",
+    amountTe: "50% \u0C35\u0C30\u0C15\u0C41 \u0C38\u0C2C\u0C4D\u0C38\u0C3F\u0C21\u0C40",
+    benefitEn: "Subsidy for tractors, power tillers, harvesters, seed drills, and similar farm machinery. Higher benefit for small and marginal farmers.",
+    benefitTe: "\u0C1F\u0C4D\u0C30\u0C3E\u0C15\u0C4D\u0C1F\u0C30\u0C4D, \u0C2A\u0C35\u0C30\u0C4D \u0C1F\u0C3F\u0C32\u0C4D\u0C32\u0C30\u0C4D, \u0C39\u0C3E\u0C30\u0C4D\u0C35\u0C46\u0C38\u0C4D\u0C1F\u0C30\u0C4D, \u0C38\u0C40\u0C21\u0C4D \u0C21\u0C4D\u0C30\u0C3F\u0C32\u0C4D \u0C35\u0C02\u0C1F\u0C3F \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C2F\u0C02\u0C24\u0C4D\u0C30\u0C3E\u0C32\u0C15\u0C41 \u0C38\u0C2C\u0C4D\u0C38\u0C3F\u0C21\u0C40. \u0C1A\u0C3F\u0C28\u0C4D\u0C28 \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C38\u0C28\u0C4D\u0C28\u0C15\u0C3E\u0C30\u0C41 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C15\u0C41 \u0C0E\u0C15\u0C4D\u0C15\u0C41\u0C35 \u0C2A\u0C4D\u0C30\u0C2F\u0C4B\u0C1C\u0C28\u0C02.",
+    eligibilityEn: "Small, marginal, and other farmers. Support is also available to set up Custom Hiring Centres (CHC).",
+    eligibilityTe: "\u0C1A\u0C3F\u0C28\u0C4D\u0C28, \u0C38\u0C28\u0C4D\u0C28\u0C15\u0C3E\u0C30\u0C41 \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C07\u0C24\u0C30 \u0C30\u0C48\u0C24\u0C41\u0C32\u0C41. \u0C15\u0C38\u0C4D\u0C1F\u0C2E\u0C4D \u0C39\u0C48\u0C30\u0C3F\u0C02\u0C17\u0C4D \u0C38\u0C46\u0C02\u0C1F\u0C30\u0C4D\u0C32\u0C41 (\u0C38\u0C40\u0C39\u0C46\u0C1A\u0C4D\u200C\u0C38\u0C40) \u0C0F\u0C30\u0C4D\u0C2A\u0C3E\u0C1F\u0C41\u0C15\u0C41 \u0C15\u0C42\u0C21\u0C3E \u0C2E\u0C26\u0C4D\u0C26\u0C24\u0C41 \u0C09\u0C02\u0C26\u0C3F.",
+    howToApplyEn: "Through the agriculture department or agrimachinery.nic.in. District-level approval applies.",
+    howToApplyTe: "\u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C36\u0C3E\u0C16 \u0C32\u0C47\u0C26\u0C3E agrimachinery.nic.in \u0C2A\u0C4B\u0C30\u0C4D\u0C1F\u0C32\u0C4D \u0C26\u0C4D\u0C35\u0C3E\u0C30\u0C3E. \u0C1C\u0C3F\u0C32\u0C4D\u0C32\u0C3E \u0C38\u0C4D\u0C25\u0C3E\u0C2F\u0C3F \u0C06\u0C2E\u0C4B\u0C26 \u0C2A\u0C4D\u0C30\u0C15\u0C4D\u0C30\u0C3F\u0C2F \u0C09\u0C02\u0C26\u0C3F.",
+    applyUrl: "https://agrimachinery.nic.in/",
+    icon: "tractor",
+    highlightsEn: [
+      "Tractor and tools",
+      "CHC support",
+      "Small farmer priority"
+    ],
+    highlightsTe: [
+      "\u0C1F\u0C4D\u0C30\u0C3E\u0C15\u0C4D\u0C1F\u0C30\u0C4D \u0C2E\u0C30\u0C3F\u0C2F\u0C41 \u0C2A\u0C30\u0C3F\u0C15\u0C30\u0C3E\u0C32\u0C41",
+      "\u0C38\u0C40\u0C39\u0C46\u0C1A\u0C4D\u200C\u0C38\u0C40 \u0C2E\u0C26\u0C4D\u0C26\u0C24\u0C41",
+      "\u0C1A\u0C3F\u0C28\u0C4D\u0C28 \u0C30\u0C48\u0C24\u0C41 \u0C2A\u0C4D\u0C30\u0C3E\u0C27\u0C3E\u0C28\u0C4D\u0C2F\u0C02"
+    ],
+    eligibilityRules: {
+      requiresLand: true
+    },
+    verifiedAt: "2026-09-04"
+  },
+  {
+    id: "aif",
+    category: "loan",
+    region: "central",
+    status: "active",
+    titleEn: "Agriculture Infrastructure Fund (AIF)",
+    titleTe: "\u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C2E\u0C4C\u0C32\u0C3F\u0C15 \u0C38\u0C26\u0C41\u0C2A\u0C3E\u0C2F\u0C3E\u0C32 \u0C28\u0C3F\u0C27\u0C3F (\u0C0F\u0C10\u0C0E\u0C2B\u0C4D)",
+    amountEn: "Loans \u20B92\u2013100 lakh",
+    amountTe: "\u0C30\u0C41\u0C23\u0C3E\u0C32\u0C41 \u20B92\u2013100 \u0C32\u0C15\u0C4D\u0C37\u0C32\u0C41",
+    benefitEn: "Medium to long-term loans for cold storage, warehouses, sorting, grading, and processing units. About 3% interest subvention may apply.",
+    benefitTe: "\u0C15\u0C4B\u0C32\u0C4D\u0C21\u0C4D \u0C38\u0C4D\u0C1F\u0C4B\u0C30\u0C47\u0C1C\u0C4D, \u0C17\u0C4B\u0C26\u0C3E\u0C2E\u0C41\u0C32\u0C41, \u0C38\u0C3E\u0C30\u0C4D\u0C1F\u0C3F\u0C02\u0C17\u0C4D, \u0C17\u0C4D\u0C30\u0C47\u0C21\u0C3F\u0C02\u0C17\u0C4D, \u0C2A\u0C4D\u0C30\u0C3E\u0C38\u0C46\u0C38\u0C3F\u0C02\u0C17\u0C4D \u0C2F\u0C42\u0C28\u0C3F\u0C1F\u0C4D\u0C32\u0C15\u0C41 \u0C2E\u0C27\u0C4D\u0C2F-\u0C26\u0C40\u0C30\u0C4D\u0C18\u0C15\u0C3E\u0C32\u0C3F\u0C15 \u0C30\u0C41\u0C23\u0C3E\u0C32\u0C41. \u0C38\u0C41\u0C2E\u0C3E\u0C30\u0C41 3% \u0C35\u0C21\u0C4D\u0C21\u0C40 \u0C30\u0C3E\u0C2F\u0C3F\u0C24\u0C40 \u0C09\u0C02\u0C21\u0C35\u0C1A\u0C4D\u0C1A\u0C41.",
+    eligibilityEn: "Farmers, FPOs, agri entrepreneurs, and startups with a viable project report.",
+    eligibilityTe: "\u0C30\u0C48\u0C24\u0C41\u0C32\u0C41, \u0C0E\u0C2B\u0C4D\u200C\u0C2A\u0C40\u0C13\u0C32\u0C41, \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C4D\u0C25\u0C3E\u0C2A\u0C15\u0C41\u0C32\u0C41, \u0C38\u0C4D\u0C1F\u0C3E\u0C30\u0C4D\u0C1F\u0C2A\u0C4D\u200C\u0C32\u0C41 \u2014 \u0C38\u0C3E\u0C27\u0C4D\u0C2F\u0C2E\u0C48\u0C28 \u0C2A\u0C4D\u0C30\u0C3E\u0C1C\u0C46\u0C15\u0C4D\u0C1F\u0C4D \u0C28\u0C3F\u0C35\u0C47\u0C26\u0C3F\u0C15 \u0C05\u0C35\u0C38\u0C30\u0C02.",
+    howToApplyEn: "Apply through scheduled banks or NABARD-approved projects. See details at agriinfra.dac.gov.in.",
+    howToApplyTe: "\u0C37\u0C46\u0C21\u0C4D\u0C2F\u0C42\u0C32\u0C4D\u0C21\u0C4D \u0C2C\u0C4D\u0C2F\u0C3E\u0C02\u0C15\u0C41\u0C32\u0C41 / \u0C28\u0C3E\u0C2C\u0C3E\u0C30\u0C4D\u0C21\u0C4D \u0C06\u0C2E\u0C4B\u0C26\u0C3F\u0C24 \u0C2A\u0C4D\u0C30\u0C3E\u0C1C\u0C46\u0C15\u0C4D\u0C1F\u0C41\u0C32 \u0C26\u0C4D\u0C35\u0C3E\u0C30\u0C3E \u0C26\u0C30\u0C16\u0C3E\u0C38\u0C4D\u0C24\u0C41 \u0C1A\u0C47\u0C2F\u0C02\u0C21\u0C3F. agriinfra.dac.gov.in\u0C32\u0C4B \u0C35\u0C3F\u0C35\u0C30\u0C3E\u0C32\u0C41 \u0C1A\u0C42\u0C21\u0C02\u0C21\u0C3F.",
+    applyUrl: "https://agriinfra.dac.gov.in/",
+    icon: "warehouse",
+    highlightsEn: [
+      "Post-harvest infrastructure",
+      "About 3% interest subvention",
+      "FPOs eligible"
+    ],
+    highlightsTe: [
+      "\u0C2A\u0C02\u0C1F \u0C05\u0C28\u0C02\u0C24\u0C30 \u0C2E\u0C4C\u0C32\u0C3F\u0C15 \u0C38\u0C26\u0C41\u0C2A\u0C3E\u0C2F\u0C3E\u0C32\u0C41",
+      "\u0C38\u0C41\u0C2E\u0C3E\u0C30\u0C41 3% \u0C35\u0C21\u0C4D\u0C21\u0C40 \u0C30\u0C3E\u0C2F\u0C3F\u0C24\u0C40",
+      "\u0C0E\u0C2B\u0C4D\u200C\u0C2A\u0C40\u0C13\u0C32\u0C41 \u0C05\u0C30\u0C4D\u0C39\u0C41\u0C32\u0C41"
+    ],
+    eligibilityRules: {},
+    verifiedAt: "2026-09-04"
+  },
+  {
+    id: "soil-health-card",
+    category: "subsidy",
+    region: "central",
+    status: "active",
+    titleEn: "Soil Health Card",
+    titleTe: "\u0C28\u0C47\u0C32 \u0C06\u0C30\u0C4B\u0C17\u0C4D\u0C2F \u0C15\u0C3E\u0C30\u0C4D\u0C21\u0C41",
+    amountEn: "Free",
+    amountTe: "\u0C09\u0C1A\u0C3F\u0C24\u0C02",
+    benefitEn: "Free soil testing for your field with a report on N, P, K, micronutrients, and pH \u2014 to reduce fertilizer waste and guide better yield.",
+    benefitTe: "\u0C2E\u0C40 \u0C2A\u0C4A\u0C32\u0C02 \u0C28\u0C47\u0C32 \u0C2A\u0C30\u0C40\u0C15\u0C4D\u0C37 \u0C1A\u0C47\u0C38\u0C3F \u0C28\u0C24\u0C4D\u0C30\u0C1C\u0C28\u0C3F, \u0C2D\u0C3E\u0C38\u0C4D\u0C35\u0C30\u0C02, \u0C2A\u0C4A\u0C1F\u0C3E\u0C37\u0C4D, \u0C38\u0C42\u0C15\u0C4D\u0C37\u0C4D\u0C2E\u0C2A\u0C4B\u0C37\u0C15\u0C3E\u0C32\u0C41, \u0C2A\u0C40\u0C39\u0C46\u0C1A\u0C4D \u0C28\u0C3F\u0C35\u0C47\u0C26\u0C3F\u0C15 \u0C07\u0C38\u0C4D\u0C24\u0C3E\u0C30\u0C41 \u2014 \u0C0E\u0C30\u0C41\u0C35\u0C41 \u0C35\u0C43\u0C25\u0C3E \u0C24\u0C17\u0C4D\u0C17\u0C3F\u0C02\u0C1A\u0C3F \u0C26\u0C3F\u0C17\u0C41\u0C2C\u0C21\u0C3F \u0C2A\u0C46\u0C02\u0C1A\u0C21\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u0C2E\u0C3E\u0C30\u0C4D\u0C17\u0C26\u0C30\u0C4D\u0C36\u0C15\u0C02.",
+    eligibilityEn: "All farmers across India who can provide a land sample.",
+    eligibilityTe: "\u0C2D\u0C3E\u0C30\u0C24\u0C26\u0C47\u0C36\u0C02 \u0C05\u0C02\u0C24\u0C1F\u0C3E \u0C05\u0C28\u0C4D\u0C28\u0C3F \u0C30\u0C48\u0C24\u0C41\u0C32\u0C41 \u2014 \u0C2D\u0C42\u0C2E\u0C3F \u0C28\u0C41\u0C02\u0C1A\u0C3F \u0C28\u0C2E\u0C42\u0C28\u0C3E \u0C07\u0C35\u0C4D\u0C35\u0C17\u0C32\u0C3F\u0C17\u0C3F\u0C24\u0C47.",
+    howToApplyEn: "Give a sample at the District Agriculture Office, soil testing lab, or RSK. Mobile soil testing vans are also available.",
+    howToApplyTe: "\u0C1C\u0C3F\u0C32\u0C4D\u0C32\u0C3E \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C15\u0C3E\u0C30\u0C4D\u0C2F\u0C3E\u0C32\u0C2F\u0C02 / \u0C28\u0C47\u0C32 \u0C2A\u0C30\u0C40\u0C15\u0C4D\u0C37\u0C3E \u0C2A\u0C4D\u0C30\u0C2F\u0C4B\u0C17\u0C36\u0C3E\u0C32 / \u0C06\u0C30\u0C4D\u0C0E\u0C38\u0C4D\u200C\u0C15\u0C47\u0C32\u0C4B \u0C28\u0C2E\u0C42\u0C28\u0C3E \u0C07\u0C35\u0C4D\u0C35\u0C02\u0C21\u0C3F. \u0C2E\u0C4A\u0C2C\u0C48\u0C32\u0C4D \u0C28\u0C47\u0C32 \u0C2A\u0C30\u0C40\u0C15\u0C4D\u0C37\u0C3E \u0C35\u0C4D\u0C2F\u0C3E\u0C28\u0C4D\u0C32\u0C41 \u0C15\u0C42\u0C21\u0C3E \u0C09\u0C02\u0C1F\u0C3E\u0C2F\u0C3F.",
+    icon: "flask-outline",
+    highlightsEn: [
+      "Free testing",
+      "Crop-wise fertilizer advice",
+      "Active"
+    ],
+    highlightsTe: [
+      "\u0C09\u0C1A\u0C3F\u0C24 \u0C2A\u0C30\u0C40\u0C15\u0C4D\u0C37",
+      "\u0C2A\u0C02\u0C1F\u0C35\u0C3E\u0C30\u0C40 \u0C0E\u0C30\u0C41\u0C35\u0C41 \u0C38\u0C32\u0C39\u0C3E",
+      "\u0C15\u0C4A\u0C28\u0C38\u0C3E\u0C17\u0C41\u0C24\u0C4B\u0C02\u0C26\u0C3F"
+    ],
+    eligibilityRules: {
+      requiresLand: true
+    },
+    verifiedAt: "2026-09-04"
+  },
+  {
+    id: "indiramma-atmiya-bharosa",
+    category: "support",
+    region: "ts",
+    status: "active",
+    titleEn: "Indiramma Atmiya Bharosa",
+    titleTe: "\u0C07\u0C02\u0C26\u0C3F\u0C30\u0C2E\u0C4D\u0C2E \u0C06\u0C24\u0C4D\u0C2E\u0C40\u0C2F \u0C2D\u0C30\u0C4B\u0C38\u0C3E",
+    amountEn: "\u20B912,000 / year",
+    amountTe: "\u0C38\u0C02\u0C35\u0C24\u0C4D\u0C38\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u20B912,000",
+    benefitEn: "\u20B912,000 a year financial support for registered landless agricultural labourers in Telangana.",
+    benefitTe: "\u0C24\u0C46\u0C32\u0C02\u0C17\u0C3E\u0C23\u0C32\u0C4B \u0C2D\u0C42\u0C2E\u0C3F \u0C32\u0C47\u0C28\u0C3F \u0C28\u0C2E\u0C4B\u0C26\u0C3F\u0C24 \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C15\u0C42\u0C32\u0C40\u0C32\u0C15\u0C41 \u0C38\u0C02\u0C35\u0C24\u0C4D\u0C38\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u20B912,000 \u0C06\u0C30\u0C4D\u0C25\u0C3F\u0C15 \u0C38\u0C39\u0C3E\u0C2F\u0C02.",
+    eligibilityEn: "Registered landless agricultural labourers in Telangana.",
+    eligibilityTe: "\u0C24\u0C46\u0C32\u0C02\u0C17\u0C3E\u0C23\u0C32\u0C4B \u0C28\u0C2E\u0C4B\u0C26\u0C48\u0C28 \u0C2D\u0C42\u0C2E\u0C3F \u0C32\u0C47\u0C28\u0C3F \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C15\u0C42\u0C32\u0C40\u0C32\u0C41.",
+    howToApplyEn: "Register at the local revenue or agriculture office. Linked with the Rythu Bharosa system.",
+    howToApplyTe: "\u0C38\u0C4D\u0C25\u0C3E\u0C28\u0C3F\u0C15 \u0C30\u0C46\u0C35\u0C46\u0C28\u0C4D\u0C2F\u0C42 / \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C3E\u0C2F \u0C15\u0C3E\u0C30\u0C4D\u0C2F\u0C3E\u0C32\u0C2F\u0C02\u0C32\u0C4B \u0C28\u0C2E\u0C4B\u0C26\u0C41. \u0C30\u0C48\u0C24\u0C41 \u0C2D\u0C30\u0C4B\u0C38\u0C3E \u0C35\u0C4D\u0C2F\u0C35\u0C38\u0C4D\u0C25\u0C24\u0C4B \u0C05\u0C28\u0C41\u0C38\u0C02\u0C27\u0C3E\u0C28\u0C02.",
+    icon: "account-group",
+    highlightsEn: [
+      "Landless labourers",
+      "\u20B912,000 a year",
+      "Telangana only"
+    ],
+    highlightsTe: [
+      "\u0C2D\u0C42\u0C2E\u0C3F \u0C32\u0C47\u0C28\u0C3F \u0C15\u0C42\u0C32\u0C40\u0C32\u0C41",
+      "\u0C38\u0C02\u0C35\u0C24\u0C4D\u0C38\u0C30\u0C3E\u0C28\u0C3F\u0C15\u0C3F \u20B912,000",
+      "\u0C24\u0C46\u0C32\u0C02\u0C17\u0C3E\u0C23 \u0C2E\u0C3E\u0C24\u0C4D\u0C30\u0C2E\u0C47"
+    ],
+    eligibilityRules: {
+      landlessOnly: true
+    },
+    verifiedAt: "2026-09-04"
+  }
+];
+
+// src/services/adminDashboardService.ts
+init_nearbyAgPlacesService();
+async function getAdminAnalytics() {
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1e3);
+  const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1e3);
+  const [[usersTotal], [usersActive], [usersWeek], [usersMonth], [fertCount], [schemeCount], [broadcastCount]] = await Promise.all([
+    db.select({ n: (0, import_drizzle_orm25.count)() }).from(farmers),
+    db.select({ n: (0, import_drizzle_orm25.count)() }).from(farmers).where((0, import_drizzle_orm25.eq)(farmers.isActive, true)),
+    db.select({ n: (0, import_drizzle_orm25.count)() }).from(farmers).where((0, import_drizzle_orm25.gte)(farmers.createdAt, weekAgo)),
+    db.select({ n: (0, import_drizzle_orm25.count)() }).from(farmers).where((0, import_drizzle_orm25.gte)(farmers.createdAt, monthAgo)),
+    db.select({ n: (0, import_drizzle_orm25.count)() }).from(fertilizerProducts),
+    db.select({ n: (0, import_drizzle_orm25.count)() }).from(govtSchemes),
+    db.select({ n: (0, import_drizzle_orm25.count)() }).from(adminBroadcasts)
+  ]);
+  const recentJobs = await db.select({
+    id: syncJobs.id,
+    sourceId: syncJobs.sourceId,
+    status: syncJobs.status,
+    startedAt: syncJobs.startedAt,
+    finishedAt: syncJobs.finishedAt
+  }).from(syncJobs).orderBy((0, import_drizzle_orm25.desc)(syncJobs.startedAt)).limit(8);
+  const sources = await db.select({
+    id: dataSources.id,
+    name: dataSources.name,
+    lastSyncAt: dataSources.lastSyncAt
+  }).from(dataSources).limit(20);
+  return {
+    users: {
+      total: Number(usersTotal?.n ?? 0),
+      active: Number(usersActive?.n ?? 0),
+      newLast7Days: Number(usersWeek?.n ?? 0),
+      newLast30Days: Number(usersMonth?.n ?? 0)
+    },
+    catalog: {
+      fertilizers: Number(fertCount?.n ?? 0),
+      schemes: Number(schemeCount?.n ?? 0),
+      broadcasts: Number(broadcastCount?.n ?? 0)
+    },
+    sync: { sources, recentJobs }
+  };
+}
+async function listAdminUsers(opts) {
+  const page = Math.max(1, opts.page ?? 1);
+  const limit = Math.min(100, Math.max(1, opts.limit ?? 25));
+  const offset = (page - 1) * limit;
+  const q = opts.q?.trim();
+  const where = q ? (0, import_drizzle_orm25.or)(
+    (0, import_drizzle_orm25.ilike)(farmers.name, `%${q}%`),
+    (0, import_drizzle_orm25.ilike)(farmers.phone, `%${q}%`),
+    (0, import_drizzle_orm25.ilike)(farmers.email, `%${q}%`),
+    (0, import_drizzle_orm25.ilike)(farmers.locationLabel, `%${q}%`)
+  ) : void 0;
+  const [totalRow] = await db.select({ n: (0, import_drizzle_orm25.count)() }).from(farmers).where(where);
+  const rows = await db.select({
+    id: farmers.id,
+    name: farmers.name,
+    phone: farmers.phone,
+    email: farmers.email,
+    language: farmers.language,
+    locationLabel: farmers.locationLabel,
+    farmSize: farmers.farmSize,
+    isActive: farmers.isActive,
+    createdAt: farmers.createdAt,
+    updatedAt: farmers.updatedAt
+  }).from(farmers).where(where).orderBy((0, import_drizzle_orm25.desc)(farmers.createdAt)).limit(limit).offset(offset);
+  const ids = rows.map((r) => r.id);
+  const cropMeta = ids.length === 0 ? [] : await db.select({
+    farmerId: cropCalendar.farmerId,
+    cropId: cropCalendar.cropId,
+    cropName: crops.name,
+    cropNameTe: crops.nameTe
+  }).from(cropCalendar).leftJoin(crops, (0, import_drizzle_orm25.eq)(cropCalendar.cropId, crops.id)).where((0, import_drizzle_orm25.inArray)(cropCalendar.farmerId, ids));
+  const byFarmer = /* @__PURE__ */ new Map();
+  for (const row of cropMeta) {
+    const cur = byFarmer.get(row.farmerId) ?? { cropCount: 0, cropNames: [] };
+    cur.cropCount += 1;
+    const label = row.cropName || row.cropId;
+    if (label && !cur.cropNames.includes(label)) cur.cropNames.push(label);
+    byFarmer.set(row.farmerId, cur);
+  }
+  return {
+    data: rows.map((r) => ({
+      ...r,
+      cropCount: byFarmer.get(r.id)?.cropCount ?? 0,
+      cropNames: byFarmer.get(r.id)?.cropNames ?? []
+    })),
+    page,
+    limit,
+    total: Number(totalRow?.n ?? 0)
+  };
+}
+async function getAdminUserFarm(farmerId) {
+  const [farmer] = await db.select({
+    id: farmers.id,
+    name: farmers.name,
+    phone: farmers.phone,
+    email: farmers.email,
+    language: farmers.language,
+    locationLabel: farmers.locationLabel,
+    farmSize: farmers.farmSize,
+    isActive: farmers.isActive,
+    createdAt: farmers.createdAt
+  }).from(farmers).where((0, import_drizzle_orm25.eq)(farmers.id, farmerId)).limit(1);
+  if (!farmer) return null;
+  const landRows = await db.select().from(lands).where((0, import_drizzle_orm25.eq)(lands.farmerId, farmerId));
+  const plantings = await db.select({
+    id: cropCalendar.id,
+    cropId: cropCalendar.cropId,
+    cropName: crops.name,
+    cropNameTe: crops.nameTe,
+    varietyName: cropCalendar.varietyName,
+    landId: cropCalendar.landId,
+    sowingDate: cropCalendar.sowingDate,
+    expectedHarvestDate: cropCalendar.expectedHarvestDate,
+    actualHarvestDate: cropCalendar.actualHarvestDate,
+    stage: cropCalendar.stage,
+    notes: cropCalendar.notes,
+    updatedAt: cropCalendar.updatedAt
+  }).from(cropCalendar).leftJoin(crops, (0, import_drizzle_orm25.eq)(cropCalendar.cropId, crops.id)).where((0, import_drizzle_orm25.eq)(cropCalendar.farmerId, farmerId)).orderBy((0, import_drizzle_orm25.desc)(cropCalendar.updatedAt));
+  return {
+    farmer,
+    lands: landRows.map((l) => ({
+      id: l.id,
+      label: l.label,
+      areaAcres: l.areaAcres,
+      village: l.village,
+      mandal: l.mandal,
+      district: l.district,
+      state: l.state,
+      soilType: l.soilType
+    })),
+    crops: plantings.map((p) => ({
+      id: p.id,
+      cropId: p.cropId,
+      cropName: p.cropName ?? p.cropId,
+      cropNameTe: p.cropNameTe,
+      varietyName: p.varietyName,
+      landId: p.landId,
+      sowingDate: p.sowingDate,
+      expectedHarvestDate: p.expectedHarvestDate,
+      actualHarvestDate: p.actualHarvestDate,
+      stage: p.stage,
+      notes: p.notes,
+      updatedAt: p.updatedAt
+    }))
+  };
+}
+async function listAdminCropPlantings(opts) {
+  const page = Math.max(1, opts.page ?? 1);
+  const limit = Math.min(100, Math.max(1, opts.limit ?? 40));
+  const offset = (page - 1) * limit;
+  const q = opts.q?.trim();
+  const where = q ? (0, import_drizzle_orm25.or)(
+    (0, import_drizzle_orm25.ilike)(farmers.name, `%${q}%`),
+    (0, import_drizzle_orm25.ilike)(farmers.phone, `%${q}%`),
+    (0, import_drizzle_orm25.ilike)(crops.name, `%${q}%`),
+    (0, import_drizzle_orm25.ilike)(cropCalendar.cropId, `%${q}%`),
+    (0, import_drizzle_orm25.ilike)(cropCalendar.varietyName, `%${q}%`)
+  ) : void 0;
+  const [totalRow] = await db.select({ n: (0, import_drizzle_orm25.count)() }).from(cropCalendar).innerJoin(farmers, (0, import_drizzle_orm25.eq)(cropCalendar.farmerId, farmers.id)).leftJoin(crops, (0, import_drizzle_orm25.eq)(cropCalendar.cropId, crops.id)).where(where);
+  const rows = await db.select({
+    id: cropCalendar.id,
+    farmerId: farmers.id,
+    farmerName: farmers.name,
+    farmerPhone: farmers.phone,
+    cropId: cropCalendar.cropId,
+    cropName: crops.name,
+    cropNameTe: crops.nameTe,
+    varietyName: cropCalendar.varietyName,
+    sowingDate: cropCalendar.sowingDate,
+    expectedHarvestDate: cropCalendar.expectedHarvestDate,
+    stage: cropCalendar.stage,
+    locationLabel: farmers.locationLabel,
+    updatedAt: cropCalendar.updatedAt
+  }).from(cropCalendar).innerJoin(farmers, (0, import_drizzle_orm25.eq)(cropCalendar.farmerId, farmers.id)).leftJoin(crops, (0, import_drizzle_orm25.eq)(cropCalendar.cropId, crops.id)).where(where).orderBy((0, import_drizzle_orm25.desc)(cropCalendar.updatedAt)).limit(limit).offset(offset);
+  return {
+    data: rows,
+    page,
+    limit,
+    total: Number(totalRow?.n ?? 0)
+  };
+}
+async function setFarmerActive(id, isActive) {
+  const [row] = await db.update(farmers).set({ isActive, updatedAt: /* @__PURE__ */ new Date() }).where((0, import_drizzle_orm25.eq)(farmers.id, id)).returning({
+    id: farmers.id,
+    name: farmers.name,
+    phone: farmers.phone,
+    isActive: farmers.isActive
+  });
+  return row ?? null;
+}
+function slugId2(name) {
+  const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48);
+  return `${base || "fertilizer"}-${Date.now().toString(36)}`;
+}
+async function listAdminFertilizers(opts) {
+  const page = Math.max(1, opts.page ?? 1);
+  const limit = Math.min(100, Math.max(1, opts.limit ?? 25));
+  const offset = (page - 1) * limit;
+  const search = opts.search?.trim();
+  const where = search ? (0, import_drizzle_orm25.or)(
+    (0, import_drizzle_orm25.ilike)(fertilizerProducts.name, `%${search}%`),
+    (0, import_drizzle_orm25.ilike)(fertilizerProducts.brand, `%${search}%`),
+    (0, import_drizzle_orm25.ilike)(fertilizerProducts.category, `%${search}%`)
+  ) : void 0;
+  const [totalRow] = await db.select({ n: (0, import_drizzle_orm25.count)() }).from(fertilizerProducts).where(where);
+  const rows = await db.select().from(fertilizerProducts).where(where).orderBy((0, import_drizzle_orm25.desc)(fertilizerProducts.updatedAt)).limit(limit).offset(offset);
+  return { data: rows, page, limit, total: Number(totalRow?.n ?? 0) };
+}
+async function createAdminFertilizer(input) {
+  const id = (input.id?.trim() || slugId2(input.name)).slice(0, 80);
+  const now = /* @__PURE__ */ new Date();
+  const [row] = await db.insert(fertilizerProducts).values({
+    id,
+    name: input.name.trim(),
+    nameTe: input.nameTe ?? null,
+    brand: input.brand.trim(),
+    category: input.category.trim(),
+    type: input.type ?? null,
+    npk: input.npk ?? null,
+    npkRatio: input.npkRatio ?? null,
+    nutrient: input.nutrient ?? null,
+    dosage: input.dosage ?? null,
+    crop: input.crop ?? null,
+    benefits: input.benefits ?? null,
+    description: input.description ?? null,
+    crops: input.crops ?? [],
+    soilType: input.soilType ?? [],
+    seasons: input.seasons ?? [],
+    application: input.application ?? [],
+    applicationMethod: input.applicationMethod ?? null,
+    precautions: input.precautions ?? null,
+    mrp: input.mrp ?? null,
+    price: input.price ?? null,
+    packSize: input.packSize ?? null,
+    image: input.image ?? null,
+    source: input.source?.trim() || "admin",
+    sourceUrl: input.sourceUrl ?? null,
+    isSubsidized: input.isSubsidized ?? true,
+    updatedAt: now,
+    createdAt: now
+  }).returning();
+  return row;
+}
+async function updateAdminFertilizer(id, input) {
+  const [row] = await db.update(fertilizerProducts).set({
+    ...input.name != null ? { name: input.name.trim() } : {},
+    ...input.nameTe !== void 0 ? { nameTe: input.nameTe } : {},
+    ...input.brand != null ? { brand: input.brand.trim() } : {},
+    ...input.category != null ? { category: input.category.trim() } : {},
+    ...input.type !== void 0 ? { type: input.type } : {},
+    ...input.npk !== void 0 ? { npk: input.npk } : {},
+    ...input.npkRatio !== void 0 ? { npkRatio: input.npkRatio } : {},
+    ...input.nutrient !== void 0 ? { nutrient: input.nutrient } : {},
+    ...input.dosage !== void 0 ? { dosage: input.dosage } : {},
+    ...input.crop !== void 0 ? { crop: input.crop } : {},
+    ...input.benefits !== void 0 ? { benefits: input.benefits } : {},
+    ...input.description !== void 0 ? { description: input.description } : {},
+    ...input.crops !== void 0 ? { crops: input.crops } : {},
+    ...input.soilType !== void 0 ? { soilType: input.soilType } : {},
+    ...input.seasons !== void 0 ? { seasons: input.seasons } : {},
+    ...input.application !== void 0 ? { application: input.application } : {},
+    ...input.applicationMethod !== void 0 ? { applicationMethod: input.applicationMethod } : {},
+    ...input.precautions !== void 0 ? { precautions: input.precautions } : {},
+    ...input.mrp !== void 0 ? { mrp: input.mrp } : {},
+    ...input.price !== void 0 ? { price: input.price } : {},
+    ...input.packSize !== void 0 ? { packSize: input.packSize } : {},
+    ...input.image !== void 0 ? { image: input.image } : {},
+    ...input.source != null ? { source: input.source.trim() } : {},
+    ...input.sourceUrl !== void 0 ? { sourceUrl: input.sourceUrl } : {},
+    ...input.isSubsidized !== void 0 ? { isSubsidized: input.isSubsidized } : {},
+    updatedAt: /* @__PURE__ */ new Date()
+  }).where((0, import_drizzle_orm25.eq)(fertilizerProducts.id, id)).returning();
+  return row ?? null;
+}
+async function deleteAdminFertilizer(id) {
+  const result = await db.delete(fertilizerProducts).where((0, import_drizzle_orm25.eq)(fertilizerProducts.id, id)).returning({ id: fertilizerProducts.id });
+  return result.length > 0;
+}
+function mapSchemeRow(input, id, now) {
+  return {
+    id,
+    category: input.category.trim(),
+    region: input.region.trim(),
+    status: (input.status ?? "active").trim(),
+    titleEn: input.titleEn.trim(),
+    titleTe: input.titleTe.trim(),
+    amountEn: input.amountEn ?? "",
+    amountTe: input.amountTe ?? "",
+    benefitEn: input.benefitEn ?? "",
+    benefitTe: input.benefitTe ?? "",
+    eligibilityEn: input.eligibilityEn ?? "",
+    eligibilityTe: input.eligibilityTe ?? "",
+    howToApplyEn: input.howToApplyEn ?? "",
+    howToApplyTe: input.howToApplyTe ?? "",
+    applyUrl: input.applyUrl ?? null,
+    icon: input.icon ?? "sprout",
+    highlightsEn: input.highlightsEn ?? [],
+    highlightsTe: input.highlightsTe ?? [],
+    eligibilityRules: input.eligibilityRules ?? {},
+    verifiedAt: input.verifiedAt ?? null,
+    updatedAt: now
+  };
+}
+async function listAdminSchemes(opts) {
+  const page = Math.max(1, opts.page ?? 1);
+  const limit = Math.min(100, Math.max(1, opts.limit ?? 50));
+  const offset = (page - 1) * limit;
+  const where = opts.status ? (0, import_drizzle_orm25.eq)(govtSchemes.status, opts.status) : void 0;
+  const [totalRow] = await db.select({ n: (0, import_drizzle_orm25.count)() }).from(govtSchemes).where(where);
+  const rows = await db.select().from(govtSchemes).where(where).orderBy((0, import_drizzle_orm25.desc)(govtSchemes.updatedAt)).limit(limit).offset(offset);
+  return { data: rows, page, limit, total: Number(totalRow?.n ?? 0) };
+}
+async function listPublicActiveSchemes() {
+  return db.select().from(govtSchemes).where((0, import_drizzle_orm25.eq)(govtSchemes.status, "active")).orderBy(govtSchemes.titleEn);
+}
+async function createAdminScheme(input) {
+  const id = (input.id?.trim() || slugId2(input.titleEn)).slice(0, 80);
+  const now = /* @__PURE__ */ new Date();
+  const [row] = await db.insert(govtSchemes).values({ ...mapSchemeRow(input, id, now), createdAt: now }).returning();
+  return row;
+}
+async function updateAdminScheme(id, input) {
+  const existing = await db.select().from(govtSchemes).where((0, import_drizzle_orm25.eq)(govtSchemes.id, id)).limit(1);
+  if (!existing[0]) return null;
+  const merged = {
+    category: input.category ?? existing[0].category,
+    region: input.region ?? existing[0].region,
+    status: input.status ?? existing[0].status,
+    titleEn: input.titleEn ?? existing[0].titleEn,
+    titleTe: input.titleTe ?? existing[0].titleTe,
+    amountEn: input.amountEn ?? existing[0].amountEn,
+    amountTe: input.amountTe ?? existing[0].amountTe,
+    benefitEn: input.benefitEn ?? existing[0].benefitEn,
+    benefitTe: input.benefitTe ?? existing[0].benefitTe,
+    eligibilityEn: input.eligibilityEn ?? existing[0].eligibilityEn,
+    eligibilityTe: input.eligibilityTe ?? existing[0].eligibilityTe,
+    howToApplyEn: input.howToApplyEn ?? existing[0].howToApplyEn,
+    howToApplyTe: input.howToApplyTe ?? existing[0].howToApplyTe,
+    applyUrl: input.applyUrl !== void 0 ? input.applyUrl : existing[0].applyUrl,
+    icon: input.icon ?? existing[0].icon,
+    highlightsEn: input.highlightsEn ?? existing[0].highlightsEn,
+    highlightsTe: input.highlightsTe ?? existing[0].highlightsTe,
+    eligibilityRules: input.eligibilityRules ?? existing[0].eligibilityRules ?? {},
+    verifiedAt: input.verifiedAt !== void 0 ? input.verifiedAt : existing[0].verifiedAt
+  };
+  const [row] = await db.update(govtSchemes).set(mapSchemeRow(merged, id, /* @__PURE__ */ new Date())).where((0, import_drizzle_orm25.eq)(govtSchemes.id, id)).returning();
+  return row ?? null;
+}
+async function deleteAdminScheme(id) {
+  const result = await db.delete(govtSchemes).where((0, import_drizzle_orm25.eq)(govtSchemes.id, id)).returning({ id: govtSchemes.id });
+  return result.length > 0;
+}
+async function seedGovtSchemesFromFile() {
+  const schemes = govtSchemes_seed_default;
+  let upserted = 0;
+  const now = /* @__PURE__ */ new Date();
+  for (const s of schemes) {
+    await db.insert(govtSchemes).values({
+      id: s.id,
+      category: s.category,
+      region: s.region,
+      status: s.status,
+      titleEn: s.titleEn,
+      titleTe: s.titleTe,
+      amountEn: s.amountEn,
+      amountTe: s.amountTe,
+      benefitEn: s.benefitEn,
+      benefitTe: s.benefitTe,
+      eligibilityEn: s.eligibilityEn,
+      eligibilityTe: s.eligibilityTe,
+      howToApplyEn: s.howToApplyEn,
+      howToApplyTe: s.howToApplyTe,
+      applyUrl: s.applyUrl ?? null,
+      icon: s.icon,
+      highlightsEn: s.highlightsEn ?? [],
+      highlightsTe: s.highlightsTe ?? [],
+      eligibilityRules: s.eligibilityRules ?? {},
+      verifiedAt: s.verifiedAt,
+      createdAt: now,
+      updatedAt: now
+    }).onConflictDoUpdate({
+      target: govtSchemes.id,
+      set: {
+        category: s.category,
+        region: s.region,
+        status: s.status,
+        titleEn: s.titleEn,
+        titleTe: s.titleTe,
+        amountEn: s.amountEn,
+        amountTe: s.amountTe,
+        benefitEn: s.benefitEn,
+        benefitTe: s.benefitTe,
+        eligibilityEn: s.eligibilityEn,
+        eligibilityTe: s.eligibilityTe,
+        howToApplyEn: s.howToApplyEn,
+        howToApplyTe: s.howToApplyTe,
+        applyUrl: s.applyUrl ?? null,
+        icon: s.icon,
+        highlightsEn: s.highlightsEn ?? [],
+        highlightsTe: s.highlightsTe ?? [],
+        eligibilityRules: s.eligibilityRules ?? {},
+        verifiedAt: s.verifiedAt,
+        updatedAt: now
+      }
+    });
+    upserted += 1;
+  }
+  return { upserted };
+}
+var BROADCAST_TYPES = /* @__PURE__ */ new Set([
+  "mandi_alert",
+  "weather_alert",
+  "spray_reminder",
+  "fertilizer_reminder",
+  "ai_insight",
+  "crop_calendar"
+]);
+async function listAdminBroadcasts(limit = 30) {
+  return db.select().from(adminBroadcasts).orderBy((0, import_drizzle_orm25.desc)(adminBroadcasts.createdAt)).limit(limit);
+}
+async function getAdminSyncStatus(jobLimit = 40) {
+  const sources = await db.select({
+    id: dataSources.id,
+    name: dataSources.name,
+    type: dataSources.type,
+    lastSyncAt: dataSources.lastSyncAt,
+    isActive: dataSources.isActive
+  }).from(dataSources).orderBy(dataSources.id);
+  const jobs = await db.select({
+    id: syncJobs.id,
+    sourceId: syncJobs.sourceId,
+    status: syncJobs.status,
+    recordsFetched: syncJobs.recordsFetched,
+    recordsUpserted: syncJobs.recordsUpserted,
+    errorMessage: syncJobs.errorMessage,
+    startedAt: syncJobs.startedAt,
+    finishedAt: syncJobs.finishedAt
+  }).from(syncJobs).orderBy((0, import_drizzle_orm25.desc)(syncJobs.startedAt)).limit(jobLimit);
+  const [mandiRow] = await db.select({ at: import_drizzle_orm25.sql`max(${mandiPrices.fetchedAt})` }).from(mandiPrices);
+  const [weatherRow] = await db.select({ at: import_drizzle_orm25.sql`max(${weather.fetchedAt})` }).from(weather);
+  const [fertRow] = await db.select({ at: import_drizzle_orm25.sql`max(${fertilizerProducts.lastSyncedAt})` }).from(fertilizerProducts);
+  return {
+    sources,
+    recentJobs: jobs,
+    freshness: {
+      mandiLastSync: mandiRow?.at ?? null,
+      weatherLastSync: weatherRow?.at ?? null,
+      fertilizerLastSync: fertRow?.at ?? null
+    },
+    actions: [
+      { id: "daily", label: "Daily sync", blurb: "Mandi, fertilizers, weather, crops, nearby places" },
+      { id: "full", label: "Full live sync", blurb: "FAO, mandi, soil, weather, knowledge" },
+      { id: "fertilizers", label: "Fertilizer catalog", blurb: "Indian DoF / NBS fertilizer products" },
+      { id: "ag-catalog", label: "Ag catalog", blurb: "Diseases, ICAR, advisories" },
+      { id: "bulk-catalog", label: "Bulk catalog", blurb: "Pesticides, fungicides, diseases" },
+      { id: "publications", label: "Publications", blurb: "ICAR / PJTSAU / ANGRAU / FAO / Gov" },
+      { id: "places", label: "Nearby places seed", blurb: "Curated mandi & fertilizer shop pins" }
+    ]
+  };
+}
+async function runAdminSyncAction(action) {
+  switch (action) {
+    case "daily":
+      return { action, results: await runDailyAutoSync() };
+    case "full":
+      return { action, results: await runFullSync() };
+    case "fertilizers": {
+      const r = await syncIndianFertilizerCatalog();
+      return { action, results: [{ sourceId: "indian_fertilizers", ...r, errors: [] }] };
+    }
+    case "ag-catalog": {
+      const parts = await syncIndianAgCatalog();
+      return { action, results: Object.entries(parts).map(([k, v]) => ({ sourceId: k, ...v, errors: [] })) };
+    }
+    case "bulk-catalog": {
+      const counts = await syncBulkAgCatalog();
+      return {
+        action,
+        results: [
+          {
+            sourceId: "bulk_catalog",
+            fetched: Object.values(counts).reduce((s, n) => s + n, 0),
+            upserted: Object.values(counts).reduce((s, n) => s + n, 0),
+            errors: [],
+            counts
+          }
+        ]
+      };
+    }
+    case "publications": {
+      const parts = await syncAllPublications();
+      return {
+        action,
+        results: [
+          {
+            sourceId: "publications",
+            fetched: parts.curated.fetched + parts.research.fetched,
+            upserted: parts.curated.upserted + parts.research.upserted,
+            errors: []
+          }
+        ]
+      };
+    }
+    case "places": {
+      const r = await seedCuratedAgPlaces();
+      return {
+        action,
+        results: [
+          {
+            sourceId: "bhuvedam",
+            fetched: r.inserted + r.skipped,
+            upserted: r.inserted,
+            errors: []
+          }
+        ]
+      };
+    }
+    default:
+      throw new Error("UNKNOWN_SYNC_ACTION");
+  }
+}
+async function createAdminBroadcast(input) {
+  const type = BROADCAST_TYPES.has(input.type ?? "") ? input.type : "ai_insight";
+  const title = input.title.trim().slice(0, 200);
+  const body = input.body.trim();
+  if (!title || !body) throw new Error("TITLE_BODY_REQUIRED");
+  const active = await db.select({ id: farmers.id }).from(farmers).where((0, import_drizzle_orm25.eq)(farmers.isActive, true));
+  let pushSent = 0;
+  for (const farmer of active) {
+    const result = await createAndPushNotification(farmer.id, {
+      type,
+      title,
+      body,
+      data: { broadcast: true, source: "admin" },
+      sendPush: true
+    });
+    pushSent += result.pushSent;
+  }
+  const [log2] = await db.insert(adminBroadcasts).values({
+    title,
+    body,
+    type,
+    recipientCount: active.length,
+    pushSent,
+    createdBy: input.createdBy ?? null
+  }).returning();
+  return log2;
+}
+
+// src/server/adminRoutes.ts
+var admin = new import_hono.Hono();
+admin.post("/login", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const email = body.email?.trim() ?? "";
+  const password = body.password ?? "";
+  if (!email || !password) return appError(c, "PASSWORD_REQUIRED");
+  if (!verifyAdminCredentials(email, password)) return appError(c, "INVALID_CREDENTIALS");
+  const token = createAdminToken(email);
+  return c.json({ token, email: email.toLowerCase() });
+});
+admin.use("*", adminSessionAuthMiddleware);
+admin.get("/me", (c) => c.json({ email: c.get("adminEmail") }));
+admin.get("/analytics", async (c) => {
+  const data = await getAdminAnalytics();
+  return c.json({ data });
+});
+admin.get("/users", async (c) => {
+  const q = c.req.query("q") ?? void 0;
+  const page = Number(c.req.query("page") ?? 1);
+  const limit = Number(c.req.query("limit") ?? 25);
+  const result = await listAdminUsers({ q, page, limit });
+  return c.json(result);
+});
+admin.get("/users/:id/farm", async (c) => {
+  const data = await getAdminUserFarm(c.req.param("id"));
+  if (!data) return appError(c, "FARMER_NOT_FOUND");
+  return c.json({ data });
+});
+admin.get("/crop-plantings", async (c) => {
+  const q = c.req.query("q") ?? void 0;
+  const page = Number(c.req.query("page") ?? 1);
+  const limit = Number(c.req.query("limit") ?? 40);
+  const result = await listAdminCropPlantings({ q, page, limit });
+  return c.json(result);
+});
+admin.patch("/users/:id", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  if (typeof body.isActive !== "boolean") {
+    return c.json({ code: "INVALID_BODY" }, 400);
+  }
+  const row = await setFarmerActive(c.req.param("id"), body.isActive);
+  if (!row) return appError(c, "FARMER_NOT_FOUND");
+  return c.json({ data: row });
+});
+admin.get("/fertilizers", async (c) => {
+  const search = c.req.query("search") ?? void 0;
+  const page = Number(c.req.query("page") ?? 1);
+  const limit = Number(c.req.query("limit") ?? 25);
+  const result = await listAdminFertilizers({ search, page, limit });
+  return c.json(result);
+});
+admin.post("/fertilizers", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const brand = typeof body.brand === "string" ? body.brand.trim() : "";
+  const category = typeof body.category === "string" ? body.category.trim() : "";
+  if (!name || !brand || !category) return appError(c, "NAME_REQUIRED");
+  const row = await createAdminFertilizer({
+    id: typeof body.id === "string" ? body.id : void 0,
+    name,
+    brand,
+    category,
+    nameTe: typeof body.nameTe === "string" ? body.nameTe : null,
+    type: typeof body.type === "string" ? body.type : null,
+    npk: typeof body.npk === "string" ? body.npk : null,
+    dosage: typeof body.dosage === "string" ? body.dosage : null,
+    crop: typeof body.crop === "string" ? body.crop : null,
+    benefits: typeof body.benefits === "string" ? body.benefits : null,
+    description: typeof body.description === "string" ? body.description : null,
+    mrp: typeof body.mrp === "string" ? body.mrp : null,
+    price: typeof body.price === "string" ? body.price : null,
+    packSize: typeof body.packSize === "string" ? body.packSize : null,
+    source: typeof body.source === "string" ? body.source : "admin",
+    isSubsidized: typeof body.isSubsidized === "boolean" ? body.isSubsidized : true
+  });
+  return c.json({ data: row }, 201);
+});
+admin.put("/fertilizers/:id", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const row = await updateAdminFertilizer(c.req.param("id"), {
+    name: typeof body.name === "string" ? body.name : void 0,
+    brand: typeof body.brand === "string" ? body.brand : void 0,
+    category: typeof body.category === "string" ? body.category : void 0,
+    nameTe: typeof body.nameTe === "string" ? body.nameTe : body.nameTe === null ? null : void 0,
+    type: typeof body.type === "string" ? body.type : body.type === null ? null : void 0,
+    npk: typeof body.npk === "string" ? body.npk : body.npk === null ? null : void 0,
+    dosage: typeof body.dosage === "string" ? body.dosage : body.dosage === null ? null : void 0,
+    crop: typeof body.crop === "string" ? body.crop : body.crop === null ? null : void 0,
+    benefits: typeof body.benefits === "string" ? body.benefits : body.benefits === null ? null : void 0,
+    description: typeof body.description === "string" ? body.description : body.description === null ? null : void 0,
+    mrp: typeof body.mrp === "string" ? body.mrp : body.mrp === null ? null : void 0,
+    price: typeof body.price === "string" ? body.price : body.price === null ? null : void 0,
+    packSize: typeof body.packSize === "string" ? body.packSize : body.packSize === null ? null : void 0,
+    source: typeof body.source === "string" ? body.source : void 0,
+    isSubsidized: typeof body.isSubsidized === "boolean" ? body.isSubsidized : void 0
+  });
+  if (!row) return appError(c, "FERTILIZER_NOT_FOUND");
+  return c.json({ data: row });
+});
+admin.delete("/fertilizers/:id", async (c) => {
+  const ok = await deleteAdminFertilizer(c.req.param("id"));
+  if (!ok) return appError(c, "FERTILIZER_NOT_FOUND");
+  return c.json({ ok: true });
+});
+admin.get("/schemes", async (c) => {
+  const status = c.req.query("status") ?? void 0;
+  const page = Number(c.req.query("page") ?? 1);
+  const limit = Number(c.req.query("limit") ?? 50);
+  const result = await listAdminSchemes({ status, page, limit });
+  return c.json(result);
+});
+admin.post("/schemes/seed", async (c) => {
+  try {
+    const result = await seedGovtSchemesFromFile();
+    return c.json({ ok: true, ...result });
+  } catch {
+    return appError(c, "SERVER_ERROR");
+  }
+});
+admin.post("/schemes", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const titleEn = typeof body.titleEn === "string" ? body.titleEn.trim() : "";
+  const titleTe = typeof body.titleTe === "string" ? body.titleTe.trim() : "";
+  const category = typeof body.category === "string" ? body.category.trim() : "";
+  const region = typeof body.region === "string" ? body.region.trim() : "";
+  if (!titleEn || !titleTe || !category || !region) return appError(c, "NAME_REQUIRED");
+  const row = await createAdminScheme({
+    id: typeof body.id === "string" ? body.id : void 0,
+    titleEn,
+    titleTe,
+    category,
+    region,
+    status: typeof body.status === "string" ? body.status : "active",
+    amountEn: typeof body.amountEn === "string" ? body.amountEn : "",
+    amountTe: typeof body.amountTe === "string" ? body.amountTe : "",
+    benefitEn: typeof body.benefitEn === "string" ? body.benefitEn : "",
+    benefitTe: typeof body.benefitTe === "string" ? body.benefitTe : "",
+    eligibilityEn: typeof body.eligibilityEn === "string" ? body.eligibilityEn : "",
+    eligibilityTe: typeof body.eligibilityTe === "string" ? body.eligibilityTe : "",
+    howToApplyEn: typeof body.howToApplyEn === "string" ? body.howToApplyEn : "",
+    howToApplyTe: typeof body.howToApplyTe === "string" ? body.howToApplyTe : "",
+    applyUrl: typeof body.applyUrl === "string" ? body.applyUrl : null,
+    icon: typeof body.icon === "string" ? body.icon : "sprout",
+    highlightsEn: Array.isArray(body.highlightsEn) ? body.highlightsEn : [],
+    highlightsTe: Array.isArray(body.highlightsTe) ? body.highlightsTe : [],
+    verifiedAt: typeof body.verifiedAt === "string" ? body.verifiedAt : null
+  });
+  return c.json({ data: row }, 201);
+});
+admin.put("/schemes/:id", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const row = await updateAdminScheme(c.req.param("id"), {
+    titleEn: typeof body.titleEn === "string" ? body.titleEn : void 0,
+    titleTe: typeof body.titleTe === "string" ? body.titleTe : void 0,
+    category: typeof body.category === "string" ? body.category : void 0,
+    region: typeof body.region === "string" ? body.region : void 0,
+    status: typeof body.status === "string" ? body.status : void 0,
+    amountEn: typeof body.amountEn === "string" ? body.amountEn : void 0,
+    amountTe: typeof body.amountTe === "string" ? body.amountTe : void 0,
+    benefitEn: typeof body.benefitEn === "string" ? body.benefitEn : void 0,
+    benefitTe: typeof body.benefitTe === "string" ? body.benefitTe : void 0,
+    eligibilityEn: typeof body.eligibilityEn === "string" ? body.eligibilityEn : void 0,
+    eligibilityTe: typeof body.eligibilityTe === "string" ? body.eligibilityTe : void 0,
+    howToApplyEn: typeof body.howToApplyEn === "string" ? body.howToApplyEn : void 0,
+    howToApplyTe: typeof body.howToApplyTe === "string" ? body.howToApplyTe : void 0,
+    applyUrl: typeof body.applyUrl === "string" ? body.applyUrl : body.applyUrl === null ? null : void 0,
+    icon: typeof body.icon === "string" ? body.icon : void 0,
+    highlightsEn: Array.isArray(body.highlightsEn) ? body.highlightsEn : void 0,
+    highlightsTe: Array.isArray(body.highlightsTe) ? body.highlightsTe : void 0,
+    verifiedAt: typeof body.verifiedAt === "string" ? body.verifiedAt : body.verifiedAt === null ? null : void 0
+  });
+  if (!row) return appError(c, "NOT_FOUND");
+  return c.json({ data: row });
+});
+admin.delete("/schemes/:id", async (c) => {
+  const ok = await deleteAdminScheme(c.req.param("id"));
+  if (!ok) return appError(c, "NOT_FOUND");
+  return c.json({ ok: true });
+});
+admin.get("/updates", async (c) => {
+  const data = await listAdminBroadcasts(40);
+  return c.json({ data });
+});
+admin.post("/updates", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  if (!body.title?.trim() || !body.body?.trim()) return appError(c, "NAME_REQUIRED");
+  try {
+    const row = await createAdminBroadcast({
+      title: body.title,
+      body: body.body,
+      type: body.type,
+      createdBy: c.get("adminEmail")
+    });
+    return c.json({ data: row }, 201);
+  } catch {
+    return appError(c, "SERVER_ERROR");
+  }
+});
+admin.get("/sync", async (c) => {
+  const limit = Number(c.req.query("limit") ?? 40);
+  const data = await getAdminSyncStatus(limit);
+  return c.json({ data });
+});
+admin.post("/sync/:action", async (c) => {
+  const action = c.req.param("action");
+  const allowed = [
+    "daily",
+    "full",
+    "fertilizers",
+    "ag-catalog",
+    "bulk-catalog",
+    "publications",
+    "places"
+  ];
+  if (!allowed.includes(action)) return appError(c, "NOT_FOUND");
+  try {
+    const result = await runAdminSyncAction(action);
+    return c.json({ ok: true, ...result });
+  } catch {
+    return appError(c, "SERVER_ERROR");
+  }
+});
+
+// src/server/index.ts
 (0, import_dotenv3.config)({ path: ".env" });
-var app = new import_hono.Hono();
+var app = new import_hono2.Hono();
 var publicRoot = import_node_path.default.join(process.cwd(), "public");
 app.use("*", (0, import_cors.cors)());
 app.use("*", apiLoggerMiddleware);
+app.route("/api/admin", admin);
+app.get("/api/schemes", async (c) => {
+  const data = await listPublicActiveSchemes();
+  return c.json({ data, count: data.length });
+});
 app.use(
   "/static/*",
   (0, import_serve_static.serveStatic)({
@@ -13131,7 +14696,7 @@ app.post("/api/auth/ping", async (c) => {
     const body = await c.req.json();
     const phone = formatPhone((body.phone ?? "6111111111").trim());
     const rows = await Promise.race([
-      db.select({ id: farmers.id }).from(farmers).where((0, import_drizzle_orm25.eq)(farmers.phone, phone)).limit(1),
+      db.select({ id: farmers.id }).from(farmers).where((0, import_drizzle_orm26.eq)(farmers.phone, phone)).limit(1),
       new Promise(
         (_, reject) => setTimeout(() => reject(new Error("FARMERS_TIMEOUT")), 5e3)
       )
@@ -13228,7 +14793,8 @@ app.post("/api/auth/register", async (c) => {
       WEAK_PASSWORD: "WEAK_PASSWORD",
       INVALID_PHONE: "INVALID_PHONE",
       PHONE_REQUIRED: "MOBILE_REQUIRED",
-      PHONE_TAKEN: "PHONE_TAKEN"
+      PHONE_TAKEN: "PHONE_TAKEN",
+      EMAIL_TAKEN: "PHONE_TAKEN"
     };
     if (map[code]) {
       log.warn("auth/register", "rejected", { code, phone: maskPhone(phoneRaw) });
@@ -13459,6 +15025,20 @@ app.put("/api/farmers/me/sync", farmerAuthMiddleware, async (c) => {
     return appError(c, "SYNC_FAILED");
   }
 });
+app.delete("/api/farmers/me", farmerAuthMiddleware, async (c) => {
+  const farmerId = c.get("farmerId");
+  try {
+    await db.delete(payments).where((0, import_drizzle_orm26.eq)(payments.farmerId, farmerId));
+    await db.delete(orders).where((0, import_drizzle_orm26.eq)(orders.farmerId, farmerId));
+    const deleted = await db.delete(farmers).where((0, import_drizzle_orm26.eq)(farmers.id, farmerId)).returning({ id: farmers.id });
+    if (!deleted.length) return appError(c, "FARMER_NOT_FOUND");
+    log.info("farmer/delete", "account deleted", { farmerId });
+    return c.json({ success: true, deleted: true });
+  } catch (err) {
+    log.error("farmer/delete", "account delete failed", { err, farmerId });
+    return appError(c, "SERVER_ERROR");
+  }
+});
 app.get("/api/crops", async (c) => {
   const search = c.req.query("search")?.trim();
   const category = c.req.query("category")?.trim();
@@ -13489,14 +15069,14 @@ app.get("/api/crops/:cropId", async (c) => {
 });
 app.get("/api/crops/:cropId/varieties", async (c) => {
   const cropId = c.req.param("cropId");
-  const rows = await db.select().from(cropVarieties).where((0, import_drizzle_orm25.eq)(cropVarieties.cropId, cropId)).limit(500);
+  const rows = await db.select().from(cropVarieties).where((0, import_drizzle_orm26.eq)(cropVarieties.cropId, cropId)).limit(500);
   return c.json({ data: rows, count: rows.length });
 });
 app.get("/api/mandi/prices", async (c) => {
   const cropId = c.req.query("cropId");
   const state = c.req.query("state");
   const limit = Number(c.req.query("limit") ?? 100);
-  const rows = cropId ? await db.select().from(mandiPrices).where((0, import_drizzle_orm25.eq)(mandiPrices.cropId, cropId)).orderBy((0, import_drizzle_orm25.desc)(mandiPrices.fetchedAt)).limit(limit) : await db.select().from(mandiPrices).orderBy((0, import_drizzle_orm25.desc)(mandiPrices.fetchedAt)).limit(limit);
+  const rows = cropId ? await db.select().from(mandiPrices).where((0, import_drizzle_orm26.eq)(mandiPrices.cropId, cropId)).orderBy((0, import_drizzle_orm26.desc)(mandiPrices.fetchedAt)).limit(limit) : await db.select().from(mandiPrices).orderBy((0, import_drizzle_orm26.desc)(mandiPrices.fetchedAt)).limit(limit);
   const filtered = state ? rows.filter((r) => r.state === state) : rows;
   const data = filtered.map((row) => ({
     ...row,
@@ -13539,7 +15119,7 @@ app.get("/api/mandi/analytics", async (c) => {
 app.get("/api/fertilizers", async (c) => {
   const cropId = c.req.query("cropId");
   const type = c.req.query("type") ?? "fertilizer";
-  const rows = cropId ? await db.select().from(agrochemicals).where((0, import_drizzle_orm25.eq)(agrochemicals.cropId, cropId)).limit(100) : await db.select().from(agrochemicals).where((0, import_drizzle_orm25.eq)(agrochemicals.type, type)).limit(200);
+  const rows = cropId ? await db.select().from(agrochemicals).where((0, import_drizzle_orm26.eq)(agrochemicals.cropId, cropId)).limit(100) : await db.select().from(agrochemicals).where((0, import_drizzle_orm26.eq)(agrochemicals.type, type)).limit(200);
   return c.json({ data: rows });
 });
 app.get("/api/fertilizer-products", async (c) => {
@@ -13551,7 +15131,7 @@ app.get("/api/fertilizer-products", async (c) => {
     source: c.req.query("source"),
     limit: Number(c.req.query("limit") ?? 100)
   });
-  const [syncRow] = await db.select({ at: import_drizzle_orm25.sql`max(${fertilizerProducts.lastSyncedAt})` }).from(fertilizerProducts);
+  const [syncRow] = await db.select({ at: import_drizzle_orm26.sql`max(${fertilizerProducts.lastSyncedAt})` }).from(fertilizerProducts);
   return c.json({
     data,
     count: data.length,
@@ -13575,17 +15155,17 @@ app.get("/api/plant-diseases", async (c) => {
   const search = c.req.query("search")?.trim();
   const limit = Math.min(Number(c.req.query("limit") ?? 100), 500);
   const conditions = [];
-  if (crop) conditions.push((0, import_drizzle_orm25.eq)(plantDiseases.cropId, crop));
-  if (category) conditions.push((0, import_drizzle_orm25.eq)(plantDiseases.category, category));
+  if (crop) conditions.push((0, import_drizzle_orm26.eq)(plantDiseases.cropId, crop));
+  if (category) conditions.push((0, import_drizzle_orm26.eq)(plantDiseases.category, category));
   if (search) {
     const pattern = `%${search}%`;
-    conditions.push((0, import_drizzle_orm25.or)((0, import_drizzle_orm25.ilike)(plantDiseases.name, pattern), (0, import_drizzle_orm25.ilike)(plantDiseases.symptoms, pattern)));
+    conditions.push((0, import_drizzle_orm26.or)((0, import_drizzle_orm26.ilike)(plantDiseases.name, pattern), (0, import_drizzle_orm26.ilike)(plantDiseases.symptoms, pattern)));
   }
-  const rows = conditions.length > 0 ? await db.select().from(plantDiseases).where((0, import_drizzle_orm25.and)(...conditions)).limit(limit) : await db.select().from(plantDiseases).limit(limit);
+  const rows = conditions.length > 0 ? await db.select().from(plantDiseases).where((0, import_drizzle_orm26.and)(...conditions)).limit(limit) : await db.select().from(plantDiseases).limit(limit);
   return c.json({ data: rows, count: rows.length, source: "plantvillage_icar" });
 });
 app.get("/api/plant-diseases/:id", async (c) => {
-  const [row] = await db.select().from(plantDiseases).where((0, import_drizzle_orm25.eq)(plantDiseases.id, c.req.param("id"))).limit(1);
+  const [row] = await db.select().from(plantDiseases).where((0, import_drizzle_orm26.eq)(plantDiseases.id, c.req.param("id"))).limit(1);
   if (!row) return appError(c, "DISEASE_NOT_FOUND");
   return c.json({ data: row, source: "plantvillage_icar" });
 });
@@ -13594,9 +15174,9 @@ app.get("/api/icar/guidelines", async (c) => {
   const category = c.req.query("category");
   const limit = Math.min(Number(c.req.query("limit") ?? 50), 200);
   const conditions = [];
-  if (crop) conditions.push((0, import_drizzle_orm25.eq)(icarGuidelines.cropId, crop));
-  if (category) conditions.push((0, import_drizzle_orm25.eq)(icarGuidelines.category, category));
-  const rows = conditions.length > 0 ? await db.select().from(icarGuidelines).where((0, import_drizzle_orm25.and)(...conditions)).limit(limit) : await db.select().from(icarGuidelines).limit(limit);
+  if (crop) conditions.push((0, import_drizzle_orm26.eq)(icarGuidelines.cropId, crop));
+  if (category) conditions.push((0, import_drizzle_orm26.eq)(icarGuidelines.category, category));
+  const rows = conditions.length > 0 ? await db.select().from(icarGuidelines).where((0, import_drizzle_orm26.and)(...conditions)).limit(limit) : await db.select().from(icarGuidelines).limit(limit);
   return c.json({ data: rows, count: rows.length, source: "icar" });
 });
 app.get("/api/ag-advisories", async (c) => {
@@ -13604,9 +15184,9 @@ app.get("/api/ag-advisories", async (c) => {
   const season = c.req.query("season");
   const limit = Math.min(Number(c.req.query("limit") ?? 50), 200);
   const conditions = [];
-  if (type) conditions.push((0, import_drizzle_orm25.eq)(agAdvisories.type, type));
-  if (season) conditions.push((0, import_drizzle_orm25.eq)(agAdvisories.season, season));
-  const rows = conditions.length > 0 ? await db.select().from(agAdvisories).where((0, import_drizzle_orm25.and)(...conditions)).limit(limit) : await db.select().from(agAdvisories).limit(limit);
+  if (type) conditions.push((0, import_drizzle_orm26.eq)(agAdvisories.type, type));
+  if (season) conditions.push((0, import_drizzle_orm26.eq)(agAdvisories.season, season));
+  const rows = conditions.length > 0 ? await db.select().from(agAdvisories).where((0, import_drizzle_orm26.and)(...conditions)).limit(limit) : await db.select().from(agAdvisories).limit(limit);
   return c.json({ data: rows, count: rows.length, source: "doa" });
 });
 app.get("/api/soil-health/recommendations", async (c) => {
@@ -13614,9 +15194,9 @@ app.get("/api/soil-health/recommendations", async (c) => {
   const deficiency = c.req.query("deficiency");
   const limit = Math.min(Number(c.req.query("limit") ?? 50), 200);
   const conditions = [];
-  if (soilType) conditions.push((0, import_drizzle_orm25.eq)(soilHealthRecommendations.soilType, soilType));
-  if (deficiency) conditions.push((0, import_drizzle_orm25.ilike)(soilHealthRecommendations.deficiency, `%${deficiency}%`));
-  const rows = conditions.length > 0 ? await db.select().from(soilHealthRecommendations).where((0, import_drizzle_orm25.and)(...conditions)).limit(limit) : await db.select().from(soilHealthRecommendations).limit(limit);
+  if (soilType) conditions.push((0, import_drizzle_orm26.eq)(soilHealthRecommendations.soilType, soilType));
+  if (deficiency) conditions.push((0, import_drizzle_orm26.ilike)(soilHealthRecommendations.deficiency, `%${deficiency}%`));
+  const rows = conditions.length > 0 ? await db.select().from(soilHealthRecommendations).where((0, import_drizzle_orm26.and)(...conditions)).limit(limit) : await db.select().from(soilHealthRecommendations).limit(limit);
   return c.json({ data: rows, count: rows.length, source: "soil_health_card" });
 });
 app.post("/api/ag-catalog/sync", adminAuthMiddleware, async (c) => {
@@ -13638,11 +15218,11 @@ app.post("/api/bulk-catalog/sync", adminAuthMiddleware, async (c) => {
 });
 app.get("/api/bulk-catalog/stats", async (c) => {
   const [[{ pesticides }], [{ fungicides }], [{ fertilizers: fertilizers2 }], [{ diseases: diseases2 }], [{ cropCount }]] = await Promise.all([
-    db.select({ pesticides: import_drizzle_orm25.sql`count(*)::int` }).from(agProducts).where((0, import_drizzle_orm25.eq)(agProducts.type, "pesticide")),
-    db.select({ fungicides: import_drizzle_orm25.sql`count(*)::int` }).from(agProducts).where((0, import_drizzle_orm25.eq)(agProducts.type, "fungicide")),
-    db.select({ fertilizers: import_drizzle_orm25.sql`count(*)::int` }).from(agProducts).where((0, import_drizzle_orm25.eq)(agProducts.type, "fertilizer")),
-    db.select({ diseases: import_drizzle_orm25.sql`count(*)::int` }).from(cropDiseaseCatalog),
-    db.select({ cropCount: import_drizzle_orm25.sql`count(*)::int` }).from(crops)
+    db.select({ pesticides: import_drizzle_orm26.sql`count(*)::int` }).from(agProducts).where((0, import_drizzle_orm26.eq)(agProducts.type, "pesticide")),
+    db.select({ fungicides: import_drizzle_orm26.sql`count(*)::int` }).from(agProducts).where((0, import_drizzle_orm26.eq)(agProducts.type, "fungicide")),
+    db.select({ fertilizers: import_drizzle_orm26.sql`count(*)::int` }).from(agProducts).where((0, import_drizzle_orm26.eq)(agProducts.type, "fertilizer")),
+    db.select({ diseases: import_drizzle_orm26.sql`count(*)::int` }).from(cropDiseaseCatalog),
+    db.select({ cropCount: import_drizzle_orm26.sql`count(*)::int` }).from(crops)
   ]);
   return c.json({
     data: { pesticides, fungicides, fertilizers: fertilizers2, diseases: diseases2, crops: cropCount },
@@ -13683,15 +15263,15 @@ app.get("/api/ag-products", async (c) => {
   const search = c.req.query("search")?.trim();
   const limit = Math.min(Number(c.req.query("limit") ?? 100), 500);
   const conditions = [];
-  if (type) conditions.push((0, import_drizzle_orm25.eq)(agProducts.type, type));
+  if (type) conditions.push((0, import_drizzle_orm26.eq)(agProducts.type, type));
   if (search) {
     const pattern = `%${search}%`;
-    conditions.push((0, import_drizzle_orm25.or)((0, import_drizzle_orm25.ilike)(agProducts.name, pattern), (0, import_drizzle_orm25.ilike)(agProducts.activeIngredient, pattern)));
+    conditions.push((0, import_drizzle_orm26.or)((0, import_drizzle_orm26.ilike)(agProducts.name, pattern), (0, import_drizzle_orm26.ilike)(agProducts.activeIngredient, pattern)));
   }
-  if (crop) conditions.push(import_drizzle_orm25.sql`${agProducts.crops} @> ${JSON.stringify([crop])}::jsonb`);
-  if (soilType) conditions.push(import_drizzle_orm25.sql`${agProducts.soilTypes} @> ${JSON.stringify([soilType])}::jsonb`);
-  if (growthStage) conditions.push(import_drizzle_orm25.sql`${agProducts.growthStages} @> ${JSON.stringify([growthStage])}::jsonb`);
-  const rows = conditions.length > 0 ? await db.select().from(agProducts).where((0, import_drizzle_orm25.and)(...conditions)).limit(limit) : await db.select().from(agProducts).limit(limit);
+  if (crop) conditions.push(import_drizzle_orm26.sql`${agProducts.crops} @> ${JSON.stringify([crop])}::jsonb`);
+  if (soilType) conditions.push(import_drizzle_orm26.sql`${agProducts.soilTypes} @> ${JSON.stringify([soilType])}::jsonb`);
+  if (growthStage) conditions.push(import_drizzle_orm26.sql`${agProducts.growthStages} @> ${JSON.stringify([growthStage])}::jsonb`);
+  const rows = conditions.length > 0 ? await db.select().from(agProducts).where((0, import_drizzle_orm26.and)(...conditions)).limit(limit) : await db.select().from(agProducts).limit(limit);
   const data = enrichProductsWithImages(
     rows.map((r) => ({
       ...r,
@@ -13704,7 +15284,7 @@ app.get("/api/ag-products", async (c) => {
   return c.json({ data, count: data.length });
 });
 app.get("/api/ag-products/:id", async (c) => {
-  const [row] = await db.select().from(agProducts).where((0, import_drizzle_orm25.eq)(agProducts.id, c.req.param("id"))).limit(1);
+  const [row] = await db.select().from(agProducts).where((0, import_drizzle_orm26.eq)(agProducts.id, c.req.param("id"))).limit(1);
   if (!row) return appError(c, "PRODUCT_NOT_FOUND");
   const [data] = enrichProductsWithImages([
     {
@@ -13737,13 +15317,13 @@ app.get("/api/crop-diseases", async (c) => {
   const search = c.req.query("search")?.trim();
   const limit = Math.min(Number(c.req.query("limit") ?? 100), 500);
   const conditions = [];
-  if (crop) conditions.push((0, import_drizzle_orm25.eq)(cropDiseaseCatalog.cropId, crop));
-  if (category) conditions.push((0, import_drizzle_orm25.eq)(cropDiseaseCatalog.category, category));
+  if (crop) conditions.push((0, import_drizzle_orm26.eq)(cropDiseaseCatalog.cropId, crop));
+  if (category) conditions.push((0, import_drizzle_orm26.eq)(cropDiseaseCatalog.category, category));
   if (search) {
     const pattern = `%${search}%`;
-    conditions.push((0, import_drizzle_orm25.or)((0, import_drizzle_orm25.ilike)(cropDiseaseCatalog.name, pattern), (0, import_drizzle_orm25.ilike)(cropDiseaseCatalog.symptoms, pattern)));
+    conditions.push((0, import_drizzle_orm26.or)((0, import_drizzle_orm26.ilike)(cropDiseaseCatalog.name, pattern), (0, import_drizzle_orm26.ilike)(cropDiseaseCatalog.symptoms, pattern)));
   }
-  const rows = conditions.length > 0 ? await db.select().from(cropDiseaseCatalog).where((0, import_drizzle_orm25.and)(...conditions)).limit(limit) : await db.select().from(cropDiseaseCatalog).limit(limit);
+  const rows = conditions.length > 0 ? await db.select().from(cropDiseaseCatalog).where((0, import_drizzle_orm26.and)(...conditions)).limit(limit) : await db.select().from(cropDiseaseCatalog).limit(limit);
   return c.json({ data: rows, count: rows.length });
 });
 app.get("/api/soils", async (c) => {
@@ -13751,22 +15331,22 @@ app.get("/api/soils", async (c) => {
   const lon = Number(c.req.query("lon"));
   if (!lat || !lon) return appError(c, "LOCATION_REQUIRED");
   const key = geoKey(lat, lon);
-  const [cached] = await db.select().from(soils).where((0, import_drizzle_orm25.eq)(soils.geoKey, key)).limit(1);
+  const [cached] = await db.select().from(soils).where((0, import_drizzle_orm26.eq)(soils.geoKey, key)).limit(1);
   if (cached) {
     return c.json({ data: cached, source: "soilgrids" });
   }
   return c.json({ data: null, source: "soilgrids", warning: "cache_miss" });
 });
 app.get("/api/weather/latest", async (c) => {
-  const rows = await db.select().from(weather).orderBy((0, import_drizzle_orm25.desc)(weather.fetchedAt)).limit(10);
+  const rows = await db.select().from(weather).orderBy((0, import_drizzle_orm26.desc)(weather.fetchedAt)).limit(10);
   return c.json({ data: rows, source: "open_meteo" });
 });
 app.get("/api/sync/status", async (c) => {
   const sources = await db.select().from(dataSources);
-  const jobs = await db.select().from(syncJobs).orderBy((0, import_drizzle_orm25.desc)(syncJobs.startedAt)).limit(20);
-  const [mandiRow] = await db.select({ at: import_drizzle_orm25.sql`max(${mandiPrices.fetchedAt})` }).from(mandiPrices);
-  const [weatherRow] = await db.select({ at: import_drizzle_orm25.sql`max(${weather.fetchedAt})` }).from(weather);
-  const [fertRow] = await db.select({ at: import_drizzle_orm25.sql`max(${fertilizerProducts.lastSyncedAt})` }).from(fertilizerProducts);
+  const jobs = await db.select().from(syncJobs).orderBy((0, import_drizzle_orm26.desc)(syncJobs.startedAt)).limit(20);
+  const [mandiRow] = await db.select({ at: import_drizzle_orm26.sql`max(${mandiPrices.fetchedAt})` }).from(mandiPrices);
+  const [weatherRow] = await db.select({ at: import_drizzle_orm26.sql`max(${weather.fetchedAt})` }).from(weather);
+  const [fertRow] = await db.select({ at: import_drizzle_orm26.sql`max(${fertilizerProducts.lastSyncedAt})` }).from(fertilizerProducts);
   return c.json({
     sources,
     recentJobs: jobs,
@@ -13881,8 +15461,8 @@ app.patch("/api/farmers/me/notifications/:id/read", farmerAuthMiddleware, async 
   return c.json({ success: true });
 });
 app.post("/api/farmers/me/notifications/read-all", farmerAuthMiddleware, async (c) => {
-  const count = await markAllNotificationsRead(c.get("farmerId"));
-  return c.json({ success: true, count });
+  const count2 = await markAllNotificationsRead(c.get("farmerId"));
+  return c.json({ success: true, count: count2 });
 });
 app.post("/api/farmers/me/notifications/push", farmerAuthMiddleware, async (c) => {
   const body = await c.req.json();
@@ -13963,19 +15543,21 @@ app.post("/api/ai/chat", farmerAuthMiddleware, async (c) => {
     const content = await completeAiChat(messages, {
       voiceMode: body.voiceMode,
       agentId: body.agentId,
-      cropIds: body.cropIds
+      cropIds: body.cropIds,
+      language: body.language
     });
     log.info("ai/chat", "completed", {
       farmerId: c.get("farmerId"),
       agentId: body.agentId ?? "general",
       provider: getAiProvider(),
-      voiceMode: Boolean(body.voiceMode)
+      voiceMode: Boolean(body.voiceMode),
+      language: body.language ?? "te"
     });
     return c.json({ content });
   } catch (err) {
     log.error("ai/chat", "AI proxy failed", { err, farmerId: c.get("farmerId"), provider: getAiProvider() });
     return c.json({
-      content: "I am still searching for the best answer. Please ask again with your crop name and village."
+      content: "\u0C38\u0C2E\u0C3E\u0C27\u0C3E\u0C28\u0C02 \u0C07\u0C02\u0C15\u0C3E \u0C35\u0C46\u0C24\u0C41\u0C15\u0C41\u0C24\u0C41\u0C28\u0C4D\u0C28\u0C3E\u0C28\u0C41. \u0C2A\u0C02\u0C1F \u0C2A\u0C47\u0C30\u0C41, \u0C0A\u0C30\u0C41 \u0C1A\u0C46\u0C2A\u0C4D\u0C2A\u0C3F \u0C2E\u0C33\u0C4D\u0C32\u0C40 \u0C05\u0C21\u0C17\u0C02\u0C21\u0C3F."
     });
   }
 });
@@ -13987,7 +15569,8 @@ app.post("/api/ai/chat/stream", farmerAuthMiddleware, async (c) => {
     const stream = await streamAiChat(messages, {
       voiceMode: body.voiceMode,
       agentId: body.agentId,
-      cropIds: body.cropIds
+      cropIds: body.cropIds,
+      language: body.language
     });
     return new Response(stream, {
       headers: {
@@ -14002,7 +15585,8 @@ app.post("/api/ai/chat/stream", farmerAuthMiddleware, async (c) => {
       const stream = await streamAiChat(messages, {
         voiceMode: body.voiceMode,
         agentId: body.agentId,
-        cropIds: body.cropIds
+        cropIds: body.cropIds,
+        language: body.language
       });
       return new Response(stream, {
         headers: {
@@ -14013,7 +15597,7 @@ app.post("/api/ai/chat/stream", farmerAuthMiddleware, async (c) => {
       });
     } catch {
       const encoder = new TextEncoder();
-      const msg = "I am still searching for the best answer. Please ask again with your crop name and village.";
+      const msg = "\u0C38\u0C2E\u0C3E\u0C27\u0C3E\u0C28\u0C02 \u0C07\u0C02\u0C15\u0C3E \u0C35\u0C46\u0C24\u0C41\u0C15\u0C41\u0C24\u0C41\u0C28\u0C4D\u0C28\u0C3E\u0C28\u0C41. \u0C2A\u0C02\u0C1F \u0C2A\u0C47\u0C30\u0C41, \u0C0A\u0C30\u0C41 \u0C1A\u0C46\u0C2A\u0C4D\u0C2A\u0C3F \u0C2E\u0C33\u0C4D\u0C32\u0C40 \u0C05\u0C21\u0C17\u0C02\u0C21\u0C3F.";
       const fallback = new ReadableStream({
         start(controller) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: msg })}

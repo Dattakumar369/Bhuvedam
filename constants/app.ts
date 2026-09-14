@@ -1,7 +1,7 @@
 export const APP = {
   name: 'Bhuvedam',
   tagline: 'AI Agriculture Assistant',
-  version: '1.0.0',
+  version: '1.0.2',
   supportEmail: 'support@bhuvedam.com',
   website: 'https://bhuvedam.com',
 } as const;

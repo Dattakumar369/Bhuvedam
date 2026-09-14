@@ -1,7 +1,7 @@
 import { STORAGE_KEYS } from '@/constants/app';
+import { notificationsSupported } from '@/services/alerts/localNotifications';
 import { fetchFarmerProfileFromDatabase } from '@/services/farmers/farmerSyncService';
 import { imageSessionCache } from '@/services/media/imageSessionCache';
-import { notificationsSupported } from '@/services/alerts/localNotifications';
 import { registerForPushNotifications } from '@/services/notifications/pushService';
 import { useAIStore } from '@/store/aiStore';
 import { useAlertStore } from '@/store/alertStore';

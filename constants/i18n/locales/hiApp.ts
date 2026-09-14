@@ -48,6 +48,11 @@ export const hiApp: AppTranslations = {
   termsOfService: 'सेवा की शर्तें',
   logout: 'लॉग आउट',
   logoutConfirm: 'क्या आप Bhuvedam से लॉग आउट करना चाहते हैं?',
+  deleteAccount: 'खाता हटाएँ',
+  deleteAccountConfirm:
+    'यह आपका Bhuvedam खाता, खेत डेटा और चैट इतिहास सर्वर से स्थायी रूप से हटा देगा। यह वापस नहीं लिया जा सकता।',
+  deleteAccountFailed: 'खाता हटा नहीं सके। इंटरनेट जाँचकर फिर कोशिश करें।',
+  deletingAccount: 'खाता हटा रहे हैं…',
   loginTitle: 'Bhuvedam में स्वागत है',
   loginTab: 'लॉग इन',
   signupTab: 'साइन अप',

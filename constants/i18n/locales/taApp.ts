@@ -48,6 +48,11 @@ export const taApp: AppTranslations = {
   termsOfService: 'சேவை விதிமுறைகள்',
   logout: 'வெளியேறு',
   logoutConfirm: 'Bhuvedam இலிருந்து வெளியேற வேண்டுமா?',
+  deleteAccount: 'கணக்கை நீக்கு',
+  deleteAccountConfirm:
+    'இது உங்கள் Bhuvedam கணக்கு, வயல் தரவு மற்றும் அரட்டை வரலாற்றை சேவையகத்திலிருந்து நிரந்தரமாக நீக்கும். இதை திரும்பப் பெற முடியாது.',
+  deleteAccountFailed: 'கணக்கை நீக்க முடியவில்லை. இணையத்தை சரிபார்க்கவும்.',
+  deletingAccount: 'கணக்கை நீக்குகிறது…',
   loginTitle: 'Bhuvedam க்கு வரவேற்கிறோம்',
   loginTab: 'உள்நுழை',
   signupTab: 'பதிவு',

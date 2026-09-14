@@ -2,26 +2,26 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  View,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Chip, DataFreshnessBadge, Header, ListSkeleton, SearchInput } from '@/components/ui';
 import { Body, Caption, Title } from '@/components/ui/Typography';
-import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
-import { getCatalogBrowseCopy } from '@/constants/i18n/catalogTranslations';
-import { FERTILIZER_BRANDS, FERTILIZER_CATEGORIES } from '@/constants/fertilizerCatalog';
 import { CROPS } from '@/constants/crops';
+import { FERTILIZER_BRANDS, FERTILIZER_CATEGORIES } from '@/constants/fertilizerCatalog';
+import { getCatalogBrowseCopy } from '@/constants/i18n/catalogTranslations';
+import { getUserErrorMessage } from '@/constants/i18n/userErrorMessages';
 import { FertilizerProductCard } from '@/features/fertilizers/components/FertilizerProductCard';
 import { useTranslation } from '@/hooks/useTranslation';
 import { fetchFertilizerProducts } from '@/services/fertilizers/fertilizerProductService';
 import { useFarmerContextStore } from '@/store/farmerContextStore';
-import type { FertilizerCategory, FertilizerProduct } from '@/types/fertilizerProduct';
 import { colors, layout, radius, spacing } from '@/theme';
+import type { FertilizerCategory, FertilizerProduct } from '@/types/fertilizerProduct';
 
 export default function FertilizersScreen() {
   const insets = useSafeAreaInsets();

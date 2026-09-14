@@ -48,6 +48,11 @@ export const knApp: AppTranslations = {
   termsOfService: 'ಸೇವಾ ನಿಯಮಗಳು',
   logout: 'ಲಾಗ್ ಔಟ್',
   logoutConfirm: 'Bhuvedam ನಿಂದ ಲಾಗ್ ಔಟ್ ಮಾಡಬೇಕೇ?',
+  deleteAccount: 'ಖಾತೆ ಅಳಿಸಿ',
+  deleteAccountConfirm:
+    'ಇದು ನಿಮ್ಮ Bhuvedam ಖಾತೆ, ಹೊಲ ಡೇಟಾ ಮತ್ತು ಚಾಟ್ ಇತಿಹಾಸವನ್ನು ಸರ್ವರ್‌ನಿಂದ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸುತ್ತದೆ. ಇದನ್ನು ಹಿಂತಿರುಗಿಸಲಾಗುವುದಿಲ್ಲ.',
+  deleteAccountFailed: 'ಖಾತೆ ಅಳಿಸಲಾಗಲಿಲ್ಲ. ಇಂಟರ್ನೆಟ್ ಪರಿಶೀಲಿಸಿ.',
+  deletingAccount: 'ಖಾತೆ ಅಳಿಸಲಾಗುತ್ತಿದೆ…',
   loginTitle: 'Bhuvedam ಗೆ ಸ್ವಾಗತ',
   loginTab: 'ಲಾಗ್ ಇನ್',
   signupTab: 'ಸೈನ್ ಅಪ್',

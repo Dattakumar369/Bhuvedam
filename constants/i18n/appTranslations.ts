@@ -52,6 +52,10 @@ export interface AppTranslations {
   termsOfService: string;
   logout: string;
   logoutConfirm: string;
+  deleteAccount: string;
+  deleteAccountConfirm: string;
+  deleteAccountFailed: string;
+  deletingAccount: string;
   loginTitle: string;
   loginTab: string;
   signupTab: string;
@@ -175,6 +179,11 @@ const enApp: AppTranslations = {
   termsOfService: 'Terms of Service',
   logout: 'Logout',
   logoutConfirm: 'Are you sure you want to logout from Bhuvedam?',
+  deleteAccount: 'Delete account',
+  deleteAccountConfirm:
+    'This permanently deletes your Bhuvedam account, farm data, and chat history from our servers. This cannot be undone.',
+  deleteAccountFailed: 'Could not delete account. Check your internet and try again.',
+  deletingAccount: 'Deleting account…',
   loginTitle: 'Welcome to Bhuvedam',
   loginTab: 'Login',
   signupTab: 'Sign Up',
@@ -298,6 +307,11 @@ const teApp: AppTranslations = {
   termsOfService: 'నిబంధనలు',
   logout: 'లాగౌట్',
   logoutConfirm: 'Bhuvedam నుండి logout చేయాలా?',
+  deleteAccount: 'ఖాతా తొలగించండి',
+  deleteAccountConfirm:
+    'ఇది మీ Bhuvedam ఖాతా, పొలం డేటా, చాట్ చరిత్రను సర్వర్ నుండి శాశ్వతంగా తొలగిస్తుంది. తిరిగి రాదు.',
+  deleteAccountFailed: 'ఖాతా తొలగించలేకపోయాం. ఇంటర్నెట్ చూసి మళ్లీ ప్రయత్నించండి.',
+  deletingAccount: 'ఖాతా తొలగిస్తున్నాం…',
   loginTitle: 'Bhuvedam కు స్వాగతం',
   loginTab: 'Login',
   signupTab: 'Sign Up',

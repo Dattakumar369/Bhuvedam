@@ -59,7 +59,9 @@ Weather, mandi, and soil data come from public or licensed agricultural data sou
 
 ## Data Retention & Deletion
 
-You may clear app data by logging out or uninstalling the app. Contact **support@bhuvedam.com** to request deletion of any server-side logs tied to your account (if applicable).
+- **In the app:** open **Profile → Delete account**. This permanently removes your account, farm data, and related server records.
+- **On the web:** see [bhuvedam.com/privacy](https://www.bhuvedam.com/privacy) for the same instructions.
+- You may also clear local app data by logging out or uninstalling. Contact **support@bhuvedam.com** if you need help with deletion.
 
 ## Children's Privacy
 

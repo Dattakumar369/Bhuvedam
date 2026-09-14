@@ -17,6 +17,8 @@ import {
     dataSources,
     farmers,
     mandiPrices,
+    orders,
+    payments,
     soils,
     syncJobs,
     weather,
@@ -116,6 +118,8 @@ import {
   seedCuratedAgPlaces,
   type NearbyPlaceType,
 } from '../services/nearbyAgPlacesService';
+import { adminRoutes } from './adminRoutes';
+import { listPublicActiveSchemes } from '../services/adminDashboardService';
 
 const app = new Hono<{ Variables: FarmerAuthVariables }>();
 
@@ -123,6 +127,13 @@ const publicRoot = path.join(process.cwd(), 'public');
 
 app.use('*', cors());
 app.use('*', apiLoggerMiddleware);
+
+app.route('/api/admin', adminRoutes);
+
+app.get('/api/schemes', async (c) => {
+  const data = await listPublicActiveSchemes();
+  return c.json({ data, count: data.length });
+});
 
 app.use(
   '/static/*',
@@ -594,6 +605,26 @@ app.put('/api/farmers/me/sync', farmerAuthMiddleware, async (c) => {
     console.error('[farmers/sync] failed:', err);
     log.error('farmer/sync', 'profile sync failed', { err, farmerId: c.get('farmerId') });
     return appError(c, 'SYNC_FAILED');
+  }
+});
+
+/** Permanently delete the logged-in farmer account and cascaded farm data (Play Store requirement). */
+app.delete('/api/farmers/me', farmerAuthMiddleware, async (c) => {
+  const farmerId = c.get('farmerId');
+  try {
+    // Orders/payments use onDelete:restrict — clear them before the farmer row.
+    await db.delete(payments).where(eq(payments.farmerId, farmerId));
+    await db.delete(orders).where(eq(orders.farmerId, farmerId));
+    const deleted = await db
+      .delete(farmers)
+      .where(eq(farmers.id, farmerId))
+      .returning({ id: farmers.id });
+    if (!deleted.length) return appError(c, 'FARMER_NOT_FOUND');
+    log.info('farmer/delete', 'account deleted', { farmerId });
+    return c.json({ success: true, deleted: true });
+  } catch (err) {
+    log.error('farmer/delete', 'account delete failed', { err, farmerId });
+    return appError(c, 'SERVER_ERROR');
   }
 });
 

@@ -48,6 +48,11 @@ export const mrApp: AppTranslations = {
   termsOfService: 'सेवा अटी',
   logout: 'लॉग आउट',
   logoutConfirm: 'Bhuvedam मधून लॉग आउट करायचे?',
+  deleteAccount: 'खाते हटवा',
+  deleteAccountConfirm:
+    'हे तुमचे Bhuvedam खाते, शेत डेटा आणि चॅट इतिहास सर्व्हरवरून कायमचे हटवेल. हे परत येणार नाही.',
+  deleteAccountFailed: 'खाते हटवता आले नाही. इंटरनेट तपासा.',
+  deletingAccount: 'खाते हटवत आहोत…',
   loginTitle: 'Bhuvedam मध्ये स्वागत',
   loginTab: 'लॉग इन',
   signupTab: 'साइन अप',

@@ -89,6 +89,10 @@ export const userRepository = {
   async logout(): Promise<void> {
     await apiClient.post(ENDPOINTS.auth.logout);
   },
+
+  async deleteAccount(): Promise<void> {
+    await apiClient.delete(ENDPOINTS.farmers.deleteAccount);
+  },
 };
 
 export const weatherRepository = {

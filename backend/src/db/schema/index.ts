@@ -20,4 +20,6 @@ export * from './orders';
 export * from './notifications';
 export * from './otpCodes';
 export * from './pushTokens';
+export * from './govtSchemes';
+export * from './adminBroadcasts';
 export * from './relations';

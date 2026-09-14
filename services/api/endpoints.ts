@@ -14,6 +14,7 @@ export const ENDPOINTS = {
   farmers: {
     me: '/api/farmers/me',
     sync: '/api/farmers/me/sync',
+    deleteAccount: '/api/farmers/me',
     lands: '/api/farmers/me/lands',
     land: (id: string) => `/api/farmers/me/lands/${id}`,
     surveyNumbers: (landId: string) => `/api/farmers/me/lands/${landId}/survey-numbers`,

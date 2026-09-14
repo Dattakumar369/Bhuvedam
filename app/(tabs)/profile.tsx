@@ -23,6 +23,7 @@ export default function ProfileScreen() {
   const { app } = useTranslation();
   const user = useUserStore((s) => s.user);
   const logout = useUserStore((s) => s.logout);
+  const deleteAccount = useUserStore((s) => s.deleteAccount);
   const language = useLanguageStore((s) => s.language);
   const isDark = useThemeStore((s) => s.isDark);
   const setMode = useThemeStore((s) => s.setMode);
@@ -31,6 +32,9 @@ export default function ProfileScreen() {
   const district = useFarmerContextStore((s) => s.district);
   const state = useFarmerContextStore((s) => s.state);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const currentLanguage = LANGUAGES.find((l) => l.code === language);
   const displayName = user?.name?.trim() || app.farmerDefault;
@@ -45,6 +49,21 @@ export default function ProfileScreen() {
     setShowLogoutDialog(false);
     await logout();
     router.replace('/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError(false);
+    try {
+      await deleteAccount();
+      setShowDeleteDialog(false);
+      router.replace('/login');
+    } catch {
+      setShowDeleteDialog(false);
+      setDeleteError(true);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -149,6 +168,19 @@ export default function ProfileScreen() {
             <MaterialCommunityIcons name="logout" size={20} color={c.error} />
             <Body style={[styles.logoutText, { color: c.error }]}>{app.logout}</Body>
           </Pressable>
+          <Pressable
+            style={[
+              styles.logoutButton,
+              styles.deleteButton,
+              { backgroundColor: `${c.error}08`, borderColor: `${c.error}22` },
+            ]}
+            onPress={() => setShowDeleteDialog(true)}
+            accessibilityRole="button"
+            accessibilityLabel={app.deleteAccount}
+          >
+            <MaterialCommunityIcons name="account-remove-outline" size={20} color={c.error} />
+            <Body style={[styles.logoutText, { color: c.error }]}>{app.deleteAccount}</Body>
+          </Pressable>
         </Animated.View>
       </ScrollView>
 
@@ -160,6 +192,27 @@ export default function ProfileScreen() {
         onConfirm={() => void handleLogout()}
         onCancel={() => setShowLogoutDialog(false)}
         destructive
+      />
+      <AppDialog
+        visible={showDeleteDialog}
+        title={app.deleteAccount}
+        message={app.deleteAccountConfirm}
+        confirmLabel={deleting ? app.deletingAccount : app.deleteAccount}
+        onConfirm={() => {
+          if (!deleting) void handleDeleteAccount();
+        }}
+        onCancel={() => {
+          if (!deleting) setShowDeleteDialog(false);
+        }}
+        destructive
+      />
+      <AppDialog
+        visible={deleteError}
+        title={app.deleteAccount}
+        message={app.deleteAccountFailed}
+        confirmLabel={app.done}
+        onConfirm={() => setDeleteError(false)}
+        onCancel={() => setDeleteError(false)}
       />
     </View>
   );
@@ -264,6 +317,9 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: radius.lg,
     borderWidth: 1,
+  },
+  deleteButton: {
+    marginTop: spacing.sm,
   },
   logoutText: { fontFamily: 'Poppins_600SemiBold' },
 });

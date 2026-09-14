@@ -143,7 +143,7 @@ export async function loadConversationsForUser(
   candidates.sort((a, b) => b.score - a.score);
   const best = candidates[0];
 
-  await persistConversationsForUser(userId, phone, parseConversations(best.raw));
+  // Do not re-write the same payload on every cold start (was freezing low-end phones).
   return best.raw;
 }
 

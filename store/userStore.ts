@@ -33,6 +33,7 @@ interface UserState {
   setToken: (token: string) => Promise<void>;
   login: (user: User, token: string) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   clearExpiredSession: () => Promise<void>;
   hydrate: () => Promise<void>;
   setOnboardingComplete: (value: boolean) => Promise<void>;
@@ -80,6 +81,15 @@ export const useUserStore = create<UserState>((set, get) => ({
     } catch {
       // Clear local session even if server call fails
     }
+    await clearLocalSessionStores();
+    await secureStorage.remove(STORAGE_KEYS.authToken);
+    await secureStorage.remove(STORAGE_KEYS.user);
+    setAuthToken(null);
+    set({ user: null, token: null, isAuthenticated: false });
+  },
+
+  deleteAccount: async () => {
+    await userRepository.deleteAccount();
     await clearLocalSessionStores();
     await secureStorage.remove(STORAGE_KEYS.authToken);
     await secureStorage.remove(STORAGE_KEYS.user);
